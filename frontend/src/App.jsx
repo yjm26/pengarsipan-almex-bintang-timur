@@ -27,7 +27,7 @@ function App() {
           path="/dashboard/arsip" 
           element={
             <ProtectedRoute>
-              <ArsipSuratPage />
+              <DashboardPage />
             </ProtectedRoute>
           } 
         />

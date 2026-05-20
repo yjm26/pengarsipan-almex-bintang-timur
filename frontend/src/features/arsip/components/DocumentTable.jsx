@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { FileText, Eye, Download, CheckCircle2, AlertTriangle, XCircle, Clock, Building } from 'lucide-react';
+import { FileText, Eye, Download, CheckCircle2, AlertTriangle, XCircle, Pencil, Trash2, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 
 function getConfidenceBadge(score) {
   if (score >= 90) {
@@ -9,7 +9,6 @@ function getConfidenceBadge(score) {
       text: 'text-emerald-700',
       icon: CheckCircle2,
       label: `${score}%`,
-      tooltip: 'Verified',
     };
   }
   if (score >= 75) {
@@ -19,7 +18,6 @@ function getConfidenceBadge(score) {
       text: 'text-amber-700',
       icon: AlertTriangle,
       label: `${score}%`,
-      tooltip: 'Needs Review',
     };
   }
   return {
@@ -28,17 +26,10 @@ function getConfidenceBadge(score) {
     text: 'text-red-700',
     icon: XCircle,
     label: `${score}%`,
-    tooltip: 'Low Confidence',
   };
 }
 
-function getDirectionBadge(arah) {
-  return arah === 'Masuk'
-    ? { bg: 'bg-blue-50', border: 'border-blue-100', text: 'text-blue-700', icon: Clock }
-    : { bg: 'bg-violet-50', border: 'border-violet-100', text: 'text-violet-700', icon: Clock };
-}
-
-export default function DocumentTable({ documents, page = 1 }) {
+export default function DocumentTable({ documents, onView, onEdit, onDelete }) {
   if (documents.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -69,7 +60,6 @@ export default function DocumentTable({ documents, page = 1 }) {
           {documents.map((doc, i) => {
             const badge = getConfidenceBadge(doc.confidence);
             const BadgeIcon = badge.icon;
-            const dirBadge = getDirectionBadge(doc.arah);
 
             return (
               <motion.tr
@@ -87,17 +77,14 @@ export default function DocumentTable({ documents, page = 1 }) {
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-zinc-900 truncate max-w-[220px]">{doc.nama}</p>
-                      <p className="text-xs text-zinc-400 mt-0.5">{doc.ukuran} · Diunggah {doc.tanggalUnggah}</p>
+                      <p className="text-xs text-zinc-400 mt-0.5">{doc.ukuran}</p>
                     </div>
                   </div>
                 </td>
 
                 {/* Company */}
                 <td className="px-8 py-3.5 hidden lg:table-cell">
-                  <div className="flex items-center gap-1.5">
-                    <Building className="w-3.5 h-3.5 text-zinc-300" />
-                    <span className="text-sm text-zinc-600 truncate max-w-[180px]">{doc.namaPt}</span>
-                  </div>
+                  <span className="text-sm text-zinc-600 truncate max-w-[180px] block">{doc.namaPt}</span>
                 </td>
 
                 {/* Date */}
@@ -107,8 +94,15 @@ export default function DocumentTable({ documents, page = 1 }) {
 
                 {/* Direction */}
                 <td className="px-8 py-3.5">
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border ${dirBadge.bg} ${dirBadge.text} ${dirBadge.border}`}>
-                    <dirBadge.icon className="w-3 h-3" />
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium ${
+                    doc.arah === 'Masuk'
+                      ? 'text-[#D49A28]/80'
+                      : 'text-zinc-500'
+                  }`}>
+                    {doc.arah === 'Masuk'
+                      ? <ArrowDownLeft className="w-3.5 h-3.5" />
+                      : <ArrowUpRight className="w-3.5 h-3.5" />
+                    }
                     {doc.arah}
                   </span>
                 </td>
@@ -120,23 +114,35 @@ export default function DocumentTable({ documents, page = 1 }) {
 
                 {/* Accuracy */}
                 <td className="px-8 py-3.5 text-center">
-                  <span
-                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold border ${badge.bg} ${badge.text} ${badge.border}`}
-                    title={badge.tooltip}
-                  >
+                  <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold border ${badge.bg} ${badge.text} ${badge.border}`}>
                     <BadgeIcon className="w-3 h-3" />
                     {badge.label}
                   </span>
                 </td>
 
-                {/* Actions */}
-                <td className="px-8 py-3.5 text-right">
-                  <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button className="p-2 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-zinc-700 transition-all" title="Lihat Detail">
+                {/* Actions - Always visible */}
+                <td className="px-8 py-3.5">
+                  <div className="flex items-center justify-end gap-1">
+                    <button
+                      onClick={() => onView?.(doc)}
+                      className="p-2 rounded-lg hover:bg-blue-50 text-zinc-400 hover:text-blue-600 transition-all"
+                      title="Lihat Detail"
+                    >
                       <Eye className="w-4 h-4" />
                     </button>
-                    <button className="p-2 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-zinc-700 transition-all" title="Download">
-                      <Download className="w-4 h-4" />
+                    <button
+                      onClick={() => onEdit?.(doc)}
+                      className="p-2 rounded-lg hover:bg-amber-50 text-zinc-400 hover:text-amber-600 transition-all"
+                      title="Edit"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => onDelete?.(doc)}
+                      className="p-2 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-600 transition-all"
+                      title="Hapus"
+                    >
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </td>
