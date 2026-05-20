@@ -1,8 +1,15 @@
-import { LayoutDashboard, FileText, Upload, Settings, LogOut, Menu, Bell, Search, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { LayoutDashboard, FileText, Upload, Settings, LogOut, Menu, Bell, User } from 'lucide-react';
 import { useState } from 'react';
 
-export default function DashboardPage({ onLogout }) {
+export default function DashboardPage() {
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const handleLogout = () => {
+    localStorage.removeItem('isAuthenticated');
+    navigate('/');
+  };
 
   return (
     <div className="min-h-screen flex bg-zinc-50 text-zinc-900">
@@ -11,7 +18,8 @@ export default function DashboardPage({ onLogout }) {
         {/* Logo */}
         <div className="h-16 flex items-center px-6 border-b border-zinc-100">
           <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center flex-shrink-0">
-            <span className="text-white font-bold text-xs">ABT</span>
+            <img src="/logo.png" alt="Logo" className="w-5 h-5 object-contain" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }} />
+            <span className="text-white font-bold text-[8px] hidden">ABT</span>
           </div>
           {sidebarOpen && <span className="ml-3 font-semibold tracking-tight text-lg">Arsip</span>}
         </div>
@@ -38,7 +46,7 @@ export default function DashboardPage({ onLogout }) {
 
         {/* Bottom */}
         <div className="p-4 border-t border-zinc-100">
-          <button onClick={onLogout} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-zinc-500 hover:bg-red-50 hover:text-red-600 transition-all">
+          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-zinc-500 hover:bg-red-50 hover:text-red-600 transition-all">
             <LogOut className="w-5 h-5" />
             {sidebarOpen && 'Logout'}
           </button>
@@ -57,8 +65,11 @@ export default function DashboardPage({ onLogout }) {
               <Bell className="w-5 h-5" />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-zinc-900 rounded-full"></span>
             </button>
-            <div className="w-8 h-8 bg-zinc-200 rounded-full flex items-center justify-center">
-              <User className="w-4 h-4 text-zinc-600" />
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-zinc-200 rounded-full flex items-center justify-center">
+                <User className="w-4 h-4 text-zinc-600" />
+              </div>
+              {sidebarOpen && <span className="text-sm font-medium">Admin</span>}
             </div>
           </div>
         </header>
