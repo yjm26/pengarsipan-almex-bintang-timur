@@ -1,7 +1,7 @@
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Lock, Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 
-export function InputField({ type = 'text', label, placeholder, icon: Icon }) {
+export function InputField({ type = 'text', label, placeholder, icon: Icon, value, onChange }) {
   const [showPassword, setShowPassword] = useState(false);
   const isPassword = type === 'password';
   const inputType = isPassword ? (showPassword ? 'text' : 'password') : type;
@@ -16,6 +16,8 @@ export function InputField({ type = 'text', label, placeholder, icon: Icon }) {
         <input
           type={inputType}
           placeholder={placeholder}
+          value={value || ''}
+          onChange={onChange}
           className={`w-full ${Icon ? 'pl-10' : 'pl-4'} ${isPassword ? 'pr-10' : 'pr-4'} py-2.5 bg-zinc-50 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#D49A28]/20 focus:border-[#D49A28] transition-all placeholder:text-zinc-400`}
         />
         {isPassword && (

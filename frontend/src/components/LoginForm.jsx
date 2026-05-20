@@ -3,13 +3,19 @@ import { Mail, Lock } from 'lucide-react';
 import { InputField } from './Input';
 import { PrimaryButton } from './Button';
 
-export function LoginForm() {
+export function LoginForm({ onLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('Login attempt:', { email, password });
+    if (email === 'admin' && password === 'admin') {
+      setError('');
+      onLogin();
+    } else {
+      setError('Username atau password salah.');
+    }
   };
 
   return (
@@ -35,18 +41,23 @@ export function LoginForm() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
           <InputField 
-            type="email" 
-            label="Email" 
-            placeholder="admin@almex.co.id" 
+            label="Username" 
+            placeholder="admin" 
             icon={Mail} 
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
           <InputField 
             type="password" 
             label="Password" 
-            placeholder="••••••••" 
-            icon={Lock} 
+            placeholder="admin" 
+            icon={Lock}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)} 
           />
           
+          {error && <p className="text-xs text-red-600 font-medium">{error}</p>}
+
           <div className="flex justify-end">
             <a href="#" className="text-sm font-medium text-[#D49A28] hover:opacity-80 transition-opacity">Lupa password?</a>
           </div>
