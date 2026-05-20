@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, Menu, LayoutDashboard, Upload, FileText, FileArchive, Settings, LogOut } from 'lucide-react';
+import { ChevronRight, Menu, LayoutDashboard, Upload, FileText, Settings, LogOut } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Topbar from '../components/Topbar';
 import DashboardOverview from '../features/dashboard/DashboardOverview';
@@ -12,7 +12,6 @@ const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: Upload, label: 'Upload Dokumen', path: '/dashboard/upload' },
   { icon: FileText, label: 'Arsip Surat', path: '/dashboard/arsip' },
-  { icon: FileArchive, label: 'Kategori', path: '/dashboard/kategori' },
   { icon: Settings, label: 'Pengaturan', path: '/dashboard/pengaturan' },
 ];
 
