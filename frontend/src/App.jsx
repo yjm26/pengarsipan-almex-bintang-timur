@@ -38,6 +38,14 @@ function App() {
             </ProtectedRoute>
           } 
         />
+        <Route 
+          path="/dashboard/pengaturan" 
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          } 
+        />
       </Routes>
     </BrowserRouter>
   );

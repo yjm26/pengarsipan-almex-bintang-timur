@@ -6,6 +6,7 @@ import Topbar from '../components/Topbar';
 import DashboardOverview from '../features/dashboard/DashboardOverview';
 import ArsipPage from '../features/arsip/ArsipPage';
 import UploadForm from '../features/upload/UploadForm';
+import SettingsPage from '../features/settings/SettingsPage';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
@@ -19,6 +20,7 @@ function resolvePage(pathname) {
   if (pathname === '/dashboard') return <DashboardOverview />;
   if (pathname === '/dashboard/arsip') return <ArsipPage />;
   if (pathname === '/dashboard/upload') return <UploadForm />;
+  if (pathname === '/dashboard/pengaturan') return <SettingsPage />;
   return <DashboardOverview />;
 }
 
