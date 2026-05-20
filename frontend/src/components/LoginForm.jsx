@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FileText, Mail, Lock } from 'lucide-react';
+import { Mail, Lock } from 'lucide-react';
 import { InputField } from './Input';
 import { PrimaryButton } from './Button';
 
@@ -17,11 +17,11 @@ export function LoginForm() {
       <div className="w-full max-w-sm">
         {/* Mobile Logo */}
         <div className="lg:hidden flex items-center gap-3 mb-12">
-          <div className="w-10 h-10 bg-[#D49A28] rounded-xl flex items-center justify-center">
-            <FileText className="text-[#111111] w-5 h-5" />
+          <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow">
+            <span className="text-[#111111] font-bold text-xs">ABT</span>
           </div>
           <div>
-            <span className="text-lg font-semibold tracking-tight">ArsipPro</span>
+            <span className="text-lg font-semibold tracking-tight">Arsip</span>
             <p className="text-[10px] text-zinc-500 tracking-wider uppercase">PT. Almex Bintang Timur</p>
           </div>
         </div>

@@ -23,11 +23,11 @@ export function BrandPanel() {
       <div className="relative z-10 flex flex-col justify-between p-12 xl:p-16 w-full">
         {/* Logo */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-[#D49A28] rounded-xl flex items-center justify-center shadow-lg shadow-[#D49A28]/20">
-            <FileText className="text-[#111111] w-5 h-5" />
+          <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-lg">
+            <span className="text-[#111111] font-bold text-xs">ABT</span>
           </div>
           <div>
-            <span className="text-lg font-semibold tracking-tight">ArsipPro</span>
+            <span className="text-lg font-semibold tracking-tight">Arsip</span>
             <p className="text-[10px] text-zinc-500 tracking-wider uppercase">PT. Almex Bintang Timur</p>
           </div>
         </div>
@@ -44,21 +44,6 @@ export function BrandPanel() {
           </p>
         </div>
 
-        {/* Bottom Stats */}
-        <div className="flex gap-12">
-          <div>
-            <p className="text-3xl font-semibold text-white">2-Level</p>
-            <p className="text-xs text-zinc-500 mt-1 tracking-wide uppercase">Klasifikasi AI</p>
-          </div>
-          <div>
-            <p className="text-3xl font-semibold text-white">&lt;5s</p>
-            <p className="text-xs text-zinc-500 mt-1 tracking-wide uppercase">Proses per Dokumen</p>
-          </div>
-          <div>
-            <p className="text-3xl font-semibold text-white">99%</p>
-            <p className="text-xs text-zinc-500 mt-1 tracking-wide uppercase">Akurasi Model</p>
-          </div>
-        </div>
       </div>
     </div>
   );
