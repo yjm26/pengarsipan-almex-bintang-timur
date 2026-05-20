@@ -47,15 +47,15 @@ export function BrandPanel() {
         {/* Bottom Stats */}
         <div className="flex gap-12">
           <div>
-            <p className="text-3xl font-semibold text-[#D49A28]">2-Level</p>
+            <p className="text-3xl font-semibold text-white">2-Level</p>
             <p className="text-xs text-zinc-500 mt-1 tracking-wide uppercase">Klasifikasi AI</p>
           </div>
           <div>
-            <p className="text-3xl font-semibold text-[#D49A28]">&lt;5s</p>
+            <p className="text-3xl font-semibold text-white">&lt;5s</p>
             <p className="text-xs text-zinc-500 mt-1 tracking-wide uppercase">Proses per Dokumen</p>
           </div>
           <div>
-            <p className="text-3xl font-semibold text-[#D49A28]">99%</p>
+            <p className="text-3xl font-semibold text-white">99%</p>
             <p className="text-xs text-zinc-500 mt-1 tracking-wide uppercase">Akurasi Model</p>
           </div>
         </div>
