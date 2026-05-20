@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
+import ArsipSuratPage from './pages/ArsipSuratPage';
 
 // Simple Protected Route wrapper
 function ProtectedRoute({ children }) {
@@ -19,6 +20,14 @@ function App() {
           element={
             <ProtectedRoute>
               <DashboardPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard/arsip" 
+          element={
+            <ProtectedRoute>
+              <ArsipSuratPage />
             </ProtectedRoute>
           } 
         />

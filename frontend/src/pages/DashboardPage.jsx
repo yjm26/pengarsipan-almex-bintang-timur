@@ -1,25 +1,39 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, Menu, LayoutDashboard, Upload, FileText, FileArchive, Settings, LogOut } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Topbar from '../components/Topbar';
 import DashboardOverview from '../features/dashboard/DashboardOverview';
+import ArsipPage from '../features/arsip/ArsipPage';
 
 const menuItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', active: true },
-  { icon: Upload, label: 'Upload Dokumen' },
-  { icon: FileText, label: 'Arsip Surat' },
-  { icon: FileArchive, label: 'Kategori' },
-  { icon: Settings, label: 'Pengaturan' },
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
+  { icon: Upload, label: 'Upload Dokumen', path: '/dashboard/upload' },
+  { icon: FileText, label: 'Arsip Surat', path: '/dashboard/arsip' },
+  { icon: FileArchive, label: 'Kategori', path: '/dashboard/kategori' },
+  { icon: Settings, label: 'Pengaturan', path: '/dashboard/pengaturan' },
 ];
+
+function resolvePage(pathname) {
+  if (pathname === '/dashboard') return <DashboardOverview />;
+  if (pathname === '/dashboard/arsip') return <ArsipPage />;
+  // Placeholder for upcoming pages
+  return <DashboardOverview />;
+}
 
 export default function DashboardPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const activePath = useMemo(() => {
+    const base = location.pathname.split('/').slice(0, 3).join('/');
+    return menuItems.find((item) => item.path === base)?.path || '/dashboard';
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen flex bg-[#FAFAFA]">
-      
+
       {/* Floating Toggle Button (Snapped to sidebar edge) */}
       <motion.button
         initial={false}
@@ -60,12 +74,12 @@ export default function DashboardPage() {
 
             {/* Navigation */}
             <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
-              {menuItems.map((item, i) => (
+              {menuItems.map((item) => (
                 <button
-                  key={i}
-                  onClick={() => navigate('/dashboard')}
+                  key={item.path}
+                  onClick={() => navigate(item.path)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                    item.active
+                    activePath === item.path
                       ? 'bg-zinc-800 text-white'
                       : 'text-zinc-500 hover:bg-zinc-900/50 hover:text-zinc-300'
                   }`}
@@ -76,7 +90,7 @@ export default function DashboardPage() {
               ))}
             </nav>
 
-            {/* Logout (Stays at bottom, always visible) */}
+            {/* Logout */}
             <div className="p-4 border-t border-zinc-800/50">
               <motion.button
                 whileTap={{ scale: 0.98 }}
@@ -99,7 +113,7 @@ export default function DashboardPage() {
         <Topbar />
         <main className="flex-1 p-8 overflow-y-auto">
           <div className="max-w-6xl mx-auto">
-            <DashboardOverview />
+            {resolvePage(location.pathname)}
           </div>
         </main>
       </div>
