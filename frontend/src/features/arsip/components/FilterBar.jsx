@@ -7,7 +7,7 @@ export default function FilterBar({ filters, onFilterChange, totalResults }) {
   const hasActiveFilters = filters.arah || filters.jenis || filters.company || filters.dateFrom || filters.dateTo || filters.confidence || filters.search;
 
   return (
-    <div className="bg-white rounded-xl border border-zinc-200/60 p-5 space-y-3">
+    <div className="bg-white rounded-xl border border-zinc-200/60 p-5">
       {/* Row 1: Search + Quick Filters (Always Visible) */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
@@ -42,7 +42,6 @@ export default function FilterBar({ filters, onFilterChange, totalResults }) {
           ))}
         </select>
 
-        {/* Advanced Filter Toggle */}
         <button
           onClick={() => setExpanded(!expanded)}
           className={`flex items-center gap-2 px-3 py-2 text-sm border rounded-lg transition-all cursor-pointer ${
@@ -53,54 +52,33 @@ export default function FilterBar({ filters, onFilterChange, totalResults }) {
         >
           <SlidersHorizontal className="w-4 h-4" />
           <span className="hidden sm:inline">Filter</span>
-          {expanded && <span className="sm:hidden">Tutup</span>}
         </button>
       </div>
 
       {/* Row 2: Advanced Filters (Expandable) */}
       {expanded && (
-        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-zinc-100">
+        <div className="flex flex-wrap items-center gap-2 pt-3 mt-3 border-t border-zinc-100">
           <div className="flex items-center gap-2 px-3 py-2 bg-zinc-50/50 border border-zinc-200/60 rounded-lg">
             <Calendar className="w-3.5 h-3.5 text-zinc-400" />
-            <input
-              type="date"
-              value={filters.dateFrom}
-              onChange={(e) => onFilterChange('dateFrom', e.target.value)}
-              className="text-xs text-zinc-600 bg-transparent outline-none cursor-pointer"
-            />
+            <input type="date" value={filters.dateFrom} onChange={(e) => onFilterChange('dateFrom', e.target.value)} className="text-xs text-zinc-600 bg-transparent outline-none cursor-pointer" />
           </div>
 
           <div className="flex items-center gap-2 px-3 py-2 bg-zinc-50/50 border border-zinc-200/60 rounded-lg">
             <Calendar className="w-3.5 h-3.5 text-zinc-400" />
-            <input
-              type="date"
-              value={filters.dateTo}
-              onChange={(e) => onFilterChange('dateTo', e.target.value)}
-              className="text-xs text-zinc-600 bg-transparent outline-none cursor-pointer"
-            />
+            <input type="date" value={filters.dateTo} onChange={(e) => onFilterChange('dateTo', e.target.value)} className="text-xs text-zinc-600 bg-transparent outline-none cursor-pointer" />
           </div>
 
           <div className="flex items-center gap-2 px-3 py-2 bg-zinc-50/50 border border-zinc-200/60 rounded-lg">
             <Building2 className="w-3.5 h-3.5 text-zinc-400" />
-            <select
-              value={filters.company}
-              onChange={(e) => onFilterChange('company', e.target.value)}
-              className="text-xs text-zinc-600 bg-transparent outline-none cursor-pointer max-w-[180px]"
-            >
+            <select value={filters.company} onChange={(e) => onFilterChange('company', e.target.value)} className="text-xs text-zinc-600 bg-transparent outline-none cursor-pointer max-w-[180px]">
               <option value="">Semua PT</option>
-              {companies.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
+              {companies.map((c) => (<option key={c} value={c}>{c}</option>))}
             </select>
           </div>
 
           <div className="flex items-center gap-2 px-3 py-2 bg-zinc-50/50 border border-zinc-200/60 rounded-lg">
             <FileBadge className="w-3.5 h-3.5 text-zinc-400" />
-            <select
-              value={filters.confidence}
-              onChange={(e) => onFilterChange('confidence', e.target.value)}
-              className="text-xs text-zinc-600 bg-transparent outline-none cursor-pointer"
-            >
+            <select value={filters.confidence} onChange={(e) => onFilterChange('confidence', e.target.value)} className="text-xs text-zinc-600 bg-transparent outline-none cursor-pointer">
               <option value="">Akurasi</option>
               <option value="90">≥ 90%</option>
               <option value="75">75-89%</option>
@@ -109,27 +87,17 @@ export default function FilterBar({ filters, onFilterChange, totalResults }) {
           </div>
 
           {hasActiveFilters && (
-            <button
-              onClick={() => { onFilterChange('clear'); setExpanded(false); }}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all ml-1"
-            >
-              <X className="w-3 h-3" />
-              Reset
+            <button onClick={() => { onFilterChange('clear'); setExpanded(false); }} className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all ml-1">
+              <X className="w-3 h-3" /> Reset
             </button>
           )}
 
-          <span className="text-xs text-zinc-400 ml-auto">
-            {totalResults} dokumen
-          </span>
+          <span className="text-xs text-zinc-400 ml-auto">{totalResults} dokumen</span>
         </div>
       )}
 
-      {/* Result count when collapsed */}
-      {!expanded && (
-        <div className="flex items-center justify-between text-xs text-zinc-400 pt-1">
-          <span>{totalResults} dokumen ditemukan</span>
-        </div>
-      )}
+      {/* Result count (collapsed state) */}
+      {!expanded && <span className="text-xs text-zinc-400 mt-2 block">{totalResults} dokumen ditemukan</span>}
     </div>
   );
 }

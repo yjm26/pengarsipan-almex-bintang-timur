@@ -1,35 +1,17 @@
 import { motion } from 'framer-motion';
-import { FileText, Eye, Download, CheckCircle2, AlertTriangle, XCircle, Pencil, Trash2, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
+import { FileText, Eye, CheckCircle2, AlertTriangle, XCircle, Pencil, Trash2, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 
 function getConfidenceBadge(score) {
   if (score >= 90) {
-    return {
-      bg: 'bg-emerald-50',
-      border: 'border-emerald-100',
-      text: 'text-emerald-700',
-      icon: CheckCircle2,
-      label: `${score}%`,
-    };
+    return { bg: 'bg-emerald-50', border: 'border-emerald-100', text: 'text-emerald-700', icon: CheckCircle2, label: `${score}%` };
   }
   if (score >= 75) {
-    return {
-      bg: 'bg-amber-50',
-      border: 'border-amber-100',
-      text: 'text-amber-700',
-      icon: AlertTriangle,
-      label: `${score}%`,
-    };
+    return { bg: 'bg-amber-50', border: 'border-amber-100', text: 'text-amber-700', icon: AlertTriangle, label: `${score}%` };
   }
-  return {
-    bg: 'bg-red-50',
-    border: 'border-red-100',
-    text: 'text-red-700',
-    icon: XCircle,
-    label: `${score}%`,
-  };
+  return { bg: 'bg-red-50', border: 'border-red-100', text: 'text-red-700', icon: XCircle, label: `${score}%` };
 }
 
-export default function DocumentTable({ documents, onView, onEdit, onDelete }) {
+export default function DocumentTable({ documents }) {
   if (documents.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -60,6 +42,7 @@ export default function DocumentTable({ documents, onView, onEdit, onDelete }) {
           {documents.map((doc, i) => {
             const badge = getConfidenceBadge(doc.confidence);
             const BadgeIcon = badge.icon;
+            const isMasuk = doc.arah === 'Masuk';
 
             return (
               <motion.tr
@@ -69,7 +52,6 @@ export default function DocumentTable({ documents, onView, onEdit, onDelete }) {
                 transition={{ delay: i * 0.03 }}
                 className="border-b border-zinc-50 last:border-0 hover:bg-zinc-50/50 transition-colors group"
               >
-                {/* File Name */}
                 <td className="px-8 py-3.5">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-lg bg-zinc-100 border border-zinc-200/60 flex items-center justify-center flex-shrink-0 group-hover:bg-zinc-200/60 transition-colors">
@@ -82,37 +64,30 @@ export default function DocumentTable({ documents, onView, onEdit, onDelete }) {
                   </div>
                 </td>
 
-                {/* Company */}
                 <td className="px-8 py-3.5 hidden lg:table-cell">
                   <span className="text-sm text-zinc-600 truncate max-w-[180px] block">{doc.namaPt}</span>
                 </td>
 
-                {/* Date */}
                 <td className="px-8 py-3.5 hidden sm:table-cell">
                   <span className="text-sm text-zinc-600 whitespace-nowrap">{doc.tanggalSurat}</span>
                 </td>
 
-                {/* Direction */}
+                {/* Direction: green Masuk, red Keluar — subtle pill */}
                 <td className="px-8 py-3.5">
                   <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium ${
-                    doc.arah === 'Masuk'
-                      ? 'text-[#D49A28]/80'
-                      : 'text-zinc-500'
+                    isMasuk
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                      : 'bg-red-50 text-red-700 border border-red-100'
                   }`}>
-                    {doc.arah === 'Masuk'
-                      ? <ArrowDownLeft className="w-3.5 h-3.5" />
-                      : <ArrowUpRight className="w-3.5 h-3.5" />
-                    }
+                    {isMasuk ? <ArrowDownLeft className="w-3.5 h-3.5" /> : <ArrowUpRight className="w-3.5 h-3.5" />}
                     {doc.arah}
                   </span>
                 </td>
 
-                {/* Category */}
                 <td className="px-8 py-3.5">
                   <span className="text-sm text-zinc-700">{doc.jenis}</span>
                 </td>
 
-                {/* Accuracy */}
                 <td className="px-8 py-3.5 text-center">
                   <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold border ${badge.bg} ${badge.text} ${badge.border}`}>
                     <BadgeIcon className="w-3 h-3" />
@@ -120,28 +95,15 @@ export default function DocumentTable({ documents, onView, onEdit, onDelete }) {
                   </span>
                 </td>
 
-                {/* Actions - Always visible */}
-                <td className="px-8 py-3.5">
-                  <div className="flex items-center justify-end gap-1">
-                    <button
-                      onClick={() => onView?.(doc)}
-                      className="p-2 rounded-lg hover:bg-blue-50 text-zinc-400 hover:text-blue-600 transition-all"
-                      title="Lihat Detail"
-                    >
+                <td className="px-8 py-3.5 text-right">
+                  <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button className="p-2 rounded-lg hover:bg-blue-50 text-zinc-400 hover:text-blue-600 transition-all" title="Lihat Detail">
                       <Eye className="w-4 h-4" />
                     </button>
-                    <button
-                      onClick={() => onEdit?.(doc)}
-                      className="p-2 rounded-lg hover:bg-amber-50 text-zinc-400 hover:text-amber-600 transition-all"
-                      title="Edit"
-                    >
+                    <button className="p-2 rounded-lg hover:bg-amber-50 text-zinc-400 hover:text-amber-600 transition-all" title="Edit">
                       <Pencil className="w-4 h-4" />
                     </button>
-                    <button
-                      onClick={() => onDelete?.(doc)}
-                      className="p-2 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-600 transition-all"
-                      title="Hapus"
-                    >
+                    <button className="p-2 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-600 transition-all" title="Hapus">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>

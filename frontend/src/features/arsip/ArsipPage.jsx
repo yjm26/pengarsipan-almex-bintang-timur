@@ -51,7 +51,7 @@ export default function ArsipPage() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.05 }}>
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Arsip Surat</h1>
