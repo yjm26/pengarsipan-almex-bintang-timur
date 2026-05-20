@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileText, Eye, CheckCircle2, AlertTriangle, XCircle, Pencil, Trash2, ArrowDownLeft, ArrowUpRight, X, ChevronRight, Edit3, Tag, Download, AlertCircle, Check, Loader2 } from 'lucide-react';
+import { FileText, Eye, CheckCircle2, AlertTriangle, XCircle, Pencil, Trash2, ArrowDownLeft, ArrowUpRight, X, ChevronRight, Edit3, Download, Check, Loader2 } from 'lucide-react';
 
 function getConfidenceBadge(score) {
   if (score >= 90) {
@@ -35,10 +35,10 @@ function DetailPanel({ doc, onClose, onCorrect }) {
         animate={{ x: 0 }}
         exit={{ x: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="fixed right-0 top-0 h-screen w-full sm:w-[520px] bg-white border-l border-zinc-200/60 z-50 shadow-2xl overflow-y-auto"
+        className="fixed right-0 top-0 h-screen w-full xl:w-[960px] bg-white border-l border-zinc-200/60 z-50 shadow-2xl flex flex-col overflow-hidden"
       >
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-zinc-100 px-6 py-4 flex items-center justify-between z-10">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 flex-shrink-0">
           <div className="flex items-center gap-3">
             <button onClick={onClose} className="p-2 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition-all">
               <ChevronRight className="w-5 h-5" />
@@ -50,115 +50,149 @@ function DetailPanel({ doc, onClose, onCorrect }) {
           </button>
         </div>
 
-        <div className="p-6 space-y-6">
-          {/* File Info */}
-          <div className="flex items-start gap-4 p-4 rounded-xl bg-zinc-50 border border-zinc-100">
-            <div className="w-12 h-12 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center flex-shrink-0">
-              <FileText className="w-6 h-6 text-red-400" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-zinc-900 truncate">{doc.nama}</p>
-              <p className="text-xs text-zinc-400 mt-1">{doc.ukuran} · Diunggah {doc.tanggalUnggah}</p>
-            </div>
-          </div>
-
-          {/* Metadata Grid */}
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { label: 'Perusahaan', value: doc.namaPt, icon: Tag },
-              { label: 'Tanggal Surat', value: doc.tanggalSurat, icon: Tag },
-              { label: 'Ukuran File', value: doc.ukuran, icon: Download },
-              { label: 'Status', value: doc.status === 'verified' ? 'Terverifikasi' : doc.status === 'review' ? 'Perlu Review' : 'Pending', icon: AlertCircle },
-            ].map((item, i) => (
-              <div key={i} className="p-3 rounded-lg bg-zinc-50 border border-zinc-100">
-                <p className="text-xs text-zinc-400 mb-1">{item.label}</p>
-                <p className="text-sm font-medium text-zinc-900 truncate">{item.value}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* AI Classification Result */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-zinc-900">Hasil Klasifikasi AI</h3>
-              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold ${
-                doc.confidence >= 90 ? 'bg-emerald-50 text-emerald-700' : doc.confidence >= 75 ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700'
-              }`}>
-                {doc.confidence}%
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-4 rounded-xl bg-emerald-50/50 border border-emerald-100">
-                <p className="text-xs text-zinc-500 mb-1">Arah Dokumen</p>
-                <div className="flex items-center gap-2">
-                  {doc.arah === 'Masuk' ? <ArrowDownLeft className="w-4 h-4 text-emerald-600" /> : <ArrowUpRight className="w-4 h-4 text-red-600" />}
-                  <p className="text-lg font-semibold text-zinc-900">{doc.arah}</p>
+        {/* Two-column layout: Preview (left) | Details (right) */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* LEFT: PDF Preview */}
+          <div className="flex-1 bg-zinc-100 border-r border-zinc-200 flex flex-col">
+            <div className="flex-1 flex flex-col items-center justify-center p-8 overflow-y-auto">
+              {/* PDF Page Mock */}
+              <div className="w-full max-w-[420px] bg-white rounded-lg shadow-lg border border-zinc-200 overflow-hidden">
+                {/* Fake document header */}
+                <div className="px-6 pt-6 pb-4 border-b border-zinc-100">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-10 h-10 rounded bg-[#D49A28]/10 flex items-center justify-center">
+                      <span className="text-xs font-bold text-[#D49A28]">ABT</span>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] text-zinc-400 uppercase tracking-wide">{doc.tanggalSurat}</p>
+                    </div>
+                  </div>
+                  <div className="w-24 h-2 bg-zinc-800 rounded mb-2" />
+                  <div className="w-32 h-1.5 bg-zinc-400 rounded" />
+                </div>
+                {/* Fake body lines */}
+                <div className="px-6 py-4 space-y-2">
+                  <div className="w-full h-1.5 bg-zinc-200 rounded" />
+                  <div className="w-[95%] h-1.5 bg-zinc-200 rounded" />
+                  <div className="w-[80%] h-1.5 bg-zinc-200 rounded" />
+                  <div className="w-full h-1.5 bg-zinc-200 rounded" />
+                  <div className="w-[70%] h-1.5 bg-zinc-200 rounded" />
+                  <div className="w-full h-1.5 bg-zinc-200 rounded" />
+                  <div className="w-[90%] h-1.5 bg-zinc-200 rounded" />
+                  <div className="w-[60%] h-1.5 bg-zinc-200 rounded" />
+                  <div className="w-full h-1.5 bg-zinc-200 rounded" />
+                  <div className="w-[85%] h-1.5 bg-zinc-200 rounded" />
+                  <div className="w-full h-1.5 bg-zinc-200 rounded" />
+                  <div className="w-[75%] h-1.5 bg-zinc-200 rounded" />
+                </div>
+                {/* Fake signature area */}
+                <div className="px-6 pb-6 pt-4 flex justify-end">
+                  <div className="text-center">
+                    <div className="w-20 h-8 border-b border-zinc-400 mb-1" />
+                    <div className="w-16 h-1.5 bg-zinc-400 rounded mx-auto" />
+                  </div>
                 </div>
               </div>
-              <div className="p-4 rounded-xl bg-blue-50/50 border border-blue-100">
-                <p className="text-xs text-zinc-500 mb-1">Jenis Dokumen</p>
-                <p className="text-lg font-semibold text-zinc-900">{doc.jenis}</p>
-              </div>
             </div>
-          </div>
-
-          {/* Correction */}
-          {!correcting ? (
-            <button onClick={() => setCorrecting(true)} className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-zinc-600 hover:text-[#D49A28] hover:bg-[#D49A28]/5 rounded-lg transition-all border border-zinc-200/60 hover:border-[#D49A28]/30 w-full">
-              <Edit3 className="w-4 h-4" />
-              Koreksi Klasifikasi
-            </button>
-          ) : (
-            <div className="p-4 rounded-lg border border-[#D49A28]/30 bg-[#D49A28]/5 space-y-4">
+            {/* Preview footer */}
+            <div className="px-6 py-3 bg-white border-t border-zinc-100 flex items-center justify-between flex-shrink-0">
               <div>
-                <label className="block text-xs font-medium text-zinc-700 mb-2">Arah Dokumen</label>
-                <select value={correction.arah} onChange={(e) => setCorrection({ ...correction, arah: e.target.value })} className="w-full px-3 py-2 text-sm bg-white border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D49A28]/20">
-                  <option value="Masuk">Surat Masuk</option>
-                  <option value="Keluar">Surat Keluar</option>
-                </select>
+                <p className="text-sm font-medium text-zinc-900 truncate max-w-[200px]">{doc.nama}</p>
+                <p className="text-xs text-zinc-400">{doc.ukuran} · PDF Document</p>
               </div>
-              <div>
-                <label className="block text-xs font-medium text-zinc-700 mb-2">Jenis Dokumen</label>
-                <select value={correction.jenis} onChange={(e) => setCorrection({ ...correction, jenis: e.target.value })} className="w-full px-3 py-2 text-sm bg-white border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D49A28]/20">
-                  {['Surat Masuk', 'Surat Keluar', 'Penawaran', 'Purchase Order', 'Invoice', 'Kontrak', 'Nota Dinas', 'MoU', 'Lainnya'].map((j) => (
-                    <option key={j} value={j}>{j}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex items-center gap-2">
-                <button onClick={handleCorrect} disabled={saving} className="flex items-center gap-2 px-4 py-2 bg-[#D49A28] text-white text-xs font-medium rounded-lg hover:bg-[#C08A20] transition-colors disabled:opacity-50">
-                  {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
-                  Simpan Koreksi
-                </button>
-                <button onClick={() => setCorrecting(false)} className="px-4 py-2 text-xs font-medium text-zinc-500 hover:text-zinc-700 rounded-lg hover:bg-zinc-100 transition-all">Batal</button>
-              </div>
-            </div>
-          )}
-
-          {/* PDF Preview */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-zinc-900">Preview Dokumen</h3>
-              <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-500 hover:text-[#D49A28] hover:bg-[#D49A28]/5 rounded-lg border border-zinc-200/60 hover:border-[#D49A28]/30 transition-all">
+              <button className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-zinc-600 hover:text-[#D49A28] hover:bg-[#D49A28]/5 rounded-lg border border-zinc-200/60 hover:border-[#D49A28]/30 transition-all">
                 <Download className="w-3.5 h-3.5" />
                 Unduh
               </button>
             </div>
-            <div className="rounded-lg border border-zinc-200 overflow-hidden bg-zinc-100">
-              {/* PDF Viewer Placeholder */}
-              <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
-                <div className="w-16 h-20 rounded-lg bg-white border border-zinc-200 shadow-sm flex flex-col items-center justify-center mb-4">
-                  <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center mb-1">
-                    <span className="text-[8px] font-bold text-red-500">PDF</span>
-                  </div>
-                  <div className="w-6 h-0.5 bg-zinc-200 rounded" />
+          </div>
+
+          {/* RIGHT: Details sidebar */}
+          <div className="w-[340px] flex-shrink-0 overflow-y-auto bg-white">
+            <div className="p-5 space-y-5">
+              {/* File Info */}
+              <div className="flex items-start gap-3 p-3 rounded-xl bg-zinc-50 border border-zinc-100">
+                <div className="w-9 h-9 rounded-lg bg-red-50 border border-red-100 flex items-center justify-center flex-shrink-0">
+                  <FileText className="w-4 h-4 text-red-400" />
                 </div>
-                <p className="text-sm font-medium text-zinc-700">{doc.nama}</p>
-                <p className="text-xs text-zinc-400 mt-1">{doc.ukuran} · PDF Document</p>
-                <button className="mt-4 px-4 py-2 text-xs font-medium text-white bg-[#D49A28] rounded-lg hover:bg-[#C08A20] transition-colors">
-                  Buka Preview
-                </button>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-zinc-900 truncate">{doc.nama}</p>
+                  <p className="text-xs text-zinc-400 mt-0.5">Diunggah {doc.tanggalUnggah}</p>
+                </div>
+              </div>
+
+              {/* Metadata */}
+              <div className="space-y-2">
+                <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Metadata</h3>
+                {[
+                  { label: 'Perusahaan', value: doc.namaPt },
+                  { label: 'Tanggal Surat', value: doc.tanggalSurat },
+                  { label: 'Status', value: doc.status === 'verified' ? 'Terverifikasi' : doc.status === 'review' ? 'Perlu Review' : 'Pending' },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center justify-between py-2 border-b border-zinc-50 last:border-0">
+                    <span className="text-xs text-zinc-500">{item.label}</span>
+                    <span className="text-sm font-medium text-zinc-900 text-right">{item.value}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* AI Result */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Hasil Klasifikasi</h3>
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold ${
+                    doc.confidence >= 90 ? 'bg-emerald-50 text-emerald-700' : doc.confidence >= 75 ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700'
+                  }`}>{doc.confidence}%</span>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-emerald-50/50 border border-emerald-100">
+                    <span className="text-xs text-zinc-600">Arah</span>
+                    <div className="flex items-center gap-1.5">
+                      {doc.arah === 'Masuk' ? <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-600" /> : <ArrowUpRight className="w-3.5 h-3.5 text-red-600" />}
+                      <span className="text-sm font-semibold text-zinc-900">{doc.arah}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-blue-50/50 border border-blue-100">
+                    <span className="text-xs text-zinc-600">Jenis</span>
+                    <span className="text-sm font-semibold text-zinc-900">{doc.jenis}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Correction */}
+              <div className="space-y-2">
+                <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Koreksi</h3>
+                {!correcting ? (
+                  <button onClick={() => setCorrecting(true)} className="flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-medium text-zinc-600 hover:text-[#D49A28] hover:bg-[#D49A28]/5 rounded-lg transition-all border border-zinc-200/60 hover:border-[#D49A28]/30">
+                    <Edit3 className="w-4 h-4" />
+                    Koreksi Klasifikasi
+                  </button>
+                ) : (
+                  <div className="space-y-3 p-3 rounded-lg border border-[#D49A28]/30 bg-[#D49A28]/5">
+                    <div>
+                      <label className="block text-xs font-medium text-zinc-700 mb-1.5">Arah</label>
+                      <select value={correction.arah} onChange={(e) => setCorrection({ ...correction, arah: e.target.value })} className="w-full px-3 py-2 text-sm bg-white border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D49A28]/20">
+                        <option value="Masuk">Surat Masuk</option>
+                        <option value="Keluar">Surat Keluar</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-zinc-700 mb-1.5">Jenis</label>
+                      <select value={correction.jenis} onChange={(e) => setCorrection({ ...correction, jenis: e.target.value })} className="w-full px-3 py-2 text-sm bg-white border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D49A28]/20">
+                        {['Surat Masuk', 'Surat Keluar', 'Penawaran', 'Purchase Order', 'Invoice', 'Kontrak', 'Nota Dinas', 'MoU', 'Lainnya'].map((j) => (
+                          <option key={j} value={j}>{j}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button onClick={handleCorrect} disabled={saving} className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[#D49A28] text-white text-xs font-medium rounded-lg hover:bg-[#C08A20] transition-colors disabled:opacity-50">
+                        {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                        Simpan
+                      </button>
+                      <button onClick={() => setCorrecting(false)} className="px-3 py-2 text-xs font-medium text-zinc-500 hover:text-zinc-700 rounded-lg hover:bg-zinc-100 transition-all">Batal</button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
