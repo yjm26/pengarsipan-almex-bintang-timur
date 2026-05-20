@@ -20,16 +20,16 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen flex bg-[#FAFAFA]">
       
-      {/* Floating Toggle Button (Always Visible) */}
+      {/* Floating Toggle Button (Snapped to sidebar edge) */}
       <motion.button
         initial={false}
-        animate={{ x: sidebarOpen ? 256 : 0 }}
+        animate={{ left: sidebarOpen ? '256px' : '0px' }}
         transition={{ duration: 0.3, ease: 'easeOut' }}
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="fixed top-5 z-50 p-2 rounded-lg bg-white border border-zinc-200 shadow-sm hover:bg-zinc-50 text-zinc-600 transition-colors"
-        style={{ left: sidebarOpen ? 'calc(256px + 12px)' : '12px' }}
+        className="fixed top-1/2 -translate-y-1/2 z-50 p-2 rounded-r-lg bg-[#0A0A0A] hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors shadow-lg"
+        style={{ left: sidebarOpen ? '256px' : '0px' }}
       >
-        {sidebarOpen ? <ChevronRight className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+        {sidebarOpen ? <ChevronRight className="w-4 h-4 rotate-180" /> : <ChevronRight className="w-4 h-4" />}
       </motion.button>
 
       {/* Sidebar (Fixed - Doesn't scroll with content) */}
