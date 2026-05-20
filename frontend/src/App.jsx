@@ -30,6 +30,14 @@ function App() {
             </ProtectedRoute>
           } 
         />
+        <Route 
+          path="/dashboard/upload" 
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          } 
+        />
       </Routes>
     </BrowserRouter>
   );

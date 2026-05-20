@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import Topbar from '../components/Topbar';
 import DashboardOverview from '../features/dashboard/DashboardOverview';
 import ArsipPage from '../features/arsip/ArsipPage';
+import UploadForm from '../features/upload/UploadForm';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
@@ -17,7 +18,7 @@ const menuItems = [
 function resolvePage(pathname) {
   if (pathname === '/dashboard') return <DashboardOverview />;
   if (pathname === '/dashboard/arsip') return <ArsipPage />;
-  // Placeholder for upcoming pages
+  if (pathname === '/dashboard/upload') return <UploadForm />;
   return <DashboardOverview />;
 }
 
