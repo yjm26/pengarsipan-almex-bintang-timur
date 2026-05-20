@@ -1,0 +1,13 @@
+# Core
+fastapi==0.110.0
+uvicorn==0.27.1
+python-multipart==0.0.9
+
+# Machine Learning
+scikit-learn==1.4.0
+pandas==2.2.0
+numpy==1.26.4
+
+# Document Processing
+pdfplumber==0.10.3
+pytesseract==0.3.10
