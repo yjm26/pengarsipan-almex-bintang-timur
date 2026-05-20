@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileText, Eye, CheckCircle2, AlertTriangle, XCircle, Pencil, Trash2, ArrowDownLeft, ArrowUpRight, X, ChevronLeft, ChevronRight, Edit3, Tag, Download, AlertCircle, Check, Save, Loader2 } from 'lucide-react';
+import { FileText, Eye, CheckCircle2, AlertTriangle, XCircle, Pencil, Trash2, ArrowDownLeft, ArrowUpRight, X, ChevronRight, Edit3, Tag, Download, AlertCircle, Check, Loader2 } from 'lucide-react';
 
 function getConfidenceBadge(score) {
   if (score >= 90) {
@@ -101,28 +101,6 @@ function DetailPanel({ doc, onClose, onCorrect }) {
                 <p className="text-lg font-semibold text-zinc-900">{doc.jenis}</p>
               </div>
             </div>
-
-            {/* AI Probabilities (mock breakdown) */}
-            <div className="mt-3 p-4 rounded-lg bg-zinc-50 border border-zinc-100">
-              <p className="text-xs text-zinc-500 mb-3">Probabilitas per Kelas (Naïve Bayes)</p>
-              <div className="space-y-2">
-                {[
-                  { label: doc.arah === 'Masuk' ? 'Surat Masuk' : 'Surat Keluar', prob: doc.confidence, primary: true },
-                  { label: doc.arah === 'Masuk' ? 'Surat Keluar' : 'Surat Masuk', prob: Math.round(100 - doc.confidence * 0.8), primary: false },
-                ].map((p, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <span className="text-xs text-zinc-600 w-28 truncate">{p.label}</span>
-                    <div className="flex-1 h-2 bg-zinc-200 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${p.primary ? 'bg-[#D49A28]' : 'bg-zinc-400'}`}
-                        style={{ width: `${Math.max(p.prob, 2)}%` }}
-                      />
-                    </div>
-                    <span className={`text-xs font-medium w-10 text-right ${p.primary ? 'text-[#D49A28]' : 'text-zinc-400'}`}>{p.prob}%</span>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
 
           {/* Correction */}
@@ -158,13 +136,30 @@ function DetailPanel({ doc, onClose, onCorrect }) {
             </div>
           )}
 
-          {/* Extracted Text */}
+          {/* PDF Preview */}
           <div>
-            <h3 className="text-sm font-semibold text-zinc-900 mb-3">Teks Terestrrak</h3>
-            <div className="p-4 rounded-lg bg-zinc-50 border border-zinc-100 max-h-48 overflow-y-auto">
-              <p className="text-sm text-zinc-600 leading-relaxed">
-                {doc.teksEkstrak || `Surat ${doc.arah.toLowerCase()} perihal ${doc.jenis.toLowerCase()} yang dikirimkan oleh ${doc.namaPt} pada tanggal ${doc.tanggalSurat}. Dokumen ini telah diproses melalui pipeline: case folding → stopword removal → stemming → TF-IDF vectorization → Multinomial Naïve Bayes classification.\n\nHasil klasifikasi menunjukkan bahwa dokumen ini merupakan ${doc.arah.toLowerCase()} dengan jenis ${doc.jenis.toLowerCase()} dan confidence score ${doc.confidence}%. Pipeline klasifikasi ini menggunakan model yang telah dilatih dengan ${1245} dokumen terverifikasi dan menghasilkan akurasi 94.2% pada dataset testing.`}
-              </p>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-zinc-900">Preview Dokumen</h3>
+              <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-500 hover:text-[#D49A28] hover:bg-[#D49A28]/5 rounded-lg border border-zinc-200/60 hover:border-[#D49A28]/30 transition-all">
+                <Download className="w-3.5 h-3.5" />
+                Unduh
+              </button>
+            </div>
+            <div className="rounded-lg border border-zinc-200 overflow-hidden bg-zinc-100">
+              {/* PDF Viewer Placeholder */}
+              <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
+                <div className="w-16 h-20 rounded-lg bg-white border border-zinc-200 shadow-sm flex flex-col items-center justify-center mb-4">
+                  <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center mb-1">
+                    <span className="text-[8px] font-bold text-red-500">PDF</span>
+                  </div>
+                  <div className="w-6 h-0.5 bg-zinc-200 rounded" />
+                </div>
+                <p className="text-sm font-medium text-zinc-700">{doc.nama}</p>
+                <p className="text-xs text-zinc-400 mt-1">{doc.ukuran} · PDF Document</p>
+                <button className="mt-4 px-4 py-2 text-xs font-medium text-white bg-[#D49A28] rounded-lg hover:bg-[#C08A20] transition-colors">
+                  Buka Preview
+                </button>
+              </div>
             </div>
           </div>
         </div>
