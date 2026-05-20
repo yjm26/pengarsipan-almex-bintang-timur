@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+/* Impeccable Style Base */
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --color-accent: #2563eb; /* blue-600 */
+}
+
+body {
+  @apply bg-zinc-50 text-zinc-900 antialiased;
+}
