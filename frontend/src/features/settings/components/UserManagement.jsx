@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { UserPlus, Pencil, Trash2, Key, Shield, Users } from 'lucide-react';
+import { UserPlus, Pencil, Trash2, Key, Shield, Users, User } from 'lucide-react';
 
 const initialUsers = [
   { id: 1, nama: 'Administrator', email: 'admin@almex.co.id', role: 'Super Admin', status: 'Aktif', lastLogin: '20 Mei 2025' },
