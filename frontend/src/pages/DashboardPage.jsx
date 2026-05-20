@@ -26,7 +26,7 @@ function resolvePage(pathname, { onNavigate } = {}) {
 export default function DashboardPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const onNavigate = (page, filterParams) => {
     if (page === 'arsip') {
@@ -35,6 +35,7 @@ export default function DashboardPage() {
       if (filterParams?.confidence) params.set('confidence', filterParams.confidence);
       navigate(`/dashboard/arsip?${params}`);
     }
+    setSidebarOpen(false);
   };
 
   const activePath = useMemo(() => {
@@ -45,19 +46,20 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen flex bg-[#FAFAFA] dark:bg-zinc-950 transition-colors">
 
-      {/* Floating Toggle Button (Snapped to sidebar edge) */}
-      <motion.button
-        initial={false}
-        animate={{ left: sidebarOpen ? '256px' : '0px' }}
-        transition={{ duration: 0.3, ease: 'easeOut' }}
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="fixed top-1/2 -translate-y-1/2 z-50 p-2 rounded-r-lg bg-[#0A0A0A] hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors shadow-lg"
-        style={{ left: sidebarOpen ? '256px' : '0px' }}
-      >
-        {sidebarOpen ? <ChevronRight className="w-4 h-4 rotate-180" /> : <ChevronRight className="w-4 h-4" />}
-      </motion.button>
+      {/* Mobile Backdrop */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSidebarOpen(false)}
+            className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          />
+        )}
+      </AnimatePresence>
 
-      {/* Sidebar (Fixed - Doesn't scroll with content) */}
+      {/* Sidebar */}
       <AnimatePresence>
         {sidebarOpen && (
           <motion.aside
@@ -65,7 +67,7 @@ export default function DashboardPage() {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -256, opacity: 0 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="fixed top-0 left-0 h-screen w-64 bg-[#0A0A0A] z-40 flex flex-col"
+            className="fixed top-0 left-0 h-screen w-64 bg-[#0A0A0A] z-50 flex flex-col lg:shadow-xl"
           >
             {/* Logo Area */}
             <div className="flex items-center gap-3 px-6 py-5 border-b border-zinc-800/50">
@@ -88,7 +90,10 @@ export default function DashboardPage() {
               {menuItems.map((item) => (
                 <button
                   key={item.path}
-                  onClick={() => navigate(item.path)}
+                  onClick={() => {
+                    navigate(item.path);
+                    setSidebarOpen(false);
+                  }}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                     activePath === item.path
                       ? 'bg-zinc-800 text-white'
@@ -119,10 +124,64 @@ export default function DashboardPage() {
         )}
       </AnimatePresence>
 
-      {/* Main Content (Scrolls independently) */}
-      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'}`}>
-        <Topbar />
-        <main className="flex-1 p-8 overflow-y-auto">
+      {/* Desktop fixed sidebar (always visible on lg+) */}
+      <motion.aside
+        className="hidden lg:flex fixed top-0 left-0 h-screen w-64 bg-[#0A0A0A] z-30 flex-col"
+      >
+        {/* Logo Area */}
+        <div className="flex items-center gap-3 px-6 py-5 border-b border-zinc-800/50">
+          <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center flex-shrink-0">
+            <span className="text-zinc-950 font-bold text-[10px] tracking-widest">ABT</span>
+          </div>
+          <span className="font-semibold tracking-tight text-lg text-white">Arsip</span>
+        </div>
+
+        {/* Search */}
+        <div className="px-5 py-4">
+          <div className="flex items-center gap-2 px-3 py-2.5 bg-zinc-900/60 rounded-lg border border-zinc-800 text-zinc-500 text-xs">
+            <span className="text-lg leading-none">⌕</span>
+            <span>Cari menu...</span>
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
+          {menuItems.map((item) => (
+            <button
+              key={item.path}
+              onClick={() => navigate(item.path)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                activePath === item.path
+                  ? 'bg-zinc-800 text-white'
+                  : 'text-zinc-500 hover:bg-zinc-900/50 hover:text-zinc-300'
+              }`}
+            >
+              <item.icon className="w-5 h-5 flex-shrink-0" />
+              {item.label}
+            </button>
+          ))}
+        </nav>
+
+        {/* Logout */}
+        <div className="p-4 border-t border-zinc-800/50">
+          <motion.button
+            whileTap={{ scale: 0.98 }}
+            onClick={() => {
+              localStorage.removeItem('isAuthenticated');
+              navigate('/');
+            }}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-zinc-500 hover:bg-red-500/10 hover:text-red-400 transition-all"
+          >
+            <LogOut className="w-5 h-5 flex-shrink-0" />
+            Logout
+          </motion.button>
+        </div>
+      </motion.aside>
+
+      {/* Main Content — always full width on mobile, shifted on desktop */}
+      <div className="flex-1 flex flex-col min-w-0 lg:ml-64">
+        <Topbar onOpenSidebar={() => setSidebarOpen(true)} />
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
           <div className="max-w-6xl mx-auto">
             {resolvePage(location.pathname, { onNavigate })}
           </div>

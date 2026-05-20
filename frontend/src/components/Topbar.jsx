@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, User, Search, Moon, Sun, FileText, CheckCircle2, AlertTriangle, X } from 'lucide-react';
+import { Bell, User, Search, Moon, Sun, Menu, FileText, CheckCircle2, AlertTriangle, X } from 'lucide-react';
 
 const mockNotifications = [
   { id: 1, type: 'success', title: 'Klasifikasi Selesai', desc: '12 dokumen baru telah diproses oleh AI.', time: '2 menit lalu', read: false },
@@ -10,7 +10,7 @@ const mockNotifications = [
   { id: 5, type: 'success', title: 'Model Retrained', desc: 'Model NB telah di-retrain dengan 45 dokumen baru.', time: 'Kemarin', read: true },
 ];
 
-export default function Topbar() {
+export default function Topbar({ onOpenSidebar }) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
   const [notifications, setNotifications] = useState(mockNotifications);
@@ -31,8 +31,17 @@ export default function Topbar() {
   };
 
   return (
-    <header className="h-16 bg-white dark:bg-zinc-900 border-b border-zinc-200/60 dark:border-zinc-800 flex items-center justify-end px-6 sticky top-0 z-10 transition-colors">
-      <div className="flex items-center gap-4">
+    <header className="h-16 bg-white dark:bg-zinc-900 border-b border-zinc-200/60 dark:border-zinc-800 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-10 transition-colors">
+      {/* Mobile Hamburger */}
+      <motion.button
+        whileTap={{ scale: 0.95 }}
+        onClick={onOpenSidebar}
+        className="lg:hidden p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 transition-all"
+      >
+        <Menu className="w-5 h-5" />
+      </motion.button>
+
+      <div className="flex items-center gap-3 lg:gap-4 ml-auto lg:ml-0">
         {/* Search Bar */}
         <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 text-sm w-64 focus-within:border-zinc-400 focus-within:ring-1 focus-within:ring-zinc-400 transition-all">
           <Search className="w-4 h-4" />
