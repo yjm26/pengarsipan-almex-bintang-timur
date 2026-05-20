@@ -23,7 +23,7 @@ export default function KPICard({ title, value, subtitle, icon: Icon, accent = '
       <p className="text-3xl font-semibold tracking-tight text-zinc-900">{value}</p>
       <p className="text-sm font-medium text-zinc-900 mt-1">{title}</p>
       {subtitle && (
-        <p className="text-xs text-zinc-500 mt-0.5">{subtitle}</p>
+        <p className="text-xs text-zinc-400 mt-1 font-light">{subtitle}</p>
       )}
     </motion.div>
   );

@@ -27,13 +27,13 @@ const data = [
 
 export default function ActivityChart() {
   return (
-    <div className="bg-white rounded-xl border border-zinc-200/60 p-6">
-      <div className="mb-6">
+    <div className="bg-white rounded-xl border border-zinc-200/60 p-8">
+      <div className="mb-8">
         <h3 className="text-base font-semibold tracking-tight text-zinc-900">Tren Aktivitas Dokumen</h3>
-        <p className="text-sm text-zinc-500 mt-0.5">Volume surat masuk & keluar 30 hari terakhir</p>
+        <p className="text-sm text-zinc-500 mt-1">Volume surat masuk & keluar 30 hari terakhir</p>
       </div>
 
-      <div className="flex items-center gap-6 mb-4">
+      <div className="flex items-center gap-6 mb-6">
         <div className="flex items-center gap-2">
           <span className="w-3 h-3 rounded-full bg-[#D49A28]" />
           <span className="text-xs font-medium text-zinc-600">Surat Masuk</span>

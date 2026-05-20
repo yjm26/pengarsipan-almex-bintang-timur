@@ -14,11 +14,11 @@ const kpiData = [
 
 export default function DashboardOverview() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }}>
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Overview</h1>
-        <p className="text-sm text-zinc-500 mt-1 font-light">Ringkasan aktivitas arsip dokumen perusahaan.</p>
+        <p className="text-sm text-zinc-500 mt-1.5 font-light">Ringkasan aktivitas arsip dokumen perusahaan.</p>
       </motion.div>
 
       {/* KPI Cards (Generated from array) */}

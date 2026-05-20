@@ -8,7 +8,7 @@ export default function Topbar() {
         {/* Search Bar */}
         <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-zinc-50 rounded-lg border border-zinc-200 text-zinc-500 text-sm w-64 focus-within:border-zinc-400 focus-within:ring-1 focus-within:ring-zinc-400 transition-all">
           <Search className="w-4 h-4" />
-          <input type="text" placeholder="Try to search..." className="bg-transparent outline-none w-full placeholder:text-zinc-400" />
+          <input type="text" placeholder="Cari dokumen..." className="bg-transparent outline-none w-full placeholder:text-zinc-400" />
         </div>
 
         {/* Notifications */}

@@ -76,10 +76,10 @@ export default function RecentDocuments() {
   return (
     <div className="bg-white rounded-xl border border-zinc-200/60">
       {/* Header */}
-      <div className="flex items-center justify-between p-6 pb-4 border-b border-zinc-100">
+      <div className="flex items-center justify-between px-8 pt-8 pb-5 border-b border-zinc-100">
         <div>
           <h3 className="text-base font-semibold tracking-tight text-zinc-900">Dokumen Terbaru</h3>
-          <p className="text-sm text-zinc-500 mt-0.5">5 dokumen terakhir yang diproses</p>
+          <p className="text-sm text-zinc-500 mt-1">5 dokumen terakhir yang diproses</p>
         </div>
       </div>
 
@@ -88,11 +88,11 @@ export default function RecentDocuments() {
         <table className="w-full">
           <thead>
             <tr className="border-b border-zinc-100">
-              <th className="text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider px-6 py-3">File</th>
-              <th className="text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider px-6 py-3 hidden sm:table-cell">Tanggal</th>
-              <th className="text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider px-6 py-3">Klasifikasi</th>
-              <th className="text-center text-xs font-semibold text-zinc-500 uppercase tracking-wider px-6 py-3">Akurasi</th>
-              <th className="text-right text-xs font-semibold text-zinc-500 uppercase tracking-wider px-6 py-3">Aksi</th>
+              <th className="text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider px-8 py-3">File</th>
+              <th className="text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider px-8 py-3 hidden sm:table-cell">Tanggal</th>
+              <th className="text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider px-8 py-3">Klasifikasi</th>
+              <th className="text-center text-xs font-semibold text-zinc-500 uppercase tracking-wider px-8 py-3">Akurasi</th>
+              <th className="text-right text-xs font-semibold text-zinc-500 uppercase tracking-wider px-8 py-3">Aksi</th>
             </tr>
           </thead>
           <tbody>
@@ -107,7 +107,7 @@ export default function RecentDocuments() {
                   transition={{ delay: 0.3 + i * 0.06 }}
                   className="border-b border-zinc-50 last:border-0 hover:bg-zinc-50/50 transition-colors"
                 >
-                  <td className="px-6 py-4">
+                  <td className="px-8 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-lg bg-zinc-100 border border-zinc-200/60 flex items-center justify-center flex-shrink-0">
                         <FileText className="w-4 h-4 text-zinc-500" />
@@ -120,19 +120,19 @@ export default function RecentDocuments() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 hidden sm:table-cell">
+                  <td className="px-8 py-4 hidden sm:table-cell">
                     <span className="text-sm text-zinc-600">{doc.tanggal}</span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-8 py-4">
                     <span className="text-sm text-zinc-700">{doc.klasifikasi}</span>
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-8 py-4 text-center">
                     <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold border ${badge.bg} ${badge.text} ${badge.border}`}>
                       <BadgeIcon className="w-3 h-3" />
                       {badge.label}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-8 py-4 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <button className="p-2 rounded-lg hover:bg-zinc-100 text-zinc-500 hover:text-zinc-700 transition-all" title="Lihat">
                         <Eye className="w-4 h-4" />

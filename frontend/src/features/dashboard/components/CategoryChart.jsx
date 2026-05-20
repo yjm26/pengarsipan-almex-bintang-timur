@@ -12,10 +12,10 @@ export default function CategoryChart() {
   const total = data.reduce((sum, item) => sum + item.value, 0);
 
   return (
-    <div className="bg-white rounded-xl border border-zinc-200/60 p-6">
-      <div className="mb-4">
+    <div className="bg-white rounded-xl border border-zinc-200/60 p-8">
+      <div className="mb-6">
         <h3 className="text-base font-semibold tracking-tight text-zinc-900">Distribusi Kategori</h3>
-        <p className="text-sm text-zinc-500 mt-0.5">Komposisi jenis dokumen</p>
+        <p className="text-sm text-zinc-500 mt-1">Komposisi jenis dokumen</p>
       </div>
 
       <ResponsiveContainer width="100%" height={200}>
@@ -46,7 +46,7 @@ export default function CategoryChart() {
       </ResponsiveContainer>
 
       {/* Legend */}
-      <div className="space-y-2 mt-2">
+      <div className="space-y-3 mt-6 pt-6 border-t border-zinc-100">
         {data.map((item, i) => (
           <div key={i} className="flex items-center justify-between">
             <div className="flex items-center gap-2">
