@@ -1,21 +1,21 @@
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-export function PrimaryButton({ children, onClick, disabled }) {
+export function PrimaryButton({ children, onClick, disabled, type = 'submit' }) {
   return (
     <motion.button
       whileTap={{ scale: 0.98 }}
-      type="submit"
+      type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`w-full py-3 px-4 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#D49A28]/10 ${
+      className={`w-full py-3 px-4 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
         disabled 
-          ? 'bg-zinc-200 text-zinc-400 cursor-not-allowed shadow-none' 
-          : 'bg-[#D49A28] text-white hover:bg-[#b8841f] hover:shadow-[#D49A28]/20 active:shadow-none'
+          ? 'bg-zinc-200 text-zinc-400 cursor-not-allowed' 
+          : 'bg-[#D49A28] text-white hover:bg-[#b8841f] hover:shadow-lg hover:shadow-[#D49A28]/10 active:shadow-none'
       }`}
     >
-      {children}
-      {!disabled && <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />}
+      {disabled ? <Loader2 className="w-4 h-4 animate-spin" /> : children}
+      {!disabled && <ArrowRight className="w-4 h-4" />}
     </motion.button>
   );
 }
