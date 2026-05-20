@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import Sidebar from '../../components/Sidebar';
-import Topbar from '../../components/Topbar';
-import DashboardOverview from '../../features/dashboard/DashboardOverview';
+import Sidebar from '../components/Sidebar';
+import Topbar from '../components/Topbar';
+import DashboardOverview from '../features/dashboard/DashboardOverview';
 
 export default function DashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
