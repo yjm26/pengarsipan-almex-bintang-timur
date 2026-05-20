@@ -1,17 +1,9 @@
 @import "tailwindcss";
 
-/* Impeccable Style Base */
-@theme {
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --color-accent: #D49A28;
-}
+@custom-variant dark (&:where(.dark, .dark *));
 
-html {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-body {
-  @apply bg-zinc-50 text-zinc-900 antialiased;
-  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+@layer base {
+  body {
+    @apply antialiased;
+  }
 }

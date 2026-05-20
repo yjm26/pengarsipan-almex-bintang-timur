@@ -15,12 +15,12 @@ const menuItems = [
   { icon: Settings, label: 'Pengaturan', path: '/dashboard/pengaturan' },
 ];
 
-function resolvePage(pathname) {
-  if (pathname === '/dashboard') return <DashboardOverview />;
+function resolvePage(pathname, { onNavigate } = {}) {
+  if (pathname === '/dashboard') return <DashboardOverview onNavigate={onNavigate} />;
   if (pathname === '/dashboard/arsip') return <ArsipPage />;
   if (pathname === '/dashboard/upload') return <UploadForm />;
   if (pathname === '/dashboard/pengaturan') return <SettingsPage />;
-  return <DashboardOverview />;
+  return <DashboardOverview onNavigate={onNavigate} />;
 }
 
 export default function DashboardPage() {
@@ -28,13 +28,22 @@ export default function DashboardPage() {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
+  const onNavigate = (page, filterParams) => {
+    if (page === 'arsip') {
+      const params = new URLSearchParams();
+      if (filterParams?.arah) params.set('arah', filterParams.arah);
+      if (filterParams?.confidence) params.set('confidence', filterParams.confidence);
+      navigate(`/dashboard/arsip?${params}`);
+    }
+  };
+
   const activePath = useMemo(() => {
     const base = location.pathname.split('/').slice(0, 3).join('/');
     return menuItems.find((item) => item.path === base)?.path || '/dashboard';
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen flex bg-[#FAFAFA]">
+    <div className="min-h-screen flex bg-[#FAFAFA] dark:bg-zinc-950 transition-colors">
 
       {/* Floating Toggle Button (Snapped to sidebar edge) */}
       <motion.button
@@ -115,7 +124,7 @@ export default function DashboardPage() {
         <Topbar />
         <main className="flex-1 p-8 overflow-y-auto">
           <div className="max-w-6xl mx-auto">
-            {resolvePage(location.pathname)}
+            {resolvePage(location.pathname, { onNavigate })}
           </div>
         </main>
       </div>
