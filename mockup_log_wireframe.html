@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wireframe Audit Log</title><style>
+* { margin:0; padding:0; box-sizing:border-box; font-family: monospace, sans-serif; }
+body { display:flex; height:100vh; }
+.sidebar { width:200px; background:#222; border-right:2px solid #000; padding-top:20px; }
+.sidebar-title { text-align:center; color:#fff; font-weight:bold; padding:10px; border-bottom:1px solid #444; margin-bottom:10px; }
+.menu-item { color:#ccc; padding:10px 15px; border-bottom:1px solid #333; font-size:12px; }
+.menu-item.active { background:#444; color:#fff; font-weight:bold; }
+.main { flex:1; background:#f5f5f5; padding:20px; }
+.header { background:#fff; border:1px solid #000; padding:10px; margin-bottom:20px; font-weight:bold; }
+.table-box { background:#fff; border:2px solid #000; padding:15px; }
+.table-title { font-weight:bold; margin-bottom:10px; border-bottom:1px solid #000; padding-bottom:5px; }
+.table-row { display:flex; border-bottom:1px solid #ddd; padding:8px 0; font-size:11px; align-items:center; }
+.table-row.header { font-weight:bold; border-bottom:2px solid #000; }
+</style></head>
+<body>
+<div class="sidebar">
+  <div class="sidebar-title">ARSIP ABT</div>
+  <div class="menu-item">DASHBOARD</div>
+  <div class="menu-item">ARSIP SURAT</div>
+  <div class="menu-item">UPLOAD</div>
+  <div class="menu-item">PENGGUNA</div>
+  <div class="menu-item">KATEGORI</div>
+  <div class="menu-item">PENGATURAN AI</div>
+  <div class="menu-item active">LOG</div>
+  <div class="menu-item" style="color:#fff; border-top:1px solid #555; margin-top:20px;">LOGOUT</div>
+</div>
+<div class="main">
+  <div class="header">AUDIT LOG AKTIVITAS</div>
+  <div class="table-box">
+    <div class="table-title">RIWAYAT AKTIVITAS SISTEM</div>
+    <div class="table-row header"><div style="flex:1">WAKTU</div><div style="flex:1">USER</div><div style="flex:3">AKTIVITAS</div><div style="flex:2">DESKRIPSI</div></div>
+    <div class="table-row"><div style="flex:1">2025-05-20 14:32</div><div style="flex:1">admin</div><div style="flex:3">Login</div><div style="flex:2">Berhasil masuk ke sistem</div></div>
+    <div class="table-row"><div style="flex:1">2025-05-20 14:35</div><div style="flex:1">admin</div><div style="flex:3">Upload Dokumen</div><div style="flex:2">PO_Bintang_Timur_001.pdf</div></div>
+    <div class="table-row"><div style="flex:1">2025-05-20 14:35</div><div style="flex:1">Sistem</div><div style="flex:3">Klasifikasi AI</div><div style="flex:2">Hasil: Surat Keluar - PO (0.95)</div></div>
+    <div class="table-row"><div style="flex:1">2025-05-20 14:40</div><div style="flex:1">admin</div><div style="flex:3">Retrain Model</div><div style="flex:2">Pelatihan ulang model NB</div></div>
+  </div>
+</div>
+</body></html>

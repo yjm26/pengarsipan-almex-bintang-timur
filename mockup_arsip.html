@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arsip Surat - Arsip ABT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { theme: { extend: { colors: { dark: '#0A0A0A', zinc: { 50: '#fafafa', 100: '#f4f4f5', 200: '#e4e4e7', 300: '#d4d4d8', 400: '#a1a1aa', 500: '#71717a', 600: '#52525b', 700: '#3f3f46', 800: '#27272a', 900: '#18181b', 950: '#09090b' } } } } }
+    </script>
+</head>
+<body class="bg-zinc-950 text-white h-screen flex overflow-hidden">
+    <!-- Sidebar (Simplified) -->
+    <aside class="w-64 bg-[#0A0A0A] flex-shrink-0 flex flex-col border-r border-zinc-800/50">
+        <div class="flex items-center px-6 py-5 border-b border-zinc-800/50">
+            <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center"><span class="text-zinc-950 font-bold text-[10px] tracking-widest">ABT</span></div>
+            <span class="font-semibold tracking-tight text-lg text-white ml-3">Arsip</span>
+        </div>
+        <nav class="flex-1 px-3 py-2 space-y-1 mt-12">
+            <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-zinc-500 hover:bg-zinc-900/50 text-sm font-medium cursor-pointer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z"></path></svg> Dashboard
+            </div>
+            <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-zinc-500 hover:bg-zinc-900/50 text-sm font-medium cursor-pointer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg> Upload Dokumen
+            </div>
+            <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-zinc-800 text-white text-sm font-medium cursor-pointer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> Arsip Surat
+            </div>
+        </nav>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <header class="h-16 bg-zinc-950/80 border-b border-zinc-800/50 flex items-center justify-between px-6">
+            <h2 class="text-lg font-medium">Arsip Surat</h2>
+            <div class="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs font-bold">A</div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-6">
+            <!-- Filter Bar -->
+            <div class="flex gap-3 mb-4">
+                <input type="text" placeholder="Cari dokumen..." class="bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2 text-sm w-64 focus:outline-none focus:border-zinc-600">
+                <select class="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none"><option>Semua Kategori</option><option>Surat Masuk</option></select>
+                <button class="bg-white text-zinc-950 font-medium px-4 py-2 rounded-lg text-sm hover:bg-zinc-200">+ Upload</button>
+            </div>
+
+            <!-- Table -->
+            <div class="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-zinc-950/50 text-zinc-500 border-b border-zinc-800">
+                        <tr>
+                            <th class="px-4 py-3 font-medium">Nama Dokumen</th>
+                            <th class="px-4 py-3 font-medium">Tanggal</th>
+                            <th class="px-4 py-3 font-medium">Kategori</th>
+                            <th class="px-4 py-3 font-medium">Confidence</th>
+                            <th class="px-4 py-3 font-medium">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-zinc-800/50">
+                        <tr>
+                            <td class="px-4 py-3">Invoice_Project_Alpha.pdf</td>
+                            <td class="px-4 py-3 text-zinc-400">20 Mei 2025</td>
+                            <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-xs">Masuk - Invoice</span></td>
+                            <td class="px-4 py-3 text-emerald-400">98.5%</td>
+                            <td class="px-4 py-3 flex gap-2 text-zinc-500">
+                                <span class="hover:text-white cursor-pointer">Unduh</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-4 py-3">PO_Vendor_Beta.pdf</td>
+                            <td class="px-4 py-3 text-zinc-400">18 Mei 2025</td>
+                            <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-xs">Keluar - PO</span></td>
+                            <td class="px-4 py-3 text-emerald-400">95.2%</td>
+                            <td class="px-4 py-3 flex gap-2 text-zinc-500">
+                                <span class="hover:text-white cursor-pointer">Unduh</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

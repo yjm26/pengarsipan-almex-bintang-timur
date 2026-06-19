@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wireframe Arsip Surat</title><style>
+* { margin:0; padding:0; box-sizing:border-box; font-family: monospace, sans-serif; }
+body { display:flex; height:100vh; }
+.sidebar { width:200px; background:#222; border-right:2px solid #000; padding-top:20px; }
+.sidebar-title { text-align:center; color:#fff; font-weight:bold; padding:10px; border-bottom:1px solid #444; margin-bottom:10px; }
+.menu-item { color:#ccc; padding:10px 15px; border-bottom:1px solid #333; font-size:12px; }
+.menu-item.active { background:#444; color:#fff; font-weight:bold; }
+.main { flex:1; background:#f5f5f5; padding:20px; }
+.header { background:#fff; border:1px solid #000; padding:10px; margin-bottom:20px; font-weight:bold; display:flex; justify-content:space-between; }
+.filter-box { display:flex; gap:10px; margin-bottom:20px; }
+.filter { border:1px solid #000; padding:8px 12px; background:#fff; font-size:11px; width:180px; }
+.search { border:1px solid #000; padding:8px 12px; background:#fff; font-size:11px; flex:1; }
+.btn-search { background:#333; color:#fff; border:1px solid #000; padding:8px 15px; font-size:11px; }
+.table-box { background:#fff; border:2px solid #000; padding:15px; }
+.table-title { font-weight:bold; margin-bottom:10px; border-bottom:1px solid #000; padding-bottom:5px; }
+.table-row { display:flex; border-bottom:1px solid #ddd; padding:8px 0; font-size:11px; align-items:center; }
+.table-row.header { font-weight:bold; border-bottom:2px solid #000; }
+.badge { border:1px solid #000; padding:2px 6px; font-size:10px; }
+</style></head>
+<body>
+<div class="sidebar">
+  <div class="sidebar-title">ARSIP ABT</div>
+  <div class="menu-item">DASHBOARD</div>
+  <div class="menu-item active">ARSIP SURAT</div>
+  <div class="menu-item">UPLOAD</div>
+  <div class="menu-item">PENGGUNA</div>
+  <div class="menu-item">KATEGORI</div>
+  <div class="menu-item">PENGATURAN AI</div>
+  <div class="menu-item">LOG</div>
+  <div class="menu-item" style="color:#fff; border-top:1px solid #555; margin-top:20px;">LOGOUT</div>
+</div>
+<div class="main">
+  <div class="header"><div>ARSIP SURAT</div><div>128 Dokumen</div></div>
+  <div class="filter-box">
+    <div class="filter">Kategori: Semua</div>
+    <div class="filter">Tanggal: Semua</div>
+    <div class="search">Cari dokumen...</div>
+    <div class="btn-search">CARI</div>
+  </div>
+  <div class="table-box">
+    <div class="table-title">DAFTAR DOKUMEN</div>
+    <div class="table-row header"><div style="flex:2">NAMA FILE</div><div style="flex:1">ARAH</div><div style="flex:1">JENIS</div><div style="flex:1">PT</div><div style="flex:1">TANGGAL</div><div style="flex:1">SCORE</div><div style="flex:1">AKSI</div></div>
+    <div class="table-row"><div style="flex:2">PO_Bintang_Timur_001.pdf</div><div style="flex:1">Keluar</div><div style="flex:1">PO</div><div style="flex:1">PT. ABC</div><div style="flex:1">2025-05-20</div><div style="flex:1">0.95</div><div style="flex:1">[UNDUH] [HAPUS]</div></div>
+    <div class="table-row"><div style="flex:2">Invoice_Mei_2025.pdf</div><div style="flex:1">Masuk</div><div style="flex:1">Invoice</div><div style="flex:1">PT. XYZ</div><div style="flex:1">2025-05-19</div><div style="flex:1">0.92</div><div style="flex:1">[UNDUH] [HAPUS]</div></div>
+    <div class="table-row"><div style="flex:2">Penawaran_Project_A.pdf</div><div style="flex:1">Masuk</div><div style="flex:1">Penawaran</div><div style="flex:1">PT. DEF</div><div style="flex:1">2025-05-18</div><div style="flex:1">0.88</div><div style="flex:1">[UNDUH] [HAPUS]</div></div>
+    <div class="table-row"><div style="flex:2">Kontrak_Kerjasama.pdf</div><div style="flex:1">Masuk</div><div style="flex:1">Kontrak</div><div style="flex:1">PT. GHI</div><div style="flex:1">2025-05-17</div><div style="flex:1">0.91</div><div style="flex:1">[UNDUH] [HAPUS]</div></div>
+  </div>
+</div>
+</body></html>

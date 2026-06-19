@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head><title>Upload Dokumen</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: Arial, sans-serif; display:flex; background:#fff; color:#000; }
+.content { flex:1; padding:24px; }
+</style>
+</head>
+<body>
+<div style="width:200px;border-right:1px solid #000;min-height:600px;display:flex;flex-direction:column;"><div style="border:1px solid #000;padding:10px 12px;margin:8px;background:#ffffff;font-weight:normal;font-size:13px;">Dashboard</div><div style="border:1px solid #000;padding:10px 12px;margin:8px;background:#e0e0e0;font-weight:bold;font-size:13px;">Upload Dokumen</div><div style="border:1px solid #000;padding:10px 12px;margin:8px;background:#ffffff;font-weight:normal;font-size:13px;">Arsip Surat</div><div style="border:1px solid #000;padding:10px 12px;margin:8px;background:#ffffff;font-weight:normal;font-size:13px;">Kategori</div><div style="border:1px solid #000;padding:10px 12px;margin:8px;background:#ffffff;font-weight:normal;font-size:13px;">Pengaturan</div></div>
+<div class="content">
+<h3 style="margin-bottom:16px;font-size:16px;">Upload Dokumen</h3>
+<div style="border:2px dashed #000;padding:48px;text-align:center;margin-bottom:20px;color:#888;">
+<div style="font-size:14px;">Drop file di sini atau klik untuk upload</div>
+<div style="font-size:12px;margin-top:4px;">PDF, JPG, PNG (Maks. 10MB)</div>
+</div>
+<div style="border:1px solid #000;padding:12px;margin-bottom:16px;font-size:13px;font-weight:bold;">File yang diupload</div>
+<table style="width:100%;border-collapse:collapse;font-size:13px;">
+<thead><tr style="border-bottom:1px solid #000;">
+<th style="padding:8px;text-align:left;">Nama File</th>
+<th style="padding:8px;text-align:left;">Ukuran</th>
+<th style="padding:8px;text-align:left;">Hasil Klasifikasi</th>
+<th style="padding:8px;text-align:left;">Confidence</th>
+</tr></thead>
+<tbody>
+<tr style="border-bottom:1px solid #ccc;"><td style="padding:8px;">laporan_keuangan.pdf</td><td style="padding:8px;">2.4 MB</td><td style="padding:8px;">Surat Masuk</td><td style="padding:8px;">92.5%</td></tr>
+<tr><td style="padding:8px;">invoice_maret.pdf</td><td style="padding:8px;">1.1 MB</td><td style="padding:8px;">-</td><td style="padding:8px;">Processing...</td></tr>
+</tbody>
+</table>
+</div>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wireframe Kelola Pengguna</title><style>
+* { margin:0; padding:0; box-sizing:border-box; font-family: monospace, sans-serif; }
+body { display:flex; height:100vh; }
+.sidebar { width:200px; background:#222; border-right:2px solid #000; padding-top:20px; }
+.sidebar-title { text-align:center; color:#fff; font-weight:bold; padding:10px; border-bottom:1px solid #444; margin-bottom:10px; }
+.menu-item { color:#ccc; padding:10px 15px; border-bottom:1px solid #333; font-size:12px; }
+.menu-item.active { background:#444; color:#fff; font-weight:bold; }
+.main { flex:1; background:#f5f5f5; padding:20px; }
+.header { background:#fff; border:1px solid #000; padding:10px; margin-bottom:20px; font-weight:bold; display:flex; justify-content:space-between; }
+.btn-add { background:#333; color:#fff; border:1px solid #000; padding:5px 12px; font-size:11px; }
+.table-box { background:#fff; border:2px solid #000; padding:15px; }
+.table-title { font-weight:bold; margin-bottom:10px; border-bottom:1px solid #000; padding-bottom:5px; }
+.table-row { display:flex; border-bottom:1px solid #ddd; padding:8px 0; font-size:11px; align-items:center; }
+.table-row.header { font-weight:bold; border-bottom:2px solid #000; }
+.badge { border:1px solid #000; padding:2px 6px; font-size:10px; }
+</style></head>
+<body>
+<div class="sidebar">
+  <div class="sidebar-title">ARSIP ABT</div>
+  <div class="menu-item">DASHBOARD</div>
+  <div class="menu-item">ARSIP SURAT</div>
+  <div class="menu-item">UPLOAD</div>
+  <div class="menu-item active">PENGGUNA</div>
+  <div class="menu-item">KATEGORI</div>
+  <div class="menu-item">PENGATURAN AI</div>
+  <div class="menu-item">LOG</div>
+  <div class="menu-item" style="color:#fff; border-top:1px solid #555; margin-top:20px;">LOGOUT</div>
+</div>
+<div class="main">
+  <div class="header"><div>KELOLA PENGGUNA</div><div class="btn-add">+ TAMBAH</div></div>
+  <div class="table-box">
+    <div class="table-title">DAFTAR PENGGUNA</div>
+    <div class="table-row header"><div style="flex:2">NAMA LENGKAP</div><div style="flex:1">USERNAME</div><div style="flex:1">ROLE</div><div style="flex:1">STATUS</div><div style="flex:1">AKSI</div></div>
+    <div class="table-row"><div style="flex:2">Admin Utama</div><div style="flex:1">admin</div><div style="flex:1"><span class="badge">Super Admin</span></div><div style="flex:1">Aktif</div><div style="flex:1">[EDIT] [RESET PW]</div></div>
+    <div class="table-row"><div style="flex:2">Operator 1</div><div style="flex:1">operator1</div><div style="flex:1"><span class="badge">Admin</span></div><div style="flex:1">Aktif</div><div style="flex:1">[EDIT] [RESET PW]</div></div>
+    <div class="table-row"><div style="flex:2">Operator 2</div><div style="flex:1">operator2</div><div style="flex:1"><span class="badge">Admin</span></div><div style="flex:1">Nonaktif</div><div style="flex:1">[EDIT] [HAPUS]</div></div>
+  </div>
+</div>
+</body></html>

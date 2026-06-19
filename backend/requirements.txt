@@ -11,3 +11,14 @@ numpy==1.26.4
 # Document Processing
 pdfplumber==0.10.3
 pytesseract==0.3.10
+
+# Auth
+python-jose[cryptography]
+passlib[bcrypt]
+
+# Export
+openpyxl
+
+# Indonesian NLP
+sastrawi
+joblib

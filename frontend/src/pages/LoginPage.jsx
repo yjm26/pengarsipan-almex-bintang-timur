@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { InputField } from '../components/Input';
 import { PrimaryButton } from '../components/Button';
 import { BrandPanel } from '../components/BrandPanel';
+import api from '../lib/api';
 
 // Animation variants
 const container = {
@@ -32,14 +33,13 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
 
-    // Simulate network delay for interaction feel
-    await new Promise(r => setTimeout(r, 800));
-
-    if (username === 'admin' && password === 'admin') {
+    try {
+      const data = await api.login(username, password);
+      api.setToken(data.access_token);
       localStorage.setItem('isAuthenticated', 'true');
       navigate('/dashboard');
-    } else {
-      setError('Username atau password salah.');
+    } catch (err) {
+      setError(err.message || 'Username atau password salah.');
     }
     setLoading(false);
   };

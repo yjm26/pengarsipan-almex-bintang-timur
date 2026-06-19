@@ -1,0 +1,208 @@
+import os
+import re
+import shutil
+from datetime import datetime, timedelta, timezone
+from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
+from fastapi.responses import FileResponse
+from sqlalchemy.orm import Session
+from database import get_db
+from models import Document, User, AuditLog, now_wib
+from schemas import DocumentOut, DocumentUpdate, BulkDeleteRequest
+from auth import get_current_user
+from ml.classifier import classifier
+
+router = APIRouter(prefix="/api/documents", tags=["Documents"])
+
+UPLOAD_DIR = "/root/pengarsipan-almex-bintang-timur/backend/uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+def extract_company_name(text: str) -> str:
+    patterns = [
+        r'(?:PT|CV|PT\.|CV\.)\s+([A-Z][A-Za-z\s&.]+?)(?:\n|,|\s{2,})',
+        r'(?:kepada|yth\.?|ditujukan\s+kepada)\s*:?\s*(?:PT|CV)\s*\.?\s*([A-Za-z\s&.]+?)(?:\n|,)',
+    ]
+    for pat in patterns:
+        m = re.search(pat, text, re.IGNORECASE)
+        if m:
+            return m.group(0).strip()[:200]
+    return ""
+
+def extract_date(text: str) -> Optional[datetime]:
+    months = {
+        'januari': 1, 'februari': 2, 'maret': 3, 'april': 4, 'mei': 5, 'juni': 6,
+        'juli': 7, 'agustus': 8, 'september': 9, 'oktober': 10, 'november': 11, 'desember': 12
+    }
+    m = re.search(r'(\d{1,2})\s+(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\s+(\d{4})', text.lower())
+    if m:
+        return datetime(int(m.group(3)), months[m.group(2)], int(m.group(1)))
+    m = re.search(r'(\d{1,2})/(\d{1,2})/(\d{4})', text)
+    if m:
+        return datetime(int(m.group(3)), int(m.group(2)), int(m.group(1)))
+    m = re.search(r'(\d{4})-(\d{2})-(\d{2})', text)
+    if m:
+        return datetime(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+    return None
+
+@router.post("/upload", response_model=DocumentOut)
+async def upload_document(file: UploadFile = File(...), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Hanya file PDF yang diizinkan")
+
+    # Save file
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    safe_name = f"{timestamp}_{file.filename}"
+    file_path = os.path.join(UPLOAD_DIR, safe_name)
+    with open(file_path, "wb") as f:
+        content = await file.read()
+        f.write(content)
+    file_size = len(content)
+
+    # Extract text
+    extracted_text = ""
+    try:
+        import pdfplumber
+        with pdfplumber.open(file_path) as pdf:
+            for page in pdf.pages:
+                t = page.extract_text()
+                if t:
+                    extracted_text += t + "\n"
+    except Exception:
+        extracted_text = ""
+
+    # Classify
+    arah_pred, arah_conf, jenis_pred, jenis_conf = "Masuk", 0.5, "Lainnya", 0.5
+    if extracted_text.strip():
+        try:
+            arah_pred, arah_conf, jenis_pred, jenis_conf = classifier.predict(extracted_text)
+        except Exception:
+            pass
+
+    confidence = round((arah_conf + jenis_conf) / 2, 4)
+
+    # Extract metadata
+    nama_pt = extract_company_name(extracted_text)
+    tanggal_surat = extract_date(extracted_text)
+
+    doc = Document(
+        nama_file=file.filename,
+        nama_pt=nama_pt,
+        tanggal_surat=tanggal_surat,
+        tanggal_unggah=now_wib(),
+        arah=arah_pred,
+        jenis=jenis_pred,
+        confidence=confidence,
+        status="pending",
+        ukuran=file_size,
+        extracted_text=extracted_text[:5000],
+        file_path=file_path,
+        user_id=current_user.id,
+        created_at=now_wib()
+    )
+    db.add(doc)
+    db.flush()
+
+    log = AuditLog(user_id=current_user.id, action="Upload Dokumen", detail=f"Mengunggah '{file.filename}' - Klasifikasi: {arah_pred}, {jenis_pred} ({confidence:.1%})", type="upload", timestamp=now_wib())
+    db.add(log)
+    db.commit()
+    db.refresh(doc)
+    return doc
+
+@router.get("", response_model=dict)
+def list_documents(
+    search: Optional[str] = None,
+    arah: Optional[str] = None,
+    jenis: Optional[str] = None,
+    company: Optional[str] = None,
+    confidence_min: Optional[float] = None,
+    confidence_max: Optional[float] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    status: Optional[str] = None,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(10, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    q = db.query(Document)
+    if search:
+        q = q.filter(Document.nama_file.ilike(f"%{search}%") | Document.nama_pt.ilike(f"%{search}%") | Document.extracted_text.ilike(f"%{search}%"))
+    if arah:
+        q = q.filter(Document.arah == arah)
+    if jenis:
+        q = q.filter(Document.jenis == jenis)
+    if company:
+        q = q.filter(Document.nama_pt.ilike(f"%{company}%"))
+    if confidence_min is not None:
+        q = q.filter(Document.confidence >= confidence_min)
+    if confidence_max is not None:
+        q = q.filter(Document.confidence <= confidence_max)
+    if date_from:
+        q = q.filter(Document.tanggal_unggah >= date_from)
+    if date_to:
+        q = q.filter(Document.tanggal_unggah <= date_to)
+    if status:
+        q = q.filter(Document.status == status)
+
+    total = q.count()
+    docs = q.order_by(Document.created_at.desc()).offset((page - 1) * per_page).limit(per_page).all()
+
+    return {
+        "data": [DocumentOut.model_validate(d) for d in docs],
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "total_pages": (total + per_page - 1) // per_page
+    }
+
+@router.get("/{doc_id}", response_model=DocumentOut)
+def get_document(doc_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    doc = db.query(Document).filter(Document.id == doc_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Dokumen tidak ditemukan")
+    return doc
+
+@router.get("/{doc_id}/download")
+def download_document(doc_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    doc = db.query(Document).filter(Document.id == doc_id).first()
+    if not doc or not os.path.exists(doc.file_path):
+        raise HTTPException(status_code=404, detail="File tidak ditemukan")
+    return FileResponse(doc.file_path, filename=doc.nama_file, media_type="application/pdf")
+
+@router.put("/{doc_id}", response_model=DocumentOut)
+def update_document(doc_id: int, data: DocumentUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    doc = db.query(Document).filter(Document.id == doc_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Dokumen tidak ditemukan")
+    for key, val in data.model_dump(exclude_unset=True).items():
+        setattr(doc, key, val)
+    log = AuditLog(user_id=current_user.id, action="Edit Dokumen", detail=f"Mengedit dokumen '{doc.nama_file}' (ID: {doc_id})", type="upload", timestamp=now_wib())
+    db.add(log)
+    db.commit()
+    db.refresh(doc)
+    return doc
+
+@router.delete("/{doc_id}")
+def delete_document(doc_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    doc = db.query(Document).filter(Document.id == doc_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Dokumen tidak ditemukan")
+    if os.path.exists(doc.file_path):
+        os.remove(doc.file_path)
+    log = AuditLog(user_id=current_user.id, action="Hapus Dokumen", detail=f"Menghapus '{doc.nama_file}' (ID: {doc_id})", type="upload", timestamp=now_wib())
+    db.add(log)
+    db.delete(doc)
+    db.commit()
+    return {"message": "Dokumen berhasil dihapus"}
+
+@router.post("/bulk-delete")
+def bulk_delete(data: BulkDeleteRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    docs = db.query(Document).filter(Document.id.in_(data.ids)).all()
+    for doc in docs:
+        if os.path.exists(doc.file_path):
+            os.remove(doc.file_path)
+        db.delete(doc)
+    log = AuditLog(user_id=current_user.id, action="Hapus Massal", detail=f"Menghapus {len(docs)} dokumen", type="upload", timestamp=now_wib())
+    db.add(log)
+    db.commit()
+    return {"message": f"{len(docs)} dokumen berhasil dihapus"}

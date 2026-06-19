@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="id">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wireframe Upload</title><style>
+* { margin:0; padding:0; box-sizing:border-box; font-family: monospace, sans-serif; }
+body { display:flex; height:100vh; }
+.sidebar { width:200px; background:#222; border-right:2px solid #000; padding-top:20px; }
+.sidebar-title { text-align:center; color:#fff; font-weight:bold; padding:10px; border-bottom:1px solid #444; margin-bottom:10px; }
+.menu-item { color:#ccc; padding:10px 15px; border-bottom:1px solid #333; font-size:12px; }
+.menu-item.active { background:#444; color:#fff; font-weight:bold; }
+.main { flex:1; background:#f5f5f5; padding:20px; }
+.header { background:#fff; border:1px solid #000; padding:10px; margin-bottom:20px; font-weight:bold; }
+.upload-box { background:#fff; border:2px dashed #000; padding:40px; text-align:center; margin-bottom:20px; }
+.upload-label { font-size:14px; font-weight:bold; margin-bottom:10px; }
+.upload-btn { background:#333; color:#fff; border:1px solid #000; padding:10px 20px; font-size:12px; cursor:pointer; }
+.result-box { background:#fff; border:2px solid #000; padding:15px; margin-top:20px; }
+.result-title { font-weight:bold; margin-bottom:10px; border-bottom:1px solid #000; padding-bottom:5px; }
+.result-row { display:flex; padding:8px 0; font-size:12px; border-bottom:1px solid #eee; }
+.result-label { font-weight:bold; width:180px; }
+</style></head>
+<body>
+<div class="sidebar">
+  <div class="sidebar-title">ARSIP ABT</div>
+  <div class="menu-item">DASHBOARD</div>
+  <div class="menu-item">ARSIP SURAT</div>
+  <div class="menu-item active">UPLOAD</div>
+  <div class="menu-item">PENGGUNA</div>
+  <div class="menu-item">KATEGORI</div>
+  <div class="menu-item">PENGATURAN AI</div>
+  <div class="menu-item">LOG</div>
+  <div class="menu-item" style="color:#fff; border-top:1px solid #555; margin-top:20px;">LOGOUT</div>
+</div>
+<div class="main">
+  <div class="header">UPLOAD DAN KLASIFIKASI DOKUMEN</div>
+  <div class="upload-box">
+    <div class="upload-label">PILIH FILE PDF UNTUK DIKLASIFIKASI</div>
+    <div style="border:1px solid #000; padding:20px; margin:15px 0; background:#eee;">
+      [ BELUM ADA FILE DIPILIH ]
+    </div>
+    <div class="upload-btn">UPLOAD & PROSES</div>
+  </div>
+  <div class="result-box">
+    <div class="result-title">HASIL KLASIFIKASI</div>
+    <div class="result-row"><div class="result-label">Arah Dokumen:</div><div>Surat Masuk</div></div>
+    <div class="result-row"><div class="result-label">Jenis Dokumen:</div><div>Penawaran</div></div>
+    <div class="result-row"><div class="result-label">Confidence Score:</div><div>0.94 (94%)</div></div>
+    <div class="result-row"><div class="result-label">Nama Perusahaan:</div><div>PT. Mitra Sejahtera</div></div>
+    <div class="result-row"><div class="result-label">Tanggal Surat:</div><div>2025-05-15</div></div>
+  </div>
+</div>
+</body></html>
