@@ -30,12 +30,21 @@ def do_retrain(user_id: int):
     try:
         from database import SessionLocal
         from ml.classifier import classifier
-        from ml.sample_data import get_training_data
-        from models import AIModel
+        from models import AIModel, Document
         from datetime import datetime, timedelta, timezone
 
         db = SessionLocal()
-        texts, arah_labels, jenis_labels = get_training_data()
+
+        # Use uploaded documents as training data
+        docs = db.query(Document).filter(Document.extracted_text != '').all()
+        if len(docs) < 10:
+            retrain_status = {"running": False, "message": f"Data kurang ({len(docs)} dokumen). Minimal 10 dokumen diperlukan.", "progress": 0}
+            db.close()
+            return
+
+        texts = [d.extracted_text for d in docs]
+        arah_labels = [d.arah for d in docs]
+        jenis_labels = [d.jenis for d in docs]
         retrain_status["progress"] = 30
 
         metrics = classifier.train(texts, arah_labels, jenis_labels)

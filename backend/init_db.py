@@ -1,4 +1,4 @@
-"""Initialize database: create tables, seed admin user, seed categories, train initial model."""
+"""Initialize database: create tables, seed admin user, seed categories."""
 import sys
 import os
 sys.path.insert(0, os.path.dirname(__file__))
@@ -25,9 +25,9 @@ def init():
         )
         db.add(admin)
         db.commit()
-        print("✓ Admin user created (admin/admin)")
+        print("[OK] Admin user created (admin/admin)")
     else:
-        print("✓ Admin user already exists")
+        print("[OK] Admin user already exists")
     
     # Seed categories
     default_categories = [
@@ -44,35 +44,37 @@ def init():
             cat = Category(nama=nama, parent_id=parent_id, status="Aktif", created_at=now_wib())
             db.add(cat)
         db.commit()
-        print("✓ Default categories created")
+        print("[OK] Default categories created")
     else:
-        print("✓ Categories already exist")
+        print("[OK] Categories already exist")
     
-    # Train initial model
-    print("Training initial ML model...")
-    from ml.classifier import classifier
-    from ml.sample_data import get_training_data
+    # Check if trained model exists
+    model_dir = os.path.join(os.path.dirname(__file__), "ml_model")
+    arah_path = os.path.join(model_dir, "arah_pipeline.pkl")
+    jenis_path = os.path.join(model_dir, "jenis_pipeline.pkl")
     
-    texts, arah_labels, jenis_labels = get_training_data()
-    metrics = classifier.train(texts, arah_labels, jenis_labels)
-    
-    if not db.query(AIModel).first():
-        model = AIModel(
-            version="1.0.0",
-            accuracy=metrics["accuracy"],
-            precision_score=metrics["precision"],
-            recall_score=metrics["recall"],
-            f1_score=metrics["f1"],
-            training_data_count=len(texts),
-            threshold=0.7,
-            last_retrain=now_wib(),
-            created_at=now_wib()
-        )
-        db.add(model)
-        db.commit()
-        print(f"✓ Model v1.0.0 trained - Accuracy: {metrics['accuracy']:.2%}")
+    if os.path.exists(arah_path) and os.path.exists(jenis_path):
+        if not db.query(AIModel).first():
+            model = AIModel(
+                version="1.0.0",
+                accuracy=0.0,
+                precision_score=0.0,
+                recall_score=0.0,
+                f1_score=0.0,
+                training_data_count=0,
+                threshold=0.7,
+                last_retrain=None,
+                created_at=now_wib()
+            )
+            db.add(model)
+            db.commit()
+            print("[OK] AI Model entry created (model files found)")
+        else:
+            print("[OK] AI Model already exists")
+        print("[OK] Trained model files found in ml_model/")
     else:
-        print("✓ AI Model already exists")
+        print("[WARN] No trained model found. Train model via Jupyter notebook first!")
+        print("       Run: notebooks/Training_Model_Produksi.ipynb")
     
     db.close()
     print("\nDatabase initialized successfully!")
