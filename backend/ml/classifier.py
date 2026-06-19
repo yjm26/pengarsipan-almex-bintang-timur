@@ -15,23 +15,27 @@ os.makedirs(MODEL_DIR, exist_ok=True)
 ARAH_LABELS = ["Masuk", "Keluar"]
 JENIS_LABELS = ["Purchase Order", "Invoice", "Surat Penawaran", "Kontrak", "Nota Dinas", "MoU", "Lainnya"]
 
-INDONESIAN_STOPWORDS = set([
-    "yang", "dan", "di", "dengan", "untuk", "pada", "dari", "ini", "itu", "adalah",
-    "ke", "oleh", "sebagai", "juga", "akan", "telah", "sudah", "atau", "dalam",
-    "tidak", "ada", "dapat", "bisa", "lebih", "kami", "kita", "anda", "mereka",
-    "saya", "aku", "dia", "ia", "kami", "kalian", "engkau", "beliau", "hal",
-    "oleh", "secara", "serta", "antara", "bahwa", "oleh", "bagi", "hanya",
-    "namun", "meski", "walaupun", "tetapi", "jika", "apabila", "maka",
-    "sehingga", "agar", "supaya", "ketika", "saat", "ketika", "yakni",
-    "yaitu", "ialah", "merupakan", "adapun", "tentang", "atas", "demi",
-    "melalui", "mengenai", "per", "tanpa", "terhadap", "tuju", "guna",
-    "untuk", "dengan", "adalah", "ialah", "merupakan", "yakni", "yaitu",
-    "dll", "dst", "dlsb", "dls", "sbb", "sbl", "sb", "yg", "dg", "dgn",
-    "tdk", "tak", "nggak", "gak", "bkn", "blm", "blum", "sdh", "sudh",
-    "bln", "tgl", "thn", "pt", "cv", "tbk", "no", "nomor", "perihal",
-    "hal", "lampiran", "kepada", "yth", "kepada", "yth", "dengan hormat",
-    "demikian", "terima kasih", "hormat kami", "wassalam", "salam",
-])
+# Sastrawi stopwords (lazy load — same approach as notebook)
+_stopword_set = None
+def get_stopwords():
+    global _stopword_set
+    if _stopword_set is None:
+        try:
+            from Sastrawi.StopWordRemover.StopWordRemoverFactory import StopWordRemoverFactory
+            factory = StopWordRemoverFactory()
+            base = set(factory.getStopWords())
+        except Exception:
+            base = set()
+        # Custom additions for company letter context
+        _stopword_set = base | {
+            'pt', 'cv', 'tbk', 'abt', 'vi', '2025',
+            'nomor', 'perihal', 'lampiran', 'kepada', 'yth',
+            'yang', 'dan', 'di', 'dengan', 'untuk', 'pada', 'dari',
+            'ini', 'itu', 'adalah', 'ke', 'oleh', 'sebagai', 'juga',
+            'akan', 'telah', 'sudah', 'atau', 'dalam', 'tidak',
+            'ada', 'dapat', 'bisa', 'lebih',
+        }
+    return _stopword_set
 
 # Sastrawi stemmer (lazy load)
 _stemmer = None
@@ -58,7 +62,7 @@ def preprocess_text(text: str) -> str:
     # Tokenizing
     tokens = text.split()
     # Stopword removal
-    tokens = [t for t in tokens if t not in INDONESIAN_STOPWORDS and len(t) > 2]
+    tokens = [t for t in tokens if t not in get_stopwords() and len(t) > 2]
     # Stemming
     stemmer = get_stemmer()
     if stemmer:
