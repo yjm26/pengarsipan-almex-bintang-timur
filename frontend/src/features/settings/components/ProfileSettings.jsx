@@ -1,27 +1,79 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { User, Mail, Shield, Edit2, Check, X, Lock } from 'lucide-react';
+import api from '../../../lib/api';
 
 export default function ProfileSettings() {
   const [editing, setEditing] = useState(false);
   const [profile, setProfile] = useState({
-    nama: 'Administrator',
-    email: 'admin@almex.co.id',
-    role: 'Super Admin',
+    nama: '',
+    email: '',
+    role: '',
   });
   const [tempProfile, setTempProfile] = useState({ ...profile });
   const [showPassword, setShowPassword] = useState(false);
   const [passwords, setPasswords] = useState({ current: '', new: '', confirm: '' });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  const handleSave = () => {
-    setProfile({ ...tempProfile });
-    setEditing(false);
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const data = await api.getProfile();
+        const mapped = {
+          nama: data.nama || data.name || data.full_name || '',
+          email: data.email || '',
+          role: data.role || '',
+        };
+        setProfile(mapped);
+        setTempProfile(mapped);
+      } catch (err) {
+        console.error('Failed to fetch profile:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await api.updateProfile({ nama: tempProfile.nama, email: tempProfile.email });
+      setProfile({ ...tempProfile });
+      setEditing(false);
+    } catch (err) {
+      console.error('Failed to update profile:', err);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancel = () => {
     setTempProfile({ ...profile });
     setEditing(false);
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-white rounded-xl border border-zinc-200/60 p-8">
+          <div className="h-6 w-48 bg-zinc-100 rounded animate-pulse mb-6" />
+          <div className="flex items-center gap-6 mb-8 pb-8 border-b border-zinc-100">
+            <div className="w-20 h-20 rounded-2xl bg-zinc-100 animate-pulse" />
+            <div className="space-y-2">
+              <div className="h-5 w-32 bg-zinc-100 rounded animate-pulse" />
+              <div className="h-4 w-24 bg-zinc-100 rounded animate-pulse" />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="h-10 bg-zinc-50 rounded-lg animate-pulse" />
+            <div className="h-10 bg-zinc-50 rounded-lg animate-pulse" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -86,10 +138,11 @@ export default function ProfileSettings() {
           <div className="flex items-center gap-3 mt-6 pt-6 border-t border-zinc-100">
             <button
               onClick={handleSave}
+              disabled={saving}
               className="flex items-center gap-2 px-5 py-2.5 bg-[#D49A28] text-white text-sm font-medium rounded-lg hover:bg-[#C08A20] transition-colors"
             >
               <Check className="w-4 h-4" />
-              Simpan
+              {saving ? 'Menyimpan...' : 'Simpan'}
             </button>
             <button onClick={handleCancel} className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 rounded-lg transition-all">
               <X className="w-4 h-4" />

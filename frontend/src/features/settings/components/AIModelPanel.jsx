@@ -1,32 +1,117 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Brain, Zap, BarChart3, RotateCw, CheckCircle2, Clock, Target, Database } from 'lucide-react';
+import api from '../../../lib/api';
 
 export default function AIModelPanel() {
   const [retraining, setRetraining] = useState(false);
   const [retrainDone, setRetrainDone] = useState(false);
   const [threshold, setThreshold] = useState(75);
+  const [modelStats, setModelStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [savingThreshold, setSavingThreshold] = useState(false);
+  const pollRef = useRef(null);
 
-  const modelStats = {
-    accuracy: 94.2,
-    precision: 93.8,
-    recall: 94.5,
-    f1Score: 94.1,
-    trainingData: 1245,
-    lastRetrain: '18 Mei 2025, 14:30',
-    modelVersion: 'v2.4.1',
-    algorithm: 'Multinomial Naïve Bayes + TF-IDF',
+  useEffect(() => {
+    const fetchModel = async () => {
+      try {
+        const data = await api.getAIModel();
+        setModelStats({
+          accuracy: data.accuracy != null ? (data.accuracy * 100).toFixed(1) : '0.0',
+          precision: data.precision != null ? (data.precision * 100).toFixed(1) : '0.0',
+          recall: data.recall != null ? (data.recall * 100).toFixed(1) : '0.0',
+          f1Score: data.f1_score != null ? (data.f1_score * 100).toFixed(1) : '0.0',
+          trainingData: data.training_data ?? data.trainingData ?? 0,
+          lastRetrain: data.last_retrain ?? data.lastRetrain ?? '-',
+          modelVersion: data.model_version ?? data.modelVersion ?? '-',
+          algorithm: data.algorithm ?? 'Multinomial Naïve Bayes + TF-IDF',
+        });
+        if (data.threshold != null) {
+          setThreshold(Math.round(data.threshold * 100));
+        }
+      } catch (err) {
+        console.error('Failed to fetch AI model stats:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchModel();
+  }, []);
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, []);
+
+  const pollRetrainStatus = () => {
+    pollRef.current = setInterval(async () => {
+      try {
+        const status = await api.getRetrainStatus();
+        if (!status.running) {
+          clearInterval(pollRef.current);
+          pollRef.current = null;
+          setRetraining(false);
+          setRetrainDone(true);
+          setTimeout(() => setRetrainDone(false), 4000);
+          // Refresh model stats
+          try {
+            const data = await api.getAIModel();
+            setModelStats({
+              accuracy: data.accuracy != null ? (data.accuracy * 100).toFixed(1) : '0.0',
+              precision: data.precision != null ? (data.precision * 100).toFixed(1) : '0.0',
+              recall: data.recall != null ? (data.recall * 100).toFixed(1) : '0.0',
+              f1Score: data.f1_score != null ? (data.f1_score * 100).toFixed(1) : '0.0',
+              trainingData: data.training_data ?? data.trainingData ?? 0,
+              lastRetrain: data.last_retrain ?? data.lastRetrain ?? '-',
+              modelVersion: data.model_version ?? data.modelVersion ?? '-',
+              algorithm: data.algorithm ?? 'Multinomial Naïve Bayes + TF-IDF',
+            });
+          } catch (_) {}
+        }
+      } catch (err) {
+        console.error('Failed to poll retrain status:', err);
+      }
+    }, 3000);
   };
 
-  const handleRetrain = () => {
+  const handleRetrain = async () => {
     setRetraining(true);
     setRetrainDone(false);
-    setTimeout(() => {
+    try {
+      await api.retrainModel();
+      pollRetrainStatus();
+    } catch (err) {
+      console.error('Failed to start retrain:', err);
       setRetraining(false);
-      setRetrainDone(true);
-      setTimeout(() => setRetrainDone(false), 4000);
-    }, 5000);
+    }
   };
+
+  const handleSaveThreshold = async () => {
+    setSavingThreshold(true);
+    try {
+      await api.updateThreshold(threshold / 100);
+    } catch (err) {
+      console.error('Failed to save threshold:', err);
+    } finally {
+      setSavingThreshold(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-white rounded-xl border border-zinc-200/60 p-8">
+          <div className="h-6 w-48 bg-zinc-100 rounded animate-pulse mb-4" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+            {[0,1,2,3].map((i) => <div key={i} className="h-24 rounded-lg bg-zinc-50 animate-pulse" />)}
+          </div>
+          <div className="h-10 bg-zinc-50 rounded animate-pulse" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -96,7 +181,7 @@ export default function AIModelPanel() {
         {retrainDone && (
           <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="mt-4 p-3 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            <span className="text-sm text-emerald-700">Model berhasil di-retrain! Akurasi terbaru: 95.1%</span>
+            <span className="text-sm text-emerald-700">Model berhasil di-retrain! Akurasi terbaru: {modelStats.accuracy}%</span>
           </motion.div>
         )}
       </div>
@@ -125,8 +210,13 @@ export default function AIModelPanel() {
             <span>50%</span>
             <span>95%</span>
           </div>
-          <motion.button whileTap={{ scale: 0.98 }} className="px-5 py-2.5 bg-[#D49A28] text-white text-sm font-medium rounded-lg hover:bg-[#C08A20] transition-colors">
-            Simpan Threshold
+          <motion.button
+            whileTap={{ scale: 0.98 }}
+            onClick={handleSaveThreshold}
+            disabled={savingThreshold}
+            className="px-5 py-2.5 bg-[#D49A28] text-white text-sm font-medium rounded-lg hover:bg-[#C08A20] transition-colors"
+          >
+            {savingThreshold ? 'Menyimpan...' : 'Simpan Threshold'}
           </motion.button>
         </div>
       </div>

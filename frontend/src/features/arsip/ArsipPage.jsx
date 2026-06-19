@@ -1,18 +1,21 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
 import { FileText, Trash2, Tag, Download, X } from 'lucide-react';
 import FilterBar from './components/FilterBar';
 import DocumentTable from './components/DocumentTable';
 import Pagination from './components/Pagination';
-import { generateDocuments } from './mockData';
+import api from '../../lib/api';
 
 const ITEMS_PER_PAGE = 10;
 
 export default function ArsipPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const allDocuments = useMemo(() => generateDocuments(45), []);
+  const [documents, setDocuments] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [filters, setFilters] = useState({
     search: '', arah: '', jenis: '', company: '',
@@ -27,6 +30,52 @@ export default function ArsipPage() {
       setFilters((prev) => ({ ...prev, arah: arah || '', confidence: confidence || '' }));
     }
   }, [searchParams]);
+
+  const fetchDocuments = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = {
+        page: currentPage,
+        per_page: ITEMS_PER_PAGE,
+      };
+      if (filters.search) params.search = filters.search;
+      if (filters.arah) params.arah = filters.arah;
+      if (filters.jenis) params.jenis = filters.jenis;
+
+      const res = await api.getDocuments(params);
+
+      const mapped = (res.data || []).map((doc) => ({
+        id: doc.id,
+        nama: doc.nama_file || '',
+        namaPt: doc.nama_pt || '',
+        tanggalSurat: doc.tanggal_surat || '',
+        tanggalUnggah: doc.tanggal_unggah || '',
+        klasifikasi: `${doc.arah || ''} · ${doc.jenis || ''}`,
+        arah: doc.arah || '',
+        jenis: doc.jenis || '',
+        confidence: doc.confidence != null ? Math.round(doc.confidence * 100) : 0,
+        ukuran: doc.ukuran ? `${(doc.ukuran / (1024 * 1024)).toFixed(1)} MB` : '',
+        status: doc.status || '',
+      }));
+
+      setDocuments(mapped);
+      setTotalPages(res.total_pages || 1);
+      setTotalItems(res.total || 0);
+    } catch (err) {
+      console.error('Failed to fetch documents:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, filters.search, filters.arah, filters.jenis]);
+
+  useEffect(() => {
+    fetchDocuments();
+  }, [fetchDocuments]);
+
+  // Reset to page 1 when filters change (except on initial mount URL params)
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters.search, filters.arah, filters.jenis]);
 
   const handleFilterChange = (key, value) => {
     if (key === 'clear') {
@@ -58,31 +107,6 @@ export default function ArsipPage() {
     }
   };
 
-  const filteredDocuments = useMemo(() => {
-    return allDocuments.filter((doc) => {
-      if (filters.search) {
-        const q = filters.search.toLowerCase();
-        if (!doc.nama.toLowerCase().includes(q) &&
-            !doc.namaPt.toLowerCase().includes(q) &&
-            !doc.klasifikasi.toLowerCase().includes(q) &&
-            !doc.jenis.toLowerCase().includes(q)) return false;
-      }
-      if (filters.arah && doc.arah !== filters.arah) return false;
-      if (filters.jenis && doc.jenis !== filters.jenis) return false;
-      if (filters.company && doc.namaPt !== filters.company) return false;
-      if (filters.confidence === '90' && doc.confidence < 90) return false;
-      if (filters.confidence === '75' && (doc.confidence < 75 || doc.confidence >= 90)) return false;
-      if (filters.confidence === 'low' && doc.confidence >= 75) return false;
-      return true;
-    });
-  }, [allDocuments, filters]);
-
-  const totalPages = Math.ceil(filteredDocuments.length / ITEMS_PER_PAGE);
-  const paginatedDocuments = filteredDocuments.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
-
   return (
     <div className="space-y-6">
       <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.05 }}>
@@ -91,7 +115,7 @@ export default function ArsipPage() {
       </motion.div>
 
       <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }}>
-        <FilterBar filters={filters} onFilterChange={handleFilterChange} totalResults={filteredDocuments.length} />
+        <FilterBar filters={filters} onFilterChange={handleFilterChange} totalResults={totalItems} />
       </motion.div>
 
       <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.15 }}
@@ -124,14 +148,24 @@ export default function ArsipPage() {
           </motion.div>
         )}
 
-        <DocumentTable documents={paginatedDocuments} selectedIds={selectedIds} onToggleSelect={handleToggleSelect} />
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-          totalItems={filteredDocuments.length}
-          itemsPerPage={ITEMS_PER_PAGE}
-        />
+        {loading ? (
+          <div className="p-8 space-y-3">
+            {[0,1,2,3,4].map((i) => (
+              <div key={i} className="h-12 rounded-lg bg-zinc-50 animate-pulse" />
+            ))}
+          </div>
+        ) : (
+          <>
+            <DocumentTable documents={documents} selectedIds={selectedIds} onToggleSelect={handleToggleSelect} />
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              totalItems={totalItems}
+              itemsPerPage={ITEMS_PER_PAGE}
+            />
+          </>
+        )}
       </motion.div>
     </div>
   );

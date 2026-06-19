@@ -1,25 +1,48 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Pencil, Trash2, FolderTree, FolderOpen, FileText, ChevronDown, ChevronRight } from 'lucide-react';
-
-const initialCategories = [
-  { id: 1, nama: 'Surat Masuk', parent: null, count: 420, status: 'Aktif' },
-  { id: 2, nama: 'Surat Keluar', parent: null, count: 315, status: 'Aktif' },
-  { id: 3, nama: 'Penawaran', parent: null, count: 186, status: 'Aktif' },
-  { id: 4, nama: 'Purchase Order', parent: null, count: 142, status: 'Aktif' },
-  { id: 5, nama: 'Invoice', parent: null, count: 98, status: 'Aktif' },
-  { id: 6, nama: 'Kontrak', parent: null, count: 45, status: 'Aktif' },
-  { id: 7, nama: 'Nota Dinas', parent: null, count: 32, status: 'Aktif' },
-  { id: 8, nama: 'MoU', parent: null, count: 15, status: 'Aktif' },
-  { id: 9, nama: 'Lainnya', parent: null, count: 22, status: 'Aktif' },
-];
+import api from '../../../lib/api';
 
 export default function CategoryManagement() {
-  const [categories, setCategories] = useState(initialCategories);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editCategory, setEditCategory] = useState(null);
   const [formData, setFormData] = useState({ nama: '', parent: null });
   const [expandedParent, setExpandedParent] = useState(null);
+  const [saving, setSaving] = useState(false);
+
+  const fetchCategories = async () => {
+    try {
+      const data = await api.getCategories();
+      // Flatten hierarchical response into a flat list
+      const flat = [];
+      const flatten = (items, parentId = null) => {
+        for (const item of items) {
+          flat.push({
+            id: item.id,
+            nama: item.nama || item.name || '',
+            parent: item.parent_id ?? parentId ?? null,
+            count: item.count ?? item.document_count ?? 0,
+            status: item.status || 'Aktif',
+          });
+          if (item.children && item.children.length > 0) {
+            flatten(item.children, item.id);
+          }
+        }
+      };
+      flatten(data);
+      setCategories(flat);
+    } catch (err) {
+      console.error('Failed to fetch categories:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
   const handleAdd = (parentId = null) => {
     setEditCategory(null);
@@ -33,21 +56,52 @@ export default function CategoryManagement() {
     setShowModal(true);
   };
 
-  const handleDelete = (id) => {
-    setCategories(categories.filter((c) => c.id !== id));
+  const handleDelete = async (id) => {
+    try {
+      await api.deleteCategory(id);
+      setCategories(categories.filter((c) => c.id !== id));
+    } catch (err) {
+      console.error('Failed to delete category:', err);
+    }
   };
 
-  const handleSave = () => {
-    if (editCategory) {
-      setCategories(categories.map((c) => (c.id === editCategory.id ? { ...c, ...formData } : c)));
-    } else {
-      setCategories([...categories, { id: Date.now(), ...formData, count: 0, status: 'Aktif' }]);
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      if (editCategory) {
+        const updated = await api.updateCategory(editCategory.id, { nama: formData.nama, parent_id: formData.parent });
+        setCategories(categories.map((c) => (c.id === editCategory.id ? { ...c, nama: formData.nama, parent: formData.parent } : c)));
+      } else {
+        const created = await api.createCategory({ nama: formData.nama, parent_id: formData.parent });
+        setCategories([...categories, {
+          id: created.id,
+          nama: created.nama || formData.nama,
+          parent: created.parent_id ?? formData.parent,
+          count: created.count ?? 0,
+          status: created.status || 'Aktif',
+        }]);
+      }
+      setShowModal(false);
+    } catch (err) {
+      console.error('Failed to save category:', err);
+    } finally {
+      setSaving(false);
     }
-    setShowModal(false);
   };
 
   const parents = categories.filter((c) => c.parent === null);
   const children = (parentId) => categories.filter((c) => c.parent === parentId);
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-white rounded-xl border border-zinc-200/60 p-8">
+          <div className="h-6 w-48 bg-zinc-100 rounded animate-pulse mb-6" />
+          {[0,1,2,3].map((i) => <div key={i} className="h-10 bg-zinc-50 rounded-lg animate-pulse mb-2" />)}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -172,7 +226,9 @@ export default function CategoryManagement() {
             </div>
             <div className="flex items-center justify-end gap-3 mt-8 pt-6 border-t border-zinc-100">
               <button onClick={() => setShowModal(false)} className="px-4 py-2.5 text-sm font-medium text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 rounded-lg transition-all">Batal</button>
-              <motion.button whileTap={{ scale: 0.98 }} onClick={handleSave} className="px-5 py-2.5 bg-[#D49A28] text-white text-sm font-medium rounded-lg hover:bg-[#C08A20] transition-colors">Simpan</motion.button>
+              <motion.button whileTap={{ scale: 0.98 }} onClick={handleSave} disabled={saving} className="px-5 py-2.5 bg-[#D49A28] text-white text-sm font-medium rounded-lg hover:bg-[#C08A20] transition-colors">
+                {saving ? 'Menyimpan...' : 'Simpan'}
+              </motion.button>
             </div>
           </motion.div>
         </div>

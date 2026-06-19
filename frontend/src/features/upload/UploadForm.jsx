@@ -1,9 +1,7 @@
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, FileText, X, CheckCircle2, Loader2, FilePlus, Sparkles } from 'lucide-react';
-
-const ARAH_OPTIONS = ['Masuk', 'Keluar'];
-const JENIS_OPTIONS = ['Surat Masuk', 'Surat Keluar', 'Penawaran', 'Purchase Order', 'Invoice', 'Kontrak', 'Nota Dinas', 'MoU', 'Lainnya'];
+import api from '../../lib/api';
 
 export default function UploadForm({ onUpload }) {
   const [dragActive, setDragActive] = useState(false);
@@ -11,56 +9,64 @@ export default function UploadForm({ onUpload }) {
   const [status, setStatus] = useState('idle'); // idle, uploading, processing, done, error
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState(null);
+  const [errorMsg, setErrorMsg] = useState('');
 
-  const simulateAI = useCallback(() => {
+  const uploadAndClassify = useCallback(async (f) => {
     setStatus('uploading');
     setProgress(0);
+    setErrorMsg('');
 
-    // Simulate upload progress
-    const uploadInterval = setInterval(() => {
+    // Simulate upload progress (since fetch doesn't give progress easily)
+    const progressInterval = setInterval(() => {
       setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(uploadInterval);
-          setStatus('processing');
-          setProgress(0);
-
-          // Simulate AI processing
-          const processInterval = setInterval(() => {
-            setProgress((p) => {
-              if (p >= 100) {
-                clearInterval(processInterval);
-
-                // Generate mock result
-                const arah = ARAH_OPTIONS[Math.floor(Math.random() * ARAH_OPTIONS.length)];
-                const jenis = JENIS_OPTIONS[Math.floor(Math.random() * JENIS_OPTIONS.length)];
-                const confidence = Math.floor(78 + Math.random() * 22);
-
-                setResult({
-                  arah,
-                  jenis,
-                  confidence,
-                  namaPt: 'PT. Almex Bintang Timur',
-                  tanggalSurat: '15 Mei 2025',
-                  extractedText: `Surat ${arah.toLowerCase()} perihal penawaran kerjasama untuk proyek pengembangan sistem informasi. Dokumen ini ditandatangani pada tanggal 15 Mei 2025 oleh direktur PT. Almex Bintang Timur...`,
-                });
-                setStatus('done');
-                return 100;
-              }
-              return p + Math.random() * 15;
-            });
-          }, 200);
-
-          return 100;
+        if (prev >= 90) {
+          clearInterval(progressInterval);
+          return 90;
         }
-        return prev + Math.random() * 20;
+        return prev + Math.random() * 15;
       });
     }, 150);
+
+    try {
+      setStatus('processing');
+      setProgress(0);
+
+      // Restart progress for AI processing phase
+      clearInterval(progressInterval);
+      const processInterval = setInterval(() => {
+        setProgress((prev) => {
+          if (prev >= 90) {
+            clearInterval(processInterval);
+            return 90;
+          }
+          return prev + Math.random() * 10;
+        });
+      }, 200);
+
+      const doc = await api.uploadDocument(f);
+      clearInterval(processInterval);
+      setProgress(100);
+
+      setResult({
+        arah: doc.arah || '',
+        jenis: doc.jenis || '',
+        confidence: doc.confidence != null ? Math.round(doc.confidence * 100) : 0,
+        namaPt: doc.nama_pt || '',
+        tanggalSurat: doc.tanggal_surat || '',
+        extractedText: doc.extracted_text || '',
+      });
+      setStatus('done');
+    } catch (err) {
+      clearInterval(progressInterval);
+      setErrorMsg(err.message || 'Upload gagal');
+      setStatus('error');
+    }
   }, []);
 
   const handleFile = (f) => {
     if (f && f.type === 'application/pdf') {
       setFile(f);
-      simulateAI();
+      uploadAndClassify(f);
     }
   };
 
@@ -76,6 +82,7 @@ export default function UploadForm({ onUpload }) {
     setStatus('idle');
     setProgress(0);
     setResult(null);
+    setErrorMsg('');
   };
 
   return (
@@ -163,6 +170,15 @@ export default function UploadForm({ onUpload }) {
                     <span>Case folding → Stopword removal → Stemming → TF-IDF → Multinomial Naïve Bayes</span>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Error */}
+            {status === 'error' && (
+              <div className="mt-5 p-3 rounded-lg bg-red-50 border border-red-100 flex items-center gap-2">
+                <X className="w-4 h-4 text-red-600" />
+                <span className="text-sm text-red-700">{errorMsg}</span>
+                <button onClick={handleReset} className="ml-auto text-xs text-red-500 underline">Coba lagi</button>
               </div>
             )}
 

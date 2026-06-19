@@ -1,7 +1,11 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Database, Download, HardDrive, FileSpreadsheet, FileText, Archive, Clock } from 'lucide-react';
+import { Database, Download, HardDrive, FileSpreadsheet, FileText, Archive, Clock, Loader2 } from 'lucide-react';
+import api from '../../../lib/api';
 
 export default function BackupExport() {
+  const [exporting, setExporting] = useState(null); // 'csv' | 'excel' | null
+
   const storageStats = {
     totalDocuments: 1245,
     totalSize: '4.8 GB',
@@ -9,6 +13,44 @@ export default function BackupExport() {
     databaseSize: '1.2 GB',
     fileStorage: '3.6 GB',
     lastBackup: '19 Mei 2025, 02:00',
+  };
+
+  const downloadFile = (blob, filename) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExport = async (type) => {
+    setExporting(type);
+    try {
+      let res;
+      if (type === 'csv') {
+        res = await api.exportCSV();
+      } else if (type === 'excel') {
+        res = await api.exportExcel();
+      } else {
+        return;
+      }
+
+      // If the response is a Response object (blob), download it
+      if (res instanceof Response) {
+        const blob = await res.blob();
+        const ext = type === 'csv' ? 'csv' : 'xlsx';
+        downloadFile(blob, `arsip_export.${ext}`);
+      }
+      // If JSON response, it may have a download URL
+      // No action needed for JSON - file was downloaded
+    } catch (err) {
+      console.error(`Export ${type} failed:`, err);
+    } finally {
+      setExporting(null);
+    }
   };
 
   return (
@@ -66,18 +108,24 @@ export default function BackupExport() {
         <h3 className="text-sm font-semibold text-zinc-900 mb-4">Export Data</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[
-            { icon: FileSpreadsheet, label: 'Export CSV', desc: 'Semua data dokumen dalam format CSV', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
-            { icon: FileSpreadsheet, label: 'Export Excel (.xlsx)', desc: 'Format spreadsheet dengan format lengkap', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
-            { icon: FileText, label: 'Export Klasifikasi Report', desc: 'Laporan akurasi AI dan distribusi kategori', color: 'text-[#D49A28]', bg: 'bg-amber-50', border: 'border-amber-100' },
-            { icon: Archive, label: 'Full Database Backup', desc: 'Backup seluruh database + file upload', color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100' },
+            { type: 'csv', icon: FileSpreadsheet, label: 'Export CSV', desc: 'Semua data dokumen dalam format CSV', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
+            { type: 'excel', icon: FileSpreadsheet, label: 'Export Excel (.xlsx)', desc: 'Format spreadsheet dengan format lengkap', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
+            { type: null, icon: FileText, label: 'Export Klasifikasi Report', desc: 'Laporan akurasi AI dan distribusi kategori', color: 'text-[#D49A28]', bg: 'bg-amber-50', border: 'border-amber-100' },
+            { type: null, icon: Archive, label: 'Full Database Backup', desc: 'Backup seluruh database + file upload', color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100' },
           ].map((option, i) => (
             <motion.button
               key={i}
               whileTap={{ scale: 0.98 }}
+              onClick={() => option.type && handleExport(option.type)}
+              disabled={!!exporting}
               className="flex items-start gap-4 p-5 rounded-lg bg-zinc-50 border border-zinc-100 hover:bg-white hover:border-zinc-200 hover:shadow-sm transition-all text-left group"
             >
               <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${option.bg} border ${option.border}`}>
-                <option.icon className={`w-5 h-5 ${option.color}`} />
+                {exporting === option.type ? (
+                  <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
+                ) : (
+                  <option.icon className={`w-5 h-5 ${option.color}`} />
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-zinc-900 group-hover:text-[#D49A28] transition-colors">{option.label}</p>
