@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, FileText, X, CheckCircle2, Loader2, FilePlus, Sparkles } from 'lucide-react';
+import { Upload, FileText, X, CheckCircle2, Loader2, FilePlus, Sparkles, AlertTriangle } from 'lucide-react';
 import api from '../../lib/api';
 
 export default function UploadForm({ onUpload }) {
@@ -10,6 +10,7 @@ export default function UploadForm({ onUpload }) {
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
+  const [manualMeta, setManualMeta] = useState({ namaPt: '', tanggal: '' });
 
   const uploadAndClassify = useCallback(async (f) => {
     setStatus('uploading');
@@ -48,6 +49,7 @@ export default function UploadForm({ onUpload }) {
       setProgress(100);
 
       setResult({
+        id: doc.id,
         arah: doc.arah || '',
         jenis: doc.jenis || '',
         confidence: doc.confidence != null ? Math.round(doc.confidence * 100) : 0,
@@ -85,6 +87,7 @@ export default function UploadForm({ onUpload }) {
     setProgress(0);
     setResult(null);
     setErrorMsg('');
+    setManualMeta({ namaPt: '', tanggal: '' });
   };
 
   return (
@@ -214,24 +217,57 @@ export default function UploadForm({ onUpload }) {
                   </div>
                   <div className="p-4 rounded-lg bg-zinc-50 border border-zinc-100">
                     <p className="text-xs text-zinc-500 mb-1">Perusahaan</p>
-                    <p className="text-sm font-medium text-zinc-900">{result.namaPt}</p>
+                    {result.namaPt ? (
+                      <p className="text-sm font-medium text-zinc-900">{result.namaPt}</p>
+                    ) : (
+                      <input type="text" value={manualMeta.namaPt} onChange={(e) => setManualMeta(m => ({...m, namaPt: e.target.value}))} placeholder="Masukkan nama perusahaan..." className="w-full text-sm font-medium text-zinc-900 bg-white border border-zinc-200 rounded px-2 py-1 outline-none focus:border-amber-400" />
+                    )}
                   </div>
                   <div className="p-4 rounded-lg bg-zinc-50 border border-zinc-100">
                     <p className="text-xs text-zinc-500 mb-1">Tanggal Surat</p>
-                    <p className="text-sm font-medium text-zinc-900">{result.tanggalSurat}</p>
+                    {result.tanggalSurat ? (
+                      <p className="text-sm font-medium text-zinc-900">{result.tanggalSurat}</p>
+                    ) : (
+                      <input type="date" value={manualMeta.tanggal} onChange={(e) => setManualMeta(m => ({...m, tanggal: e.target.value}))} className="w-full text-sm font-medium text-zinc-900 bg-white border border-zinc-200 rounded px-2 py-1 outline-none focus:border-amber-400" />
+                    )}
                   </div>
                 </div>
 
+                {/* OCR Warning */}
+                {(!result.extractedText || result.extractedText.length < 10) && (
+                  <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                    <div className="text-sm text-amber-800">
+                      <p className="font-medium">Teks gagal diekstrak dari dokumen ini.</p>
+                      <p className="text-xs mt-1 text-amber-600">Silakan isi Perusahaan dan Tanggal Surat secara manual di atas, lalu klik Simpan ke Arsip.</p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Extracted Text Preview */}
-                <div className="p-4 rounded-lg bg-zinc-50 border border-zinc-100">
-                  <p className="text-xs text-zinc-500 mb-2">Teks Terekstrak</p>
-                  <p className="text-sm text-zinc-600 leading-relaxed line-clamp-3">{result.extractedText}</p>
-                </div>
+                {result.extractedText && result.extractedText.length >= 10 && (
+                  <div className="p-4 rounded-lg bg-zinc-50 border border-zinc-100">
+                    <p className="text-xs text-zinc-500 mb-2">Teks Terekstrak</p>
+                    <p className="text-sm text-zinc-600 leading-relaxed line-clamp-3">{result.extractedText}</p>
+                  </div>
+                )}
 
                 {/* Actions */}
                 <div className="flex items-center gap-3 pt-2">
                   <motion.button
                     whileTap={{ scale: 0.98 }}
+                    onClick={async () => {
+                      if (manualMeta.namaPt || manualMeta.tanggal) {
+                        try {
+                          await api.updateDocument(result.id, {
+                            nama_pt: manualMeta.namaPt || undefined,
+                            tanggal_surat: manualMeta.tanggal || undefined,
+                          });
+                        } catch (e) { console.error('Update metadata failed:', e); }
+                      }
+                      if (onUpload) onUpload();
+                      handleReset();
+                    }}
                     className="flex items-center gap-2 px-5 py-2.5 bg-[#D49A28] text-white text-sm font-medium rounded-lg hover:bg-[#C08A20] transition-colors"
                   >
                     <FilePlus className="w-4 h-4" />
