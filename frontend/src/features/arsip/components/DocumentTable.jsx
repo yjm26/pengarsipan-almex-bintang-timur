@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FileText, Eye, Pencil, Trash2, ArrowDownLeft, ArrowUpRight, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Download, X } from 'lucide-react';
 import api from '../../../lib/api';
 
@@ -69,8 +69,30 @@ function InlineDetail({ doc, onClose, onUpdate, onDelete }) {
   };
 
   const previewUrl = `${API_URL}/api/documents/${doc.id}/preview`;
+  const [previewSrc, setPreviewSrc] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(true);
   const isMasuk = doc.arah === 'Masuk';
   const akurasi = getAkurasiLabel(doc.confidence);
+
+  // Fetch preview with auth header (img src can't send Authorization)
+  useEffect(() => {
+    let cancelled = false;
+    const token = localStorage.getItem('token');
+    if (!token) { setPreviewLoading(false); return; }
+    
+    fetch(previewUrl, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.blob() : Promise.reject())
+      .then(blob => {
+        if (!cancelled) {
+          setPreviewSrc(URL.createObjectURL(blob));
+          setPreviewLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setPreviewLoading(false);
+      });
+    return () => { cancelled = true; if (previewSrc) URL.revokeObjectURL(previewSrc); };
+  }, [doc.id]);
 
   return (
     <tr>
@@ -80,16 +102,23 @@ function InlineDetail({ doc, onClose, onUpdate, onDelete }) {
             {/* Left: Document Preview */}
             <div className="space-y-3">
               <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Preview Dokumen</div>
-              <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden" style={{ height: 320 }}>
-                <img
-                  src={previewUrl}
-                  alt="Preview"
-                  className="w-full h-full object-contain"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.parentElement.innerHTML = '<div class="flex items-center justify-center h-full text-zinc-300"><div class="text-center"><svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg><p class="text-xs">Preview tidak tersedia</p></div></div>';
-                  }}
-                />
+              <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden relative" style={{ height: 320 }}>
+                {previewLoading ? (
+                  <div className="flex items-center justify-center h-full"><div className="w-6 h-6 border-2 border-zinc-200 border-t-zinc-500 rounded-full animate-spin" /></div>
+                ) : previewSrc ? (
+                  <img
+                    src={previewSrc}
+                    alt="Preview"
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-zinc-300">
+                    <div className="text-center">
+                      <FileText className="w-12 h-12 mx-auto mb-2" />
+                      <p className="text-xs">Preview tidak tersedia</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
