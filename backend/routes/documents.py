@@ -79,13 +79,30 @@ async def upload_document(file: UploadFile = File(...), db: Session = Depends(ge
     PDF_EXT = {".pdf"}
     IMG_EXT = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif"}
     SUPPORTED_EXT = PDF_EXT | IMG_EXT
+    ALLOWED_CONTENT_TYPES = {
+        "application/pdf",
+        "image/jpeg", "image/png", "image/bmp", "image/tiff",
+    }
+    
+    # Validate file extension
     file_ext = os.path.splitext(file.filename)[1].lower()
     if file_ext not in SUPPORTED_EXT:
         raise HTTPException(status_code=400, detail="Hanya file PDF dan gambar (JPG/PNG/BMP/TIFF) yang diizinkan")
+    
+    # Validate content type
+    if file.content_type and file.content_type not in ALLOWED_CONTENT_TYPES:
+        raise HTTPException(status_code=400, detail=f"Tipe file tidak diizinkan: {file.content_type}")
+    
+    # Sanitize filename (remove path separators and special chars)
+    import re
+    safe_filename = re.sub(r'[^\w\s\-.]', '', os.path.basename(file.filename))
+    safe_filename = re.sub(r'\s+', '_', safe_filename.strip())
+    if not safe_filename:
+        safe_filename = "document.pdf"
 
     # Save file
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    safe_name = f"{timestamp}_{file.filename}"
+    safe_name = f"{timestamp}_{safe_filename}"
     file_path = os.path.join(UPLOAD_DIR, safe_name)
     with open(file_path, "wb") as f:
         content = await file.read()
