@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, FileText, X, CheckCircle2, Loader2, FilePlus, AlertTriangle, ChevronDown, ChevronUp, Pencil } from 'lucide-react';
 import api from '../../lib/api';
@@ -128,13 +128,15 @@ export default function UploadForm({ onUpload }) {
       const combined = [...prev, ...newQueue].slice(0, MAX_FILES);
       return combined;
     });
+  }, []);
 
-    setTimeout(() => {
-      if (!processing) {
-        processQueue();
-      }
-    }, 100);
-  }, [processing, processQueue]);
+  // Auto-process pending files when queue changes
+  useEffect(() => {
+    const hasPending = queue.some(item => item.status === 'pending');
+    if (hasPending && !processing) {
+      processQueue();
+    }
+  }, [queue, processing, processQueue]);
 
   const handleDrop = (e) => {
     e.preventDefault();
