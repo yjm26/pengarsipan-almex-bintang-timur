@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, Eye, CheckCircle2, AlertTriangle, XCircle, Pencil, Trash2, ArrowDownLeft, ArrowUpRight, X, ChevronRight, Edit3, Download, Check, Loader2 } from 'lucide-react';
+import { api } from '../../../lib/api';
 
 function getConfidenceBadge(score) {
   if (score >= 90) {
@@ -55,43 +56,18 @@ function DetailPanel({ doc, onClose, onCorrect }) {
           {/* LEFT: PDF Preview */}
           <div className="flex-1 bg-zinc-100 border-r border-zinc-200 flex flex-col">
             <div className="flex-1 flex flex-col items-center justify-center p-8 overflow-y-auto">
-              {/* PDF Page Mock */}
-              <div className="w-full max-w-[420px] bg-white rounded-lg shadow-lg border border-zinc-200 overflow-hidden">
-                {/* Fake document header */}
-                <div className="px-6 pt-6 pb-4 border-b border-zinc-100">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-10 h-10 rounded bg-[#D49A28]/10 flex items-center justify-center">
-                      <span className="text-xs font-bold text-[#D49A28]">ABT</span>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[10px] text-zinc-400 uppercase tracking-wide">{doc.tanggalSurat}</p>
-                    </div>
-                  </div>
-                  <div className="w-24 h-2 bg-zinc-800 rounded mb-2" />
-                  <div className="w-32 h-1.5 bg-zinc-400 rounded" />
-                </div>
-                {/* Fake body lines */}
-                <div className="px-6 py-4 space-y-2">
-                  <div className="w-full h-1.5 bg-zinc-200 rounded" />
-                  <div className="w-[95%] h-1.5 bg-zinc-200 rounded" />
-                  <div className="w-[80%] h-1.5 bg-zinc-200 rounded" />
-                  <div className="w-full h-1.5 bg-zinc-200 rounded" />
-                  <div className="w-[70%] h-1.5 bg-zinc-200 rounded" />
-                  <div className="w-full h-1.5 bg-zinc-200 rounded" />
-                  <div className="w-[90%] h-1.5 bg-zinc-200 rounded" />
-                  <div className="w-[60%] h-1.5 bg-zinc-200 rounded" />
-                  <div className="w-full h-1.5 bg-zinc-200 rounded" />
-                  <div className="w-[85%] h-1.5 bg-zinc-200 rounded" />
-                  <div className="w-full h-1.5 bg-zinc-200 rounded" />
-                  <div className="w-[75%] h-1.5 bg-zinc-200 rounded" />
-                </div>
-                {/* Fake signature area */}
-                <div className="px-6 pb-6 pt-4 flex justify-end">
-                  <div className="text-center">
-                    <div className="w-20 h-8 border-b border-zinc-400 mb-1" />
-                    <div className="w-16 h-1.5 bg-zinc-400 rounded mx-auto" />
-                  </div>
-                </div>
+              <img
+                src={`${api.baseUrl}/api/documents/${doc.id}/preview`}
+                alt={doc.nama}
+                className="max-w-full max-h-[600px] rounded-lg shadow-lg border border-zinc-200 object-contain"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
+              />
+              <div className="hidden flex-col items-center justify-center text-zinc-400">
+                <FileText className="w-12 h-12 mb-2" />
+                <p className="text-sm">Preview tidak tersedia</p>
               </div>
             </div>
             {/* Preview footer */}
@@ -100,7 +76,7 @@ function DetailPanel({ doc, onClose, onCorrect }) {
                 <p className="text-sm font-medium text-zinc-900 truncate max-w-[200px]">{doc.nama}</p>
                 <p className="text-xs text-zinc-400">{doc.ukuran} · PDF Document</p>
               </div>
-              <button className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-zinc-600 hover:text-[#D49A28] hover:bg-[#D49A28]/5 rounded-lg border border-zinc-200/60 hover:border-[#D49A28]/30 transition-all">
+              <button onClick={() => window.open(`${api.baseUrl}/api/documents/${doc.id}/download`, '_blank')} className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-zinc-600 hover:text-[#D49A28] hover:bg-[#D49A28]/5 rounded-lg border border-zinc-200/60 hover:border-[#D49A28]/30 transition-all">
                 <Download className="w-3.5 h-3.5" />
                 Unduh
               </button>

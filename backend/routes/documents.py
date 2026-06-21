@@ -3,7 +3,7 @@ import re
 import shutil
 from datetime import datetime, timedelta, timezone
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query, Response
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from database import get_db
@@ -241,6 +241,30 @@ def download_document(doc_id: int, db: Session = Depends(get_db), current_user: 
     }
     media_type = media_map.get(ext, "application/octet-stream")
     return FileResponse(doc.file_path, filename=doc.nama_file, media_type=media_type)
+
+@router.get("/{doc_id}/preview")
+def preview_document(doc_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """Return document preview as image (first page for PDF, original for images)."""
+    import fitz
+    import io
+    doc = db.query(Document).filter(Document.id == doc_id).first()
+    if not doc or not os.path.exists(doc.file_path):
+        raise HTTPException(status_code=404, detail="File tidak ditemukan")
+    ext = os.path.splitext(doc.file_path)[1].lower()
+    if ext == ".pdf":
+        # Convert first page to PNG
+        pdf = fitz.open(doc.file_path)
+        page = pdf[0]
+        pix = page.get_pixmap(dpi=150)
+        img_bytes = pix.tobytes("png")
+        pdf.close()
+        return Response(content=img_bytes, media_type="image/png")
+    elif ext in (".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif"):
+        media_map = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".bmp": "image/bmp", ".tiff": "image/tiff", ".tif": "image/tiff"}
+        with open(doc.file_path, "rb") as f:
+            return Response(content=f.read(), media_type=media_map.get(ext, "image/png"))
+    else:
+        raise HTTPException(status_code=400, detail="Format tidak mendukung preview")
 
 @router.put("/{doc_id}", response_model=DocumentOut)
 def update_document(doc_id: int, data: DocumentUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
