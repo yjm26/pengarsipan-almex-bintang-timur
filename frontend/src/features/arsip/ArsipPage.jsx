@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
+import { FileText, Trash2, Tag, Download, X } from 'lucide-react';
 import DocumentTable from './components/DocumentTable';
 import api from '../../lib/api';
 
 export default function ArsipPage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -18,7 +19,9 @@ export default function ArsipPage() {
         nama_file: doc.nama_file || '',
         nama_pt: doc.nama_pt || '',
         tanggal_surat: doc.tanggal_surat || '',
-        tanggalSurat: doc.tanggal_surat ? new Date(doc.tanggal_surat).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '',
+        tanggalSurat: doc.tanggal_surat
+          ? new Date(doc.tanggal_surat).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+          : '',
         tanggal_unggah: doc.tanggal_unggah || '',
         arah: doc.arah || '',
         jenis: doc.jenis || '',
@@ -56,8 +59,8 @@ export default function ArsipPage() {
 
   const handleUpdate = async (id, data) => {
     try {
-      await api.updateDocument(id, data);
-      setDocuments(prev => prev.map(d => d.id === id ? { ...d, ...data } : d));
+      const res = await api.updateDocument(id, data);
+      setDocuments(prev => prev.map(d => d.id === id ? { ...d, ...res } : d));
     } catch (err) {
       console.error('Gagal update:', err);
     }
