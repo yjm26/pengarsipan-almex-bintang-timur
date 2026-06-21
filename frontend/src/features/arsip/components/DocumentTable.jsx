@@ -94,7 +94,21 @@ function InlineDetail({ doc, onClose, onUpdate, onDelete }) {
     return () => { cancelled = true; if (previewSrc) URL.revokeObjectURL(previewSrc); };
   }, [doc.id]);
 
+  const [zoomOpen, setZoomOpen] = useState(false);
+
   return (
+    <>
+    {zoomOpen && previewSrc && (
+      <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setZoomOpen(false)}>
+        <div className="relative max-w-[95vw] max-h-[95vh]" onClick={(e) => e.stopPropagation()}>
+          <img src={previewSrc} alt="Preview" className="max-w-full max-h-[90vh] object-contain" />
+          <button onClick={() => setZoomOpen(false)} className="absolute top-2 right-2 w-8 h-8 bg-white rounded-full flex items-center justify-center text-zinc-600 hover:text-zinc-900 shadow-lg">✕</button>
+          <a href={`${API_URL}/api/documents/${doc.id}/download`} target="_blank" rel="noopener" className="absolute bottom-2 right-2 px-3 py-1.5 bg-white rounded-lg text-xs font-medium text-zinc-600 hover:text-zinc-900 shadow-lg">
+            <Download className="w-3.5 h-3.5 inline mr-1" /> Unduh
+          </a>
+        </div>
+      </div>
+    )}
     <tr>
       <td colSpan={7} className="p-0">
         <div className="bg-zinc-50/50 border-t border-b border-zinc-200 px-6 py-4">
@@ -102,7 +116,7 @@ function InlineDetail({ doc, onClose, onUpdate, onDelete }) {
             {/* Left: Document Preview */}
             <div className="space-y-3">
               <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Preview Dokumen</div>
-              <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden relative" style={{ height: 320 }}>
+              <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden relative cursor-pointer" style={{ height: 320 }} onClick={() => previewSrc && setZoomOpen(true)}>
                 {previewLoading ? (
                   <div className="flex items-center justify-center h-full"><div className="w-6 h-6 border-2 border-zinc-200 border-t-zinc-500 rounded-full animate-spin" /></div>
                 ) : previewSrc ? (
@@ -118,6 +132,9 @@ function InlineDetail({ doc, onClose, onUpdate, onDelete }) {
                       <p className="text-xs">Preview tidak tersedia</p>
                     </div>
                   </div>
+                )}
+                {previewSrc && (
+                  <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/50 rounded text-white text-[10px]">Klik untuk zoom</div>
                 )}
               </div>
             </div>
@@ -257,6 +274,7 @@ function InlineDetail({ doc, onClose, onUpdate, onDelete }) {
         </div>
       </td>
     </tr>
+    </>
   );
 }
 
