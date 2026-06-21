@@ -1,312 +1,177 @@
 import { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FileText, Eye, CheckCircle2, AlertTriangle, XCircle, Pencil, Trash2, ArrowDownLeft, ArrowUpRight, X, ChevronRight, Edit3, Download, Check, Loader2 } from 'lucide-react';
-import { api } from '../../../lib/api';
+import { Search, Filter, ChevronLeft, ChevronRight, Eye, Pencil, Trash2, Download, ArrowDownLeft, ArrowUpRight, X, ChevronDown, RefreshCw } from 'lucide-react';
+import FilterBar from './FilterBar';
+import DetailPanel from './DetailPanel';
 
-const MONTHS_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-function formatDate(str) {
-  if (!str) return '-';
-  // Handle ISO strings like "2024-01-15T00:00:00" or "2024-01-15"
-  const clean = String(str).split('T')[0];
-  const parts = clean.split('-');
-  if (parts.length === 3) {
-    const [y, m, d] = parts;
-    return `${parseInt(d)} ${MONTHS_ID[parseInt(m) - 1]} ${y}`;
-  }
-  // If it's already formatted (e.g. "15 Januari 2024"), return as-is
-  return str;
-}
+const PAGE_SIZE = 10;
 
-function getConfidenceBadge(score) {
-  if (score >= 75) {
-    return { bg: '#00AA00', border: '#009900', text: 'text-white', icon: CheckCircle2, label: 'Akurat' };
-  }
-  if (score >= 50) {
-    return { bg: '#D4A000', border: '#B88600', text: 'text-white', icon: AlertTriangle, label: 'Cukup' };
-  }
-  return { bg: '#DD0000', border: '#BB0000', text: 'text-white', icon: XCircle, label: 'Tidak Akurat' };
-}
-
-/* ===== DETAIL PANEL (Feature 1) ===== */
-function DetailPanel({ doc, onClose, onCorrect }) {
-  const [correcting, setCorrecting] = useState(false);
-  const [correction, setCorrection] = useState({ arah: doc.arah, jenis: doc.jenis });
-  const [saving, setSaving] = useState(false);
-  const badge = getConfidenceBadge(doc.confidence);
-  const BadgeIcon = badge.icon;
-
-  const handleCorrect = () => {
-    setSaving(true);
-    setTimeout(() => {
-      onCorrect(doc.id, correction);
-      setSaving(false);
-      setCorrecting(false);
-    }, 800);
-  };
-
-  return (
-    <AnimatePresence>
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50" onClick={onClose} />
-      <motion.div
-        initial={{ x: '100%' }}
-        animate={{ x: 0 }}
-        exit={{ x: '100%' }}
-        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="fixed right-0 top-0 h-screen w-full xl:w-[960px] bg-white border-l border-zinc-200/60 z-50 shadow-2xl flex flex-col overflow-hidden"
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <button onClick={onClose} className="p-2 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition-all">
-              <ChevronRight className="w-5 h-5" />
-            </button>
-            <h2 className="text-base font-semibold tracking-tight text-zinc-900">Detail Dokumen</h2>
-          </div>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-zinc-100 text-zinc-400 transition-all">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Two-column layout: Preview (left) | Details (right) */}
-        <div className="flex-1 flex overflow-hidden">
-          {/* LEFT: PDF Preview */}
-          <div className="flex-1 bg-zinc-100 border-r border-zinc-200 flex flex-col">
-            <div className="flex-1 flex flex-col items-center justify-center p-8 overflow-y-auto">
-              <img
-                src={`${api.baseUrl}/api/documents/${doc.id}/preview`}
-                alt={doc.nama}
-                className="max-w-full max-h-[600px] rounded-lg shadow-lg border border-zinc-200 object-contain"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                  e.target.nextSibling.style.display = 'flex';
-                }}
-              />
-              <div className="hidden flex-col items-center justify-center text-zinc-400">
-                <FileText className="w-12 h-12 mb-2" />
-                <p className="text-sm">Preview tidak tersedia</p>
-              </div>
-            </div>
-            {/* Preview footer */}
-            <div className="px-6 py-3 bg-white border-t border-zinc-100 flex items-center justify-between flex-shrink-0">
-              <div>
-                <p className="text-sm font-medium text-zinc-900 truncate max-w-[200px]">{doc.nama}</p>
-                <p className="text-xs text-zinc-400">{doc.ukuran} · PDF Document</p>
-              </div>
-              <button onClick={() => window.open(`${api.baseUrl}/api/documents/${doc.id}/download`, '_blank')} className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-zinc-600 hover:text-[#D49A28] hover:bg-[#D49A28]/5 rounded-lg border border-zinc-200/60 hover:border-[#D49A28]/30 transition-all">
-                <Download className="w-3.5 h-3.5" />
-                Unduh
-              </button>
-            </div>
-          </div>
-
-          {/* RIGHT: Details sidebar */}
-          <div className="w-[340px] flex-shrink-0 overflow-y-auto bg-white">
-            <div className="p-5 space-y-5">
-              {/* File Info */}
-              <div className="flex items-start gap-3 p-3 rounded-xl bg-zinc-50 border border-zinc-100">
-                <div className="w-9 h-9 rounded-lg bg-red-50 border border-red-100 flex items-center justify-center flex-shrink-0">
-                  <FileText className="w-4 h-4 text-red-400" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-zinc-900 truncate">{doc.nama}</p>
-                  <p className="text-xs text-zinc-400 mt-0.5">Diunggah {formatDate(doc.tanggalUnggah)}</p>
-                </div>
-              </div>
-
-              {/* Metadata */}
-              <div className="space-y-2">
-                <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Metadata</h3>
-                {[
-                  { label: 'Perusahaan', value: doc.namaPt },
-                  { label: 'Tanggal Surat', value: formatDate(doc.tanggalSurat) },
-                  { label: 'Status', value: doc.status === 'verified' ? 'Terverifikasi' : doc.status === 'review' ? 'Perlu Review' : 'Pending' },
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center justify-between py-2 border-b border-zinc-50 last:border-0">
-                    <span className="text-xs text-zinc-500">{item.label}</span>
-                    <span className="text-sm font-medium text-zinc-900 text-right">{item.value}</span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Classification Result */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Hasil Klasifikasi</h3>
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-semibold text-white" style={{ backgroundColor: badge.bg }}>
-                    <BadgeIcon className="w-3 h-3" />
-                    {badge.label}
-                  </span>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-zinc-200">
-                    <span className="text-xs text-zinc-600">Arah</span>
-                    <div className="flex items-center gap-1.5">
-                      {doc.arah === 'Masuk' ? <ArrowDownLeft className="w-3.5 h-3.5" style={{ color: '#00AA00' }} /> : <ArrowUpRight className="w-3.5 h-3.5" style={{ color: '#DD0000' }} />}
-                      <span className="text-sm font-semibold text-zinc-900">{doc.arah}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-zinc-200">
-                    <span className="text-xs text-zinc-600">Jenis</span>
-                    <span className="text-sm font-semibold text-zinc-900">{doc.jenis}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Correction */}
-              <div className="space-y-2">
-                <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Koreksi</h3>
-                {!correcting ? (
-                  <button onClick={() => setCorrecting(true)} className="flex items-center justify-center gap-2 w-full px-4 py-2.5 text-sm font-medium text-zinc-600 hover:text-[#D49A28] hover:bg-[#D49A28]/5 rounded-lg transition-all border border-zinc-200/60 hover:border-[#D49A28]/30">
-                    <Edit3 className="w-4 h-4" />
-                    Koreksi Klasifikasi
-                  </button>
-                ) : (
-                  <div className="space-y-3 p-3 rounded-lg border border-[#D49A28]/30 bg-[#D49A28]/5">
-                    <div>
-                      <label className="block text-xs font-medium text-zinc-700 mb-1.5">Arah</label>
-                      <select value={correction.arah} onChange={(e) => setCorrection({ ...correction, arah: e.target.value })} className="w-full px-3 py-2 text-sm bg-white border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D49A28]/20">
-                        <option value="Masuk">Surat Masuk</option>
-                        <option value="Keluar">Surat Keluar</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-zinc-700 mb-1.5">Jenis</label>
-                      <select value={correction.jenis} onChange={(e) => setCorrection({ ...correction, jenis: e.target.value })} className="w-full px-3 py-2 text-sm bg-white border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D49A28]/20">
-                        {['Surat Masuk', 'Surat Keluar', 'Penawaran', 'Purchase Order', 'Invoice', 'Kontrak', 'Nota Dinas', 'MoU', 'Lainnya'].map((j) => (
-                          <option key={j} value={j}>{j}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button onClick={handleCorrect} disabled={saving} className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[#D49A28] text-white text-xs font-medium rounded-lg hover:bg-[#C08A20] transition-colors disabled:opacity-50">
-                        {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
-                        Simpan
-                      </button>
-                      <button onClick={() => setCorrecting(false)} className="px-3 py-2 text-xs font-medium text-zinc-500 hover:text-zinc-700 rounded-lg hover:bg-zinc-100 transition-all">Batal</button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-    </AnimatePresence>
-  );
-}
-
-/* ===== MAIN TABLE ===== */
-export default function DocumentTable({ documents, selectedIds, onToggleSelect }) {
+export default function DocumentTable({ documents, loading, onRefresh, onDelete, onBulkDelete, onUpdate }) {
+  const [search, setSearch] = useState('');
+  const [filters, setFilters] = useState({ arah: '', jenis: '', confidence: '' });
+  const [page, setPage] = useState(1);
+  const [selected, setSelected] = useState([]);
+  const [expanded, setExpanded] = useState(false);
   const [detailDoc, setDetailDoc] = useState(null);
 
-  const handleCorrect = (docId, correction) => {
-    console.log('Corrected:', docId, correction);
+  const filtered = useMemo(() => {
+    let data = [...documents];
+    if (search) {
+      const q = search.toLowerCase();
+      data = data.filter(d => d.nama_file.toLowerCase().includes(q) || (d.nama_pt || '').toLowerCase().includes(q));
+    }
+    if (filters.arah) data = data.filter(d => d.arah === filters.arah);
+    if (filters.jenis) data = data.filter(d => d.jenis === filters.jenis);
+    if (filters.confidence === '90') data = data.filter(d => d.confidence >= 0.9);
+    else if (filters.confidence === '75') data = data.filter(d => d.confidence >= 0.75 && d.confidence < 0.9);
+    else if (filters.confidence === 'low') data = data.filter(d => d.confidence < 0.75);
+    return data;
+  }, [documents, search, filters]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const hasActiveFilters = filters.arah || filters.jenis || filters.confidence;
+
+  const handleFilterChange = (key, val) => {
+    if (key === 'clear') setFilters({ arah: '', jenis: '', confidence: '' });
+    else setFilters(prev => ({ ...prev, [key]: val }));
+    setPage(1);
   };
 
-  if (documents.length === 0) {
+  const toggleSelectAll = () => {
+    const ids = paginated.map(d => d.id);
+    setSelected(prev => prev.length === ids.length ? [] : ids);
+  };
+
+  const toggleSelect = (id) => {
+    setSelected(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+
+  const handleBulkDelete = async () => {
+    if (!selected.length || !confirm(`Hapus ${selected.length} dokumen?`)) return;
+    try {
+      await onBulkDelete(selected);
+      setSelected([]);
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const getBadge = (confidence) => {
+    const pct = Math.round(confidence * 100);
+    if (pct >= 75) return { bg: '#00AA00', label: 'Akurat' };
+    if (pct >= 50) return { bg: '#D4A000', label: 'Cukup' };
+    return { bg: '#DD0000', label: 'Tidak Akurat' };
+  };
+
+  const handleUpdate = async (id, data) => {
+    await onUpdate(id, data);
+    setDetailDoc(prev => prev && prev.id === id ? { ...prev, ...data } : prev);
+  };
+
+  if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-zinc-100 border border-zinc-200/60 flex items-center justify-center mb-4">
-          <FileText className="w-7 h-7 text-zinc-300" />
-        </div>
-        <p className="text-sm font-medium text-zinc-600">Tidak ada dokumen ditemukan</p>
-        <p className="text-xs text-zinc-400 mt-1">Coba ubah filter atau kata kunci pencarian</p>
+      <div className="bg-white rounded-xl border border-zinc-200/60 p-12 text-center">
+        <RefreshCw className="w-6 h-6 text-zinc-400 animate-spin mx-auto mb-3" />
+        <p className="text-sm text-zinc-500">Memuat dokumen...</p>
       </div>
     );
   }
 
-  const allSelected = documents.length > 0 && documents.every((d) => selectedIds?.has(d.id));
-
   return (
-    <>
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-zinc-100">
-              <th className="text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider px-8 py-3 w-12">
-                <input type="checkbox" checked={allSelected} onChange={() => {
-                  documents.forEach((d) => {
-                    if (allSelected) onToggleSelect?.(d.id, false);
-                    else onToggleSelect?.(d.id, true);
-                  });
-                }} className="w-4 h-4 rounded border-zinc-300 text-[#D49A28] focus:ring-[#D49A28]/20 cursor-pointer" />
-              </th>
-              <th className="text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider px-8 py-3">File</th>
-              <th className="text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider px-8 py-3 hidden lg:table-cell">Perusahaan</th>
-              <th className="text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider px-8 py-3 hidden sm:table-cell">Tanggal</th>
-              <th className="text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider px-8 py-3">Arah</th>
-              <th className="text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider px-8 py-3">Kategori</th>
-              <th className="text-right text-xs font-semibold text-zinc-500 uppercase tracking-wider px-8 py-3">Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {documents.map((doc, i) => {
-              const badge = getConfidenceBadge(doc.confidence);
-              const BadgeIcon = badge.icon;
-              const isMasuk = doc.arah === 'Masuk';
-              const isSelected = selectedIds?.has(doc.id);
+    <div className="flex gap-4">
+      <div className="flex-1 min-w-0">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3 flex-1">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+              <input type="text" placeholder="Cari dokumen..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-zinc-200/60 bg-zinc-50/50 outline-none focus:border-zinc-400 transition-all" />
+            </div>
+            <button onClick={() => setExpanded(!expanded)} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition-all ${expanded ? 'border-zinc-400 bg-zinc-100' : 'border-zinc-200/60 bg-zinc-50/50 hover:bg-zinc-100'} ${hasActiveFilters ? 'border-zinc-900 bg-zinc-900 text-white hover:bg-zinc-800' : 'text-zinc-600'}`}>
+              <Filter className="w-3.5 h-3.5" /> Filter {hasActiveFilters && `(${Object.values(filters).filter(Boolean).length})`}
+            </button>
+            {selected.length > 0 && (
+              <button onClick={handleBulkDelete} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 border border-red-100 transition-all">
+                <Trash2 className="w-3.5 h-3.5" /> Hapus ({selected.length})
+              </button>
+            )}
+          </div>
+          <button onClick={onRefresh} className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition-all"><RefreshCw className="w-4 h-4" /></button>
+        </div>
 
-              return (
-                <motion.tr
-                  key={doc.id}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.03 }}
-                  className={`border-b border-zinc-50 last:border-0 transition-colors group ${
-                    isSelected ? 'bg-[#D49A28]/5' : 'hover:bg-zinc-50/50'
-                  }`}
-                >
-                  <td className="px-8 py-3.5">
-                    <input type="checkbox" checked={isSelected} onChange={(e) => onToggleSelect?.(doc.id, e.target.checked)} className="w-4 h-4 rounded border-zinc-300 text-[#D49A28] focus:ring-[#D49A28]/20 cursor-pointer" />
-                  </td>
-                  <td className="px-8 py-3.5">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-zinc-100 border border-zinc-200/60 flex items-center justify-center flex-shrink-0 group-hover:bg-zinc-200/60 transition-colors">
-                        <FileText className="w-4 h-4 text-zinc-500" />
+        {/* Filter */}
+        {expanded && <FilterBar filters={filters} onFilterChange={handleFilterChange} />}
+
+        {/* Info */}
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs text-zinc-500">{filtered.length} dokumen ditemukan</p>
+          {selected.length > 0 && <button onClick={() => setSelected([])} className="text-xs text-zinc-400 hover:text-zinc-600">Batal pilih</button>}
+        </div>
+
+        {/* Table */}
+        <div className="bg-white rounded-xl border border-zinc-200/60 overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-zinc-100">
+                <th className="pl-3 pr-1 py-2 w-6"><input type="checkbox" checked={selected.length === paginated.length && paginated.length > 0} onChange={toggleSelectAll} className="rounded border-zinc-300 w-3 h-3" /></th>
+                <th className="text-left px-2 py-2 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">File</th>
+                <th className="text-left px-2 py-2 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Perusahaan</th>
+                <th className="text-left px-2 py-2 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Tanggal</th>
+                <th className="text-left px-2 py-2 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Arah</th>
+                <th className="text-left px-2 py-2 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Kategori</th>
+                <th className="w-10"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {paginated.length === 0 ? (
+                <tr><td colSpan={7} className="text-center py-12"><p className="text-sm text-zinc-400">{hasActiveFilters ? 'Tidak ada dokumen yang cocok' : 'Belum ada dokumen'}</p></td></tr>
+              ) : paginated.map((doc) => {
+                const isMasuk = doc.arah === 'Masuk';
+                return (
+                  <tr key={doc.id} className={`border-b border-zinc-50 hover:bg-zinc-50/50 cursor-pointer transition-colors ${selected.includes(doc.id) ? 'bg-zinc-50' : ''}`} onClick={() => setDetailDoc(doc)}>
+                    <td className="pl-3 pr-1 py-1.5" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selected.includes(doc.id)} onChange={() => toggleSelect(doc.id)} className="rounded border-zinc-300 w-3 h-3" /></td>
+                    <td className="px-2 py-1.5"><div className="flex items-center gap-1.5 min-w-0"><div className="w-5 h-5 rounded flex items-center justify-center bg-zinc-100 flex-shrink-0"><Download className="w-2.5 h-2.5 text-zinc-500" /></div><div className="min-w-0"><p className="text-[11px] font-medium text-zinc-900 truncate max-w-[140px]">{doc.nama_file}</p><p className="text-[9px] text-zinc-400">{doc.ukuran ? `${(doc.ukuran / 1024 / 1024).toFixed(1)} MB` : ''}</p></div></div></td>
+                    <td className="px-2 py-1.5 text-[11px] text-zinc-600 max-w-[120px] truncate">{doc.nama_pt || <span className="text-zinc-300">-</span>}</td>
+                    <td className="px-2 py-1.5 text-[11px] text-zinc-600 whitespace-nowrap">{doc.tanggalSurat || <span className="text-zinc-300">-</span>}</td>
+                    <td className="px-2 py-1.5">
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium text-white" style={{ backgroundColor: isMasuk ? '#00AA00' : '#DD0000' }}>
+                        {isMasuk ? <ArrowDownLeft className="w-2.5 h-2.5" /> : <ArrowUpRight className="w-2.5 h-2.5" />}
+                        {doc.arah}
+                      </span>
+                    </td>
+                    <td className="px-2 py-1.5 text-[11px] text-zinc-600 max-w-[100px] truncate">{doc.jenis}</td>
+                    <td className="pr-3 py-1.5" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 hover:opacity-100 transition-opacity">
+                        <button onClick={() => setDetailDoc(doc)} className="p-1 rounded hover:bg-blue-50 text-zinc-400 hover:text-blue-600 transition-all" title="Detail"><Eye className="w-3 h-3" /></button>
+                        <button onClick={() => onDelete(doc.id)} className="p-1 rounded hover:bg-red-50 text-zinc-400 hover:text-red-600 transition-all" title="Hapus"><Trash2 className="w-3 h-3" /></button>
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-zinc-900 truncate max-w-[220px]">{doc.nama}</p>
-                        <p className="text-xs text-zinc-400 mt-0.5">{doc.ukuran}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-8 py-3.5 hidden lg:table-cell">
-                    <span className="text-sm text-zinc-600 truncate max-w-[180px] block">{doc.namaPt}</span>
-                  </td>
-                  <td className="px-8 py-3.5 hidden sm:table-cell">
-                    <span className="text-sm text-zinc-600 whitespace-nowrap">{formatDate(doc.tanggalSurat)}</span>
-                  </td>
-                  <td className="px-8 py-3.5">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium text-white" style={{ backgroundColor: isMasuk ? '#00AA00' : '#DD0000' }}>
-                      {isMasuk ? <ArrowDownLeft className="w-3.5 h-3.5" /> : <ArrowUpRight className="w-3.5 h-3.5" />}
-                      {doc.arah}
-                    </span>
-                  </td>
-                  <td className="px-8 py-3.5">
-                    <span className="text-sm text-zinc-700">{doc.jenis}</span>
-                  </td>
-                  <td className="px-8 py-3.5 text-right">
-                    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => setDetailDoc(doc)} className="p-2 rounded-lg hover:bg-blue-50 text-zinc-400 hover:text-blue-600 transition-all" title="Lihat Detail">
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button className="p-2 rounded-lg hover:bg-amber-50 text-zinc-400 hover:text-amber-600 transition-all" title="Edit">
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      <button className="p-2 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-600 transition-all" title="Hapus">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </motion.tr>
-              );
-            })}
-          </tbody>
-        </table>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-3">
+            <p className="text-xs text-zinc-500">Halaman {page} dari {totalPages}</p>
+            <div className="flex items-center gap-1">
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 disabled:opacity-30"><ChevronLeft className="w-4 h-4" /></button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                <button key={p} onClick={() => setPage(p)} className={`w-7 h-7 text-xs rounded-lg ${p === page ? 'bg-zinc-900 text-white' : 'hover:bg-zinc-100 text-zinc-600'}`}>{p}</button>
+              ))}
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 disabled:opacity-30"><ChevronRight className="w-4 h-4" /></button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Detail Panel */}
-      {detailDoc && <DetailPanel doc={detailDoc} onClose={() => setDetailDoc(null)} onCorrect={handleCorrect} />}
-    </>
+      {/* Detail panel */}
+      {detailDoc && (
+        <DetailPanel doc={detailDoc} onClose={() => setDetailDoc(null)} onUpdate={handleUpdate} onDelete={(id) => { onDelete(id); setDetailDoc(null); }} />
+      )}
+    </div>
   );
 }
