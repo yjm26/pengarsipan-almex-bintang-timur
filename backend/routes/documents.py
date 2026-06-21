@@ -18,30 +18,60 @@ UPLOAD_DIR = "/root/pengarsipan-almex-bintang-timur/backend/uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 def extract_company_name(text: str) -> str:
+    if not text:
+        return ""
+    # Pattern 1: PT/CV followed by name
     patterns = [
-        r'(?:PT|CV|PT\.|CV\.)\s+([A-Z][A-Za-z\s&.]+?)(?:\n|,|\s{2,})',
+        r'(?:PT|CV|PT\.|CV\.)\s*([A-Z][A-Za-z\s&.]+?)(?:\n|,|\s{2,}|JL\.|Jl\.|jl\.)',
         r'(?:kepada|yth\.?|ditujukan\s+kepada)\s*:?\s*(?:PT|CV)\s*\.?\s*([A-Za-z\s&.]+?)(?:\n|,)',
+        r'(?:PT|CV)\s*\.?\s*([A-Z][A-Za-z\s&.]+?)(?:\s*[-,]|\s*$)',
     ]
     for pat in patterns:
         m = re.search(pat, text, re.IGNORECASE)
         if m:
-            return m.group(0).strip()[:200]
+            full_match = m.group(0).strip()
+            # Clean up: remove trailing whitespace, commas, etc
+            full_match = re.sub(r'\s+$', '', full_match)
+            return full_match[:200]
     return ""
 
 def extract_date(text: str) -> Optional[datetime]:
+    if not text:
+        return None
     months = {
         'januari': 1, 'februari': 2, 'maret': 3, 'april': 4, 'mei': 5, 'juni': 6,
-        'juli': 7, 'agustus': 8, 'september': 9, 'oktober': 10, 'november': 11, 'desember': 12
+        'juli': 7, 'agustus': 8, 'september': 9, 'oktober': 10, 'november': 11, 'desember': 12,
+        'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'jun': 6,
+        'jul': 7, 'agu': 8, 'sep': 9, 'okt': 10, 'nov': 11, 'des': 12
     }
-    m = re.search(r'(\d{1,2})\s+(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\s+(\d{4})', text.lower())
+    # Pattern 1: "12 Januari 2021" or "12 Jan 2021"
+    m = re.search(r'(\d{1,2})\s+(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember|jan|feb|mar|apr|jun|jul|agu|sep|okt|nov|des)\s+(\d{4})', text.lower())
     if m:
-        return datetime(int(m.group(3)), months[m.group(2)], int(m.group(1)))
+        try:
+            return datetime(int(m.group(3)), months[m.group(2)], int(m.group(1)))
+        except (ValueError, KeyError):
+            pass
+    # Pattern 2: "02-November-2021" or "02-Nov-2021"
+    m = re.search(r'(\d{1,2})[-/](januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember|jan|feb|mar|apr|jun|jul|agu|sep|okt|nov|des)[-/](\d{4})', text.lower())
+    if m:
+        try:
+            return datetime(int(m.group(3)), months[m.group(2)], int(m.group(1)))
+        except (ValueError, KeyError):
+            pass
+    # Pattern 3: "12/01/2021" or "12-01-2021"
     m = re.search(r'(\d{1,2})/(\d{1,2})/(\d{4})', text)
     if m:
-        return datetime(int(m.group(3)), int(m.group(2)), int(m.group(1)))
+        try:
+            return datetime(int(m.group(3)), int(m.group(2)), int(m.group(1)))
+        except ValueError:
+            pass
+    # Pattern 4: "2021-11-02"
     m = re.search(r'(\d{4})-(\d{2})-(\d{2})', text)
     if m:
-        return datetime(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+        try:
+            return datetime(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+        except ValueError:
+            pass
     return None
 
 @router.post("/upload", response_model=DocumentOut)

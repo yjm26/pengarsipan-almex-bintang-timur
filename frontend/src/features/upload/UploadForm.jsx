@@ -64,7 +64,9 @@ export default function UploadForm({ onUpload }) {
   }, []);
 
   const handleFile = (f) => {
-    if (f && f.type === 'application/pdf') {
+    if (!f) return;
+    const allowed = ['application/pdf', 'image/jpeg', 'image/png', 'image/bmp', 'image/tiff'];
+    if (allowed.includes(f.type)) {
       setFile(f);
       uploadAndClassify(f);
     }
@@ -108,7 +110,7 @@ export default function UploadForm({ onUpload }) {
           >
             <input
               type="file"
-              accept=".pdf"
+              accept=".pdf,.jpg,.jpeg,.png,.bmp,.tiff,.tif"
               onChange={(e) => handleFile(e.target.files?.[0])}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
@@ -122,7 +124,7 @@ export default function UploadForm({ onUpload }) {
                 <p className="text-sm font-medium text-zinc-700">
                   <span className="text-[#D49A28]">Klik untuk upload</span> atau drag & drop
                 </p>
-                <p className="text-xs text-zinc-400 mt-1">PDF saja, maks 10 MB</p>
+                <p className="text-xs text-zinc-400 mt-1">PDF atau gambar (JPG/PNG), maks 10 MB</p>
               </div>
             </div>
           </div>
@@ -222,7 +224,7 @@ export default function UploadForm({ onUpload }) {
 
                 {/* Extracted Text Preview */}
                 <div className="p-4 rounded-lg bg-zinc-50 border border-zinc-100">
-                  <p className="text-xs text-zinc-500 mb-2">Teks Terestrrak</p>
+                  <p className="text-xs text-zinc-500 mb-2">Teks Terekstrak</p>
                   <p className="text-sm text-zinc-600 leading-relaxed line-clamp-3">{result.extractedText}</p>
                 </div>
 
