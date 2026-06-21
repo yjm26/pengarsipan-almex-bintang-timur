@@ -37,8 +37,8 @@ export default function DocumentTable({ documents, total, page, totalPages, onPa
           <div className="flex items-center justify-center">
             <input
               type="checkbox"
-              checked={selected.length === documents.length && documents.length > 0}
-              onChange={(e) => onSelect(e.target.checked ? documents.map(d => d.id) : [])}
+              checked={selected && selected.length === documents.length && documents.length > 0}
+              onChange={(e) => onSelect && onSelect(e.target.checked ? documents.map(d => d.id) : [])}
               className="w-3.5 h-3.5 rounded border-zinc-300 accent-amber-500"
             />
           </div>

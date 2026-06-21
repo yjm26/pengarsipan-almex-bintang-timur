@@ -107,6 +107,16 @@ export default function ArsipPage() {
     }
   };
 
+  const handleDelete = async (id) => {
+    try {
+      await api.deleteDocument(id);
+      setDocuments(prev => prev.filter(d => d.id !== id));
+      setTotalItems(prev => prev - 1);
+    } catch (err) {
+      console.error('Gagal menghapus dokumen:', err);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.05 }}>
@@ -156,7 +166,7 @@ export default function ArsipPage() {
           </div>
         ) : (
           <>
-            <DocumentTable documents={documents} selectedIds={selectedIds} onToggleSelect={handleToggleSelect} />
+            <DocumentTable documents={documents} selected={[...selectedIds]} onToggleSelect={handleToggleSelect} onDelete={handleDelete} />
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
