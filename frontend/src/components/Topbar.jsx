@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, User, Search, Moon, Sun, Menu, FileText, CheckCircle2, AlertTriangle, X } from 'lucide-react';
+import { Bell, User, Moon, Sun, Menu, FileText, CheckCircle2, AlertTriangle, X } from 'lucide-react';
 
 const mockNotifications = [
   { id: 1, type: 'success', title: 'Klasifikasi Selesai', desc: '12 dokumen baru telah diklasifikasi.', time: '2 menit lalu', read: false },
@@ -40,12 +40,6 @@ export default function Topbar({ onOpenSidebar }) {
       >
         <Menu className="w-5 h-5" />
       </motion.button>
-
-      {/* Search Bar - full width */}
-      <div className="hidden md:flex flex-1 items-center gap-2 px-4 py-2 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 text-sm max-w-xl focus-within:border-zinc-400 focus-within:ring-1 focus-within:ring-zinc-400 transition-all">
-        <Search className="w-4 h-4 flex-shrink-0" />
-        <input type="text" placeholder="Cari dokumen..." className="bg-transparent outline-none w-full placeholder:text-zinc-400 dark:placeholder:text-zinc-500" />
-      </div>
 
       <div className="flex items-center gap-3 lg:gap-4 ml-auto">
 
