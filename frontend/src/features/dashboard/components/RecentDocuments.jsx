@@ -7,7 +7,7 @@ function getConfidenceBadge(score) {
   const pct = Math.round(score * 100);
   if (pct >= 75) {
     return {
-      bg: 'bg-green-600',
+      bg: '#00AA00',
       text: 'text-white',
       icon: CheckCircle2,
       label: 'Akurat',
@@ -15,14 +15,14 @@ function getConfidenceBadge(score) {
   }
   if (pct >= 50) {
     return {
-      bg: 'bg-yellow-500',
+      bg: '#D4A000',
       text: 'text-white',
       icon: AlertTriangle,
       label: 'Cukup',
     };
   }
   return {
-    bg: 'bg-red-600',
+    bg: '#DD0000',
     text: 'text-white',
     icon: AlertTriangle,
     label: 'Tidak Akurat',
@@ -118,9 +118,9 @@ export default function RecentDocuments() {
                 </div>
 
                 {/* Confidence */}
-                <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${badge.bg} ${badge.border}`}>
-                  <BadgeIcon className={`w-3.5 h-3.5 ${badge.text}`} />
-                  <span className={`text-xs font-medium ${badge.text}`}>{badge.label}</span>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-white" style={{ backgroundColor: badge.bg }}>
+                  <BadgeIcon className="w-3.5 h-3.5" />
+                  <span className="text-xs font-medium">{badge.label}</span>
                 </div>
 
                 {/* Date */}

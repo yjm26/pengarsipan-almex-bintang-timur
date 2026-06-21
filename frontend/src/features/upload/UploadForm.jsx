@@ -208,7 +208,7 @@ export default function UploadForm({ onUpload }) {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="p-4 rounded-lg bg-zinc-50 border border-zinc-100">
                     <p className="text-xs text-zinc-500 mb-1">Hasil Klasifikasi</p>
-                    <p className={`text-lg font-semibold ${result.confidence >= 75 ? 'text-green-600' : result.confidence >= 50 ? 'text-yellow-600' : 'text-red-600'}`}>
+                    <p className="text-lg font-semibold" style={{ color: result.confidence >= 75 ? '#00AA00' : result.confidence >= 50 ? '#D4A000' : '#DD0000' }}>
                       {result.confidence >= 75 ? 'Akurat' : result.confidence >= 50 ? 'Cukup' : 'Tidak Akurat'}
                     </p>
                   </div>

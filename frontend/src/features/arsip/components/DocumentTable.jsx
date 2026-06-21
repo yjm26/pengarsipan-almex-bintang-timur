@@ -5,12 +5,12 @@ import { api } from '../../../lib/api';
 
 function getConfidenceBadge(score) {
   if (score >= 75) {
-    return { bg: 'bg-green-600', border: 'border-green-700', text: 'text-white', icon: CheckCircle2, label: 'Akurat' };
+    return { bg: '#00AA00', border: '#009900', text: 'text-white', icon: CheckCircle2, label: 'Akurat' };
   }
   if (score >= 50) {
-    return { bg: 'bg-yellow-500', border: 'border-yellow-600', text: 'text-white', icon: AlertTriangle, label: 'Cukup' };
+    return { bg: '#D4A000', border: '#B88600', text: 'text-white', icon: AlertTriangle, label: 'Cukup' };
   }
-  return { bg: 'bg-red-600', border: 'border-red-700', text: 'text-white', icon: XCircle, label: 'Tidak Akurat' };
+  return { bg: '#DD0000', border: '#BB0000', text: 'text-white', icon: XCircle, label: 'Tidak Akurat' };
 }
 
 /* ===== DETAIL PANEL (Feature 1) ===== */
@@ -118,7 +118,7 @@ function DetailPanel({ doc, onClose, onCorrect }) {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Hasil Klasifikasi</h3>
-                  <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-semibold ${badge.bg} ${badge.text}`}>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-semibold text-white" style={{ backgroundColor: badge.bg }}>
                     <BadgeIcon className="w-3 h-3" />
                     {badge.label}
                   </span>
@@ -127,7 +127,7 @@ function DetailPanel({ doc, onClose, onCorrect }) {
                   <div className="flex items-center justify-between p-3 rounded-lg bg-emerald-50/50 border border-emerald-100">
                     <span className="text-xs text-zinc-600">Arah</span>
                     <div className="flex items-center gap-1.5">
-                      {doc.arah === 'Masuk' ? <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-600" /> : <ArrowUpRight className="w-3.5 h-3.5 text-red-600" />}
+                      {doc.arah === 'Masuk' ? <ArrowDownLeft className="w-3.5 h-3.5" style={{ color: '#00AA00' }} /> : <ArrowUpRight className="w-3.5 h-3.5" style={{ color: '#DD0000' }} />}
                       <span className="text-sm font-semibold text-zinc-900">{doc.arah}</span>
                     </div>
                   </div>
@@ -264,9 +264,7 @@ export default function DocumentTable({ documents, selectedIds, onToggleSelect }
                     <span className="text-sm text-zinc-600 whitespace-nowrap">{doc.tanggalSurat}</span>
                   </td>
                   <td className="px-8 py-3.5">
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium ${
-                      isMasuk ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-red-50 text-red-700 border border-red-100'
-                    }`}>
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium ${                      isMasuk ? 'text-emerald-700 border border-emerald-100' : 'text-red-700 border border-red-100'                    }`} style={{ backgroundColor: isMasuk ? '#E8F5E9' : '#FFEBEE' }}>
                       {isMasuk ? <ArrowDownLeft className="w-3.5 h-3.5" /> : <ArrowUpRight className="w-3.5 h-3.5" />}
                       {doc.arah}
                     </span>
@@ -275,7 +273,7 @@ export default function DocumentTable({ documents, selectedIds, onToggleSelect }
                     <span className="text-sm text-zinc-700">{doc.jenis}</span>
                   </td>
                   <td className="px-8 py-3.5 text-center">
-                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold border ${badge.bg} ${badge.text} ${badge.border}`}>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold text-white" style={{ backgroundColor: badge.bg, borderColor: badge.border, borderWidth: 1, borderStyle: 'solid' }}>
                       <BadgeIcon className="w-3 h-3" />
                       {badge.label}
                     </span>
