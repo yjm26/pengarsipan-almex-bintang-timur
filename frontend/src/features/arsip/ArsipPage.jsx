@@ -13,7 +13,7 @@ export default function ArsipPage() {
   const fetchDocuments = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.getDocuments({ per_page: 1000 });
+      const res = await api.getDocuments({ per_page: 100 });
       const mapped = (res.data || []).map((doc) => ({
         id: doc.id,
         nama_file: doc.nama_file || '',
