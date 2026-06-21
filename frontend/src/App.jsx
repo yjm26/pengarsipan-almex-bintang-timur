@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
+import { UploadProvider } from './store/uploadStore';
 
 // Simple Protected Route wrapper
 function ProtectedRoute({ children }) {
@@ -11,6 +12,7 @@ function ProtectedRoute({ children }) {
 
 function App() {
   return (
+    <UploadProvider>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<LoginPage />} />
@@ -48,6 +50,7 @@ function App() {
         />
       </Routes>
     </BrowserRouter>
+    </UploadProvider>
   );
 }
 

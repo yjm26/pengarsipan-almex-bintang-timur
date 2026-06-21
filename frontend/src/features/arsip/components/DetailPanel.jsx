@@ -1,144 +1,232 @@
 import { useState } from 'react';
-import { X, ArrowDownLeft, ArrowUpRight, FileText, Trash2, Save, ExternalLink } from 'lucide-react';
+import { X, ArrowDownLeft, ArrowUpRight, FileText, Trash2, Save, Pencil, Download, CheckCircle2 } from 'lucide-react';
+import api from '../../../lib/api';
 
 const AKURASI_COLORS = {
   bg: { Akurat: '#00AA00', Cukup: '#D4A000', 'Tidak Akurat': '#DD0000' },
-  label: { Akurat: 'Akurat', Cukup: 'Cukup', 'Tidak Akurat': 'Tidak Akurat' },
 };
 
-function getBadge(c) {
-  const pct = Math.round((c || 0) * 100);
-  if (pct >= 75) return { label: 'Akurat', bg: AKURASI_COLORS.bg.Akurat };
-  if (pct >= 50) return { label: 'Cukup', bg: AKURASI_COLORS.bg.Cukup };
-  return { label: 'Tidak Akurat', bg: AKURASI_COLORS.bg['Tidak Akurat'] };
+function getAkurasiLabel(confidence) {
+  if (confidence >= 75) return 'Akurat';
+  if (confidence >= 50) return 'Cukup';
+  return 'Tidak Akurat';
 }
 
-function formatDate(d) {
-  if (!d) return '-';
-  try {
-    return new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-  } catch { return d; }
+function formatDate(dateStr) {
+  if (!dateStr) return '-';
+  if (dateStr.includes('T')) dateStr = dateStr.split('T')[0];
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '-';
+  return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
 export default function DetailPanel({ doc, onClose, onUpdate, onDelete }) {
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ nama_pt: doc.nama_pt || '', tanggal_surat: doc.tanggal_surat?.split('T')[0] || '', arah: doc.arah || '', jenis: doc.jenis || '' });
+  const [formData, setFormData] = useState({
+    nama_pt: doc.namaPt || '',
+    tanggal_surat: doc.tanggalSurat ? doc.tanggalSurat.split('T')[0] : '',
+    jenis: doc.jenis || '',
+    arah: doc.arah || 'Masuk',
+  });
   const [saving, setSaving] = useState(false);
-  const badge = getBadge(doc.confidence);
-  const isMasuk = doc.arah === 'Masuk';
-  const BadgeIcon = isMasuk ? ArrowDownLeft : ArrowUpRight;
-  const previewUrl = `/api/documents/${doc.id}/preview`;
-  const downloadUrl = `/api/documents/${doc.id}/download`;
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [showKoreksi, setShowKoreksi] = useState(false);
 
-  async function handleSave() {
+  const isMasuk = doc.arah === 'Masuk';
+  const akurasi = getAkurasiLabel(doc.confidence);
+  const badgeColor = AKURASI_COLORS.bg[akurasi] || '#888';
+
+  const handleSave = async () => {
     setSaving(true);
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`/api/documents/${doc.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(form),
-      });
-      if (res.ok) { const updated = await res.json(); onUpdate(updated); setEditing(false); }
-    } finally { setSaving(false); }
-  }
+      await api.updateDocument(doc.id, formData);
+      onUpdate(doc.id, formData);
+      setEditing(false);
+    } catch (err) {
+      alert('Gagal menyimpan: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
-  async function handleDelete() {
-    if (!confirm('Hapus dokumen ini?')) return;
+  const handleDownload = () => {
     const token = localStorage.getItem('token');
-    const res = await fetch(`/api/documents/${doc.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
-    if (res.ok) onDelete(doc.id);
-  }
+    const url = `${import.meta.env.VITE_API_URL || ''}/api/documents/${doc.id}/download`;
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = doc.namaFile;
+    a.target = '_blank';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
 
   return (
-    <div className="w-[340px] flex-shrink-0 border-l border-zinc-100 bg-white overflow-y-auto">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100">
-        <h3 className="text-sm font-semibold text-zinc-900">Detail Dokumen</h3>
-        <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 transition-all"><X className="w-4 h-4" /></button>
-      </div>
-      <div className="p-4 space-y-4">
-        <div className="flex items-start gap-3 p-3 rounded-xl bg-zinc-50 border border-zinc-100">
-          <div className="w-9 h-9 rounded-lg bg-red-50 border border-red-100 flex items-center justify-center"><FileText className="w-4 h-4 text-red-400" /></div>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-zinc-900 truncate">{doc.nama_file}</p>
-            <p className="text-xs text-zinc-400 mt-0.5">Diunggah {doc.tanggal_unggah}</p>
+    <div className="fixed inset-0 bg-black/30 z-50 flex justify-end" onClick={onClose}>
+      <div className="w-full max-w-md bg-white h-full shadow-xl overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-zinc-100">
+          <div className="flex items-center gap-2">
+            <button onClick={onClose} className="p-1 hover:bg-zinc-100 rounded">
+              <span className="text-zinc-400 text-sm">&gt;</span>
+            </button>
+            <span className="text-sm font-semibold text-zinc-900">Detail Dokumen</span>
+          </div>
+          <button onClick={onClose} className="p-1.5 hover:bg-zinc-100 rounded">
+            <X className="w-4 h-4 text-zinc-400" />
+          </button>
+        </div>
+
+        {/* File Info */}
+        <div className="p-4">
+          <div className="flex items-start gap-3 p-3 rounded-xl bg-zinc-50 border border-zinc-100">
+            <div className="w-9 h-9 rounded-lg bg-red-50 border border-red-100 flex items-center justify-center flex-shrink-0">
+              <FileText className="w-4 h-4 text-red-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-zinc-900 truncate">{doc.namaFile}</p>
+              <p className="text-xs text-zinc-400 mt-0.5">Diunggah {doc.tanggalUnggah ? new Date(doc.tanggalUnggah).toLocaleDateString('id-ID') : '-'}</p>
+            </div>
           </div>
         </div>
-        <div>
-          <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">Metadata</h4>
+
+        {/* Metadata */}
+        <div className="px-4 pb-4 space-y-3">
+          <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Metadata</p>
           <div className="space-y-2">
-            {[
-              ['Perusahaan', 'nama_pt'],
-              ['Tanggal Surat', 'tanggal_surat'],
-              ['Status', 'status'],
-            ].map(([label, key]) => (
-              <div key={key} className="flex items-center justify-between py-2 px-3 rounded-lg bg-zinc-50">
-                <span className="text-xs text-zinc-500">{label}</span>
-                {editing && key !== 'status' ? (
-                  key === 'tanggal_surat' ? (
-                    <input type="date" value={form.tanggal_surat} onChange={(e) => setForm({ ...form, tanggal_surat: e.target.value })} className="text-xs text-zinc-900 bg-white border border-zinc-200 rounded px-2 py-1 w-36" />
-                  ) : (
-                    <input type="text" value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} className="text-xs text-zinc-900 bg-white border border-zinc-200 rounded px-2 py-1 w-36" />
-                  )
-                ) : (
-                  <span className="text-xs font-semibold text-zinc-900">{key === 'tanggal_surat' ? formatDate(doc.tanggal_surat) : doc[key] || '-'}</span>
-                )}
-              </div>
-            ))}
+            <MetaRow label="Perusahaan" value={editing ? <input type="text" value={formData.nama_pt} onChange={(e) => setFormData({ ...formData, nama_pt: e.target.value })} className="w-full text-xs p-1.5 border border-zinc-200 rounded" /> : (doc.namaPt || '-')} />
+            <MetaRow label="Tanggal Surat" value={editing ? <input type="date" value={formData.tanggal_surat} onChange={(e) => setFormData({ ...formData, tanggal_surat: e.target.value })} className="w-full text-xs p-1.5 border border-zinc-200 rounded" /> : formatDate(doc.tanggalSurat)} />
+            <MetaRow label="Status" value={<span className="text-xs font-medium text-zinc-600">{doc.status || 'Pending'}</span>} />
           </div>
         </div>
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Hasil Klasifikasi</h4>
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-semibold text-white" style={{ backgroundColor: badge.bg }}>{badge.label}</span>
+
+        {/* Hasil Klasifikasi */}
+        <div className="px-4 pb-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Hasil Klasifikasi</p>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold text-white" style={{ backgroundColor: badgeColor }}>
+              {akurasi}
+            </span>
           </div>
-          <div className="space-y-2">
-            <div className={`flex items-center justify-between py-2.5 px-3 rounded-lg ${isMasuk ? 'bg-emerald-50/50 border border-emerald-100' : 'bg-red-50/50 border border-red-100'}`}>
-              <span className="text-xs text-zinc-600">Arah</span>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="p-3 rounded-lg bg-zinc-50 border border-zinc-100">
+              <p className="text-[10px] text-zinc-400 mb-1">Arah</p>
               <div className="flex items-center gap-1.5">
                 {isMasuk ? <ArrowDownLeft className="w-3.5 h-3.5" style={{ color: '#00AA00' }} /> : <ArrowUpRight className="w-3.5 h-3.5" style={{ color: '#DD0000' }} />}
-                {editing ? (
-                  <select value={form.arah} onChange={(e) => setForm({ ...form, arah: e.target.value })} className="text-xs font-semibold text-zinc-900 bg-white border border-zinc-200 rounded px-2 py-1">
+                <span className="text-sm font-semibold text-zinc-900">{doc.arah}</span>
+              </div>
+            </div>
+            <div className="p-3 rounded-lg bg-zinc-50 border border-zinc-100">
+              <p className="text-[10px] text-zinc-400 mb-1">Jenis</p>
+              <p className="text-sm font-semibold text-zinc-900">{doc.jenis || '-'}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Koreksi */}
+        <div className="px-4 pb-4">
+          <button
+            onClick={() => setShowKoreksi(!showKoreksi)}
+            className="w-full flex items-center justify-center gap-2 p-3 rounded-lg border border-zinc-200 hover:bg-zinc-50 text-sm text-zinc-600"
+          >
+            <Pencil className="w-4 h-4" /> Koreksi Klasifikasi
+          </button>
+
+          {showKoreksi && (
+            <div className="mt-2 p-3 rounded-lg bg-zinc-50 border border-zinc-200 space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10px] text-zinc-400">Jenis</label>
+                  <select
+                    value={formData.jenis}
+                    onChange={(e) => setFormData({ ...formData, jenis: e.target.value })}
+                    className="w-full text-xs p-1.5 border border-zinc-200 rounded bg-white"
+                  >
+                    <option value="">Pilih...</option>
+                    {['Purchase Order', 'Invoice', 'Surat Penawaran', 'Surat Jalan', 'Nota Dinas', 'Kontrak', 'Batal Order', 'MoU', 'Lainnya'].map(j => (
+                      <option key={j} value={j}>{j}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] text-zinc-400">Arah</label>
+                  <select
+                    value={formData.arah}
+                    onChange={(e) => setFormData({ ...formData, arah: e.target.value })}
+                    className="w-full text-xs p-1.5 border border-zinc-200 rounded bg-white"
+                  >
                     <option value="Masuk">Masuk</option>
                     <option value="Keluar">Keluar</option>
                   </select>
-                ) : (
-                  <span className="text-sm font-semibold text-zinc-900">{doc.arah}</span>
-                )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={async () => {
+                    setSaving(true);
+                    try {
+                      await api.updateDocument(doc.id, formData);
+                      onUpdate(doc.id, formData);
+                      setShowKoreksi(false);
+                    } catch (err) {
+                      alert('Gagal: ' + err.message);
+                    } finally {
+                      setSaving(false);
+                    }
+                  }}
+                  disabled={saving}
+                  className="text-xs font-medium text-amber-600 hover:text-amber-700"
+                >
+                  {saving ? 'Menyimpan...' : 'Simpan'}
+                </button>
+                <button onClick={() => setShowKoreksi(false)} className="text-xs text-zinc-400 hover:text-zinc-600">Batal</button>
               </div>
             </div>
-            <div className="flex items-center justify-between py-2.5 px-3 rounded-lg bg-blue-50/50 border border-blue-100">
-              <span className="text-xs text-zinc-600">Jenis</span>
-              {editing ? (
-                <input type="text" value={form.jenis} onChange={(e) => setForm({ ...form, jenis: e.target.value })} className="text-xs font-semibold text-zinc-900 bg-white border border-zinc-200 rounded px-2 py-1 w-32" />
-              ) : (
-                <span className="text-sm font-semibold text-zinc-900">{doc.jenis}</span>
-              )}
-            </div>
-          </div>
+          )}
         </div>
-        <div className="flex items-center gap-2 pt-2">
+
+        {/* Actions */}
+        <div className="px-4 pb-6 flex items-center gap-2">
           {editing ? (
             <>
-              <button onClick={handleSave} disabled={saving} className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-white transition-all disabled:opacity-60" style={{ backgroundColor: '#C49A38' }}>
-                <Save className="w-3.5 h-3.5" /> {saving ? 'Menyimpan...' : 'Simpan'}
+              <button onClick={handleSave} disabled={saving} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium">
+                <Save className="w-4 h-4" /> {saving ? 'Menyimpan...' : 'Simpan'}
               </button>
-              <button onClick={() => setEditing(false)} className="px-4 py-2.5 rounded-xl text-xs font-semibold text-zinc-600 bg-zinc-100 hover:bg-zinc-200 transition-all">Batal</button>
+              <button onClick={() => setEditing(false)} className="px-4 py-2.5 rounded-lg border border-zinc-200 text-sm text-zinc-600 hover:bg-zinc-50">Batal</button>
             </>
           ) : (
             <>
-              <button onClick={() => setEditing(true)} className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-zinc-600 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 transition-all">
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                Koreksi
+              <button onClick={() => setEditing(true)} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium">
+                <Pencil className="w-4 h-4" /> Edit
               </button>
-              <button onClick={handleDelete} className="p-2.5 rounded-xl hover:bg-red-50 text-zinc-400 hover:text-red-500 border border-zinc-200 transition-all"><Trash2 className="w-3.5 h-3.5" /></button>
+              <button onClick={handleDownload} className="p-2.5 rounded-lg border border-zinc-200 hover:bg-zinc-50" title="Unduh">
+                <Download className="w-4 h-4 text-zinc-500" />
+              </button>
+              {showConfirmDelete ? (
+                <div className="flex items-center gap-1">
+                  <span className="text-xs text-zinc-500">Yakin?</span>
+                  <button onClick={() => onDelete(doc.id)} className="text-xs text-red-600 font-medium px-2 py-1 bg-red-50 rounded">Ya</button>
+                  <button onClick={() => setShowConfirmDelete(false)} className="text-xs text-zinc-500 px-2 py-1 bg-zinc-50 rounded">Batal</button>
+                </div>
+              ) : (
+                <button onClick={() => setShowConfirmDelete(true)} className="p-2.5 rounded-lg border border-zinc-200 hover:bg-red-50 text-zinc-400 hover:text-red-500" title="Hapus">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
             </>
           )}
         </div>
-        <a href={downloadUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl text-xs font-medium text-zinc-600 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 transition-all">
-          <ExternalLink className="w-3.5 h-3.5" /> Download / Preview
-        </a>
       </div>
+    </div>
+  );
+}
+
+function MetaRow({ label, value }) {
+  return (
+    <div className="flex items-center justify-between py-1.5 border-b border-zinc-50">
+      <span className="text-xs text-zinc-500">{label}</span>
+      <span className="text-xs font-medium text-zinc-900">{value}</span>
     </div>
   );
 }
