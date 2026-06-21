@@ -148,7 +148,9 @@ async def upload_document(file: UploadFile = File(...), db: Session = Depends(ge
             if img_np is not None:
                 extracted_text += ocr_image(img_np) + "\n"
 
-    except Exception:
+    except Exception as e:
+        import logging
+        logging.error(f"OCR extraction error: {e}")
         extracted_text = ""
 
     # Classify
