@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Eye, Pencil, Trash2, ArrowDownLeft, ArrowUpRight, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Download, X } from 'lucide-react';
+import { FileText, Eye, Pencil, Trash2, ArrowDownLeft, ArrowUpRight, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Download, X, ZoomIn } from 'lucide-react';
 import api from '../../../lib/api';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
@@ -24,6 +24,51 @@ function formatDate(dateStr) {
   return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
+function PreviewModal({ doc, onClose }) {
+  const [src, setSrc] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [zoom, setZoom] = useState(1);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) { setLoading(false); return; }
+    fetch(`${API_URL}/api/documents/${doc.id}/preview`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.blob() : Promise.reject())
+      .then(blob => { setSrc(URL.createObjectURL(blob)); setLoading(false); })
+      .catch(() => setLoading(false));
+    return () => { if (src) URL.revokeObjectURL(src); };
+  }, [doc.id]);
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-xl max-w-[90vw] max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200">
+          <div className="flex items-center gap-2">
+            <FileText className="w-4 h-4 text-red-400" />
+            <span className="text-sm font-semibold text-zinc-900">{doc.namaFile}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setZoom(z => Math.min(z + 0.25, 3))} className="p-1.5 rounded hover:bg-zinc-100 text-zinc-500"><ZoomIn className="w-4 h-4" /></button>
+            <button onClick={() => setZoom(z => Math.max(z - 0.25, 0.5))} className="p-1.5 rounded hover:bg-zinc-100 text-zinc-500 text-xs">-</button>
+            <span className="text-xs text-zinc-400 w-12 text-center">{Math.round(zoom * 100)}%</span>
+            <a href={`${API_URL}/api/documents/${doc.id}/download`} className="p-1.5 rounded hover:bg-zinc-100 text-zinc-500"><Download className="w-4 h-4" /></a>
+            <button onClick={onClose} className="p-1.5 rounded hover:bg-zinc-100 text-zinc-500"><X className="w-4 h-4" /></button>
+          </div>
+        </div>
+        <div className="flex-1 overflow-auto p-4 bg-zinc-100">
+          {loading ? (
+            <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-2 border-zinc-300 border-t-zinc-600 rounded-full animate-spin" /></div>
+          ) : src ? (
+            <img src={src} alt="Preview" className="mx-auto transition-transform duration-200" style={{ transform: `scale(${zoom})`, transformOrigin: 'top center' }} />
+          ) : (
+            <div className="flex items-center justify-center h-64 text-zinc-400 text-sm">Preview tidak tersedia</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function InlineDetail({ doc, onClose, onUpdate, onDelete }) {
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -33,8 +78,11 @@ function InlineDetail({ doc, onClose, onUpdate, onDelete }) {
     arah: doc.arah || 'Masuk',
   });
   const [saving, setSaving] = useState(false);
-  const [showKoreksi, setShowKoreksi] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+
+  const isMasuk = doc.arah === 'Masuk';
+  const akurasi = getAkurasiLabel(doc.confidence);
 
   const handleSave = async () => {
     setSaving(true);
@@ -49,16 +97,6 @@ function InlineDetail({ doc, onClose, onUpdate, onDelete }) {
     }
   };
 
-  const handleKoreksi = async () => {
-    try {
-      await api.updateDocument(doc.id, { jenis: formData.jenis, arah: formData.arah });
-      onUpdate(doc.id, { jenis: formData.jenis, arah: formData.arah });
-      setShowKoreksi(false);
-    } catch (err) {
-      alert('Gagal koreksi: ' + err.message);
-    }
-  };
-
   const handleDelete = async () => {
     try {
       await onDelete(doc.id);
@@ -68,98 +106,29 @@ function InlineDetail({ doc, onClose, onUpdate, onDelete }) {
     }
   };
 
-  const previewUrl = `${API_URL}/api/documents/${doc.id}/preview`;
-  const [previewSrc, setPreviewSrc] = useState(null);
-  const [previewLoading, setPreviewLoading] = useState(true);
-  const isMasuk = doc.arah === 'Masuk';
-  const akurasi = getAkurasiLabel(doc.confidence);
-
-  // Fetch preview with auth header (img src can't send Authorization)
-  useEffect(() => {
-    let cancelled = false;
-    const token = localStorage.getItem('token');
-    if (!token) { setPreviewLoading(false); return; }
-    
-    fetch(previewUrl, { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.ok ? r.blob() : Promise.reject())
-      .then(blob => {
-        if (!cancelled) {
-          setPreviewSrc(URL.createObjectURL(blob));
-          setPreviewLoading(false);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setPreviewLoading(false);
-      });
-    return () => { cancelled = true; if (previewSrc) URL.revokeObjectURL(previewSrc); };
-  }, [doc.id]);
-
-  const [zoomOpen, setZoomOpen] = useState(false);
-
   return (
     <>
-    {zoomOpen && previewSrc && (
-      <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setZoomOpen(false)}>
-        <div className="relative max-w-[95vw] max-h-[95vh]" onClick={(e) => e.stopPropagation()}>
-          <img src={previewSrc} alt="Preview" className="max-w-full max-h-[90vh] object-contain" />
-          <button onClick={() => setZoomOpen(false)} className="absolute top-2 right-2 w-8 h-8 bg-white rounded-full flex items-center justify-center text-zinc-600 hover:text-zinc-900 shadow-lg">✕</button>
-          <a href={`${API_URL}/api/documents/${doc.id}/download`} target="_blank" rel="noopener" className="absolute bottom-2 right-2 px-3 py-1.5 bg-white rounded-lg text-xs font-medium text-zinc-600 hover:text-zinc-900 shadow-lg">
-            <Download className="w-3.5 h-3.5 inline mr-1" /> Unduh
-          </a>
-        </div>
-      </div>
-    )}
-    <tr>
-      <td colSpan={7} className="p-0">
-        <div className="bg-zinc-50/50 border-t border-b border-zinc-200 px-6 py-4">
-          <div className="grid grid-cols-[1fr_280px] gap-6">
-            {/* Left: Document Preview */}
-            <div className="space-y-3">
-              <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Preview Dokumen</div>
-              <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden relative cursor-pointer" style={{ height: 320 }} onClick={() => previewSrc && setZoomOpen(true)}>
-                {previewLoading ? (
-                  <div className="flex items-center justify-center h-full"><div className="w-6 h-6 border-2 border-zinc-200 border-t-zinc-500 rounded-full animate-spin" /></div>
-                ) : previewSrc ? (
-                  <img
-                    src={previewSrc}
-                    alt="Preview"
-                    className="w-full h-full object-contain"
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-full text-zinc-300">
-                    <div className="text-center">
-                      <FileText className="w-12 h-12 mx-auto mb-2" />
-                      <p className="text-xs">Preview tidak tersedia</p>
-                    </div>
-                  </div>
-                )}
-                {previewSrc && (
-                  <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/50 rounded text-white text-[10px]">Klik untuk zoom</div>
-                )}
-              </div>
-            </div>
-
-            {/* Right: Metadata + Actions */}
-            <div className="space-y-4">
+      {showPreview && <PreviewModal doc={doc} onClose={() => setShowPreview(false)} />}
+      <tr>
+        <td colSpan={7} className="p-0">
+          <div className="bg-zinc-50/50 border-t border-b border-zinc-200 px-6 py-4">
+            <div className="flex items-start gap-4">
               {/* File Info */}
-              <div className="flex items-start gap-2 p-2.5 rounded-lg bg-white border border-zinc-200">
+              <div className="flex items-start gap-2 p-2.5 rounded-lg bg-white border border-zinc-200 min-w-[180px]">
                 <div className="w-8 h-8 rounded-md bg-red-50 border border-red-100 flex items-center justify-center flex-shrink-0">
                   <FileText className="w-4 h-4 text-red-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-zinc-900 truncate">{doc.namaFile}</p>
+                  <p className="text-xs font-semibold text-zinc-900 truncate max-w-[120px]">{doc.namaFile}</p>
                   <p className="text-[10px] text-zinc-400">{doc.ukuran}</p>
                 </div>
-                <a href={`${API_URL}/api/documents/${doc.id}/download`} target="_blank" rel="noopener" className="p-1 hover:bg-zinc-100 rounded text-zinc-400 hover:text-zinc-600">
-                  <Download className="w-3.5 h-3.5" />
-                </a>
               </div>
 
               {/* Metadata */}
-              <div className="space-y-1.5">
+              <div className="flex-1 space-y-1.5">
                 <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Metadata</div>
                 {editing ? (
-                  <>
+                  <div className="grid grid-cols-2 gap-2">
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] text-zinc-500 w-20">Perusahaan</span>
                       <input type="text" value={formData.nama_pt} onChange={(e) => setFormData({...formData, nama_pt: e.target.value})} className="flex-1 text-xs p-1.5 border border-zinc-200 rounded" />
@@ -168,112 +137,95 @@ function InlineDetail({ doc, onClose, onUpdate, onDelete }) {
                       <span className="text-[10px] text-zinc-500 w-20">Tanggal</span>
                       <input type="date" value={formData.tanggal_surat} onChange={(e) => setFormData({...formData, tanggal_surat: e.target.value})} className="flex-1 text-xs p-1.5 border border-zinc-200 rounded" />
                     </div>
-                  </>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-zinc-500 w-20">Jenis</span>
+                      <select value={formData.jenis} onChange={(e) => setFormData({...formData, jenis: e.target.value})} className="flex-1 text-xs p-1.5 border border-zinc-200 rounded">
+                        <option value="Purchase Order">Purchase Order</option>
+                        <option value="Invoice">Invoice</option>
+                        <option value="Surat Penawaran">Surat Penawaran</option>
+                        <option value="Nota Dinas">Nota Dinas</option>
+                        <option value="Kontrak">Kontrak</option>
+                        <option value="Surat Jalan">Surat Jalan</option>
+                        <option value="Batal Order">Batal Order</option>
+                        <option value="MoU">MoU</option>
+                        <option value="Lainnya">Lainnya</option>
+                      </select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-zinc-500 w-20">Arah</span>
+                      <select value={formData.arah} onChange={(e) => setFormData({...formData, arah: e.target.value})} className="flex-1 text-xs p-1.5 border border-zinc-200 rounded">
+                        <option value="Masuk">Masuk</option>
+                        <option value="Keluar">Keluar</option>
+                      </select>
+                    </div>
+                  </div>
                 ) : (
-                  <>
-                    <div className="flex items-center justify-between py-1">
-                      <span className="text-[10px] text-zinc-500">Perusahaan</span>
-                      <span className="text-xs font-medium text-zinc-800">{doc.namaPt || '-'}</span>
+                  <div className="grid grid-cols-4 gap-4">
+                    <div>
+                      <p className="text-[10px] text-zinc-500">Perusahaan</p>
+                      <p className="text-xs font-medium text-zinc-800">{doc.namaPt || '-'}</p>
                     </div>
-                    <div className="flex items-center justify-between py-1 border-t border-zinc-100">
-                      <span className="text-[10px] text-zinc-500">Tanggal Surat</span>
-                      <span className="text-xs text-zinc-800">{formatDate(doc.tanggalSurat)}</span>
+                    <div>
+                      <p className="text-[10px] text-zinc-500">Tanggal Surat</p>
+                      <p className="text-xs text-zinc-800">{formatDate(doc.tanggalSurat)}</p>
                     </div>
-                  </>
+                    <div>
+                      <p className="text-[10px] text-zinc-500">Jenis</p>
+                      <p className="text-xs font-semibold text-blue-600">{doc.jenis || '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-zinc-500">Arah</p>
+                      <p className="text-xs font-semibold" style={{ color: isMasuk ? '#00AA00' : '#DD0000' }}>{doc.arah}</p>
+                    </div>
+                  </div>
                 )}
-                <div className="flex items-center justify-between py-1 border-t border-zinc-100">
-                  <span className="text-[10px] text-zinc-500">Status</span>
-                  <span className="text-xs font-medium text-zinc-600">{doc.status || 'Pending'}</span>
-                </div>
               </div>
 
-              {/* Klasifikasi */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Hasil Klasifikasi</span>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded text-white" style={{ backgroundColor: getAkurasiColor(doc.confidence) }}>
-                    {akurasi}
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="p-2 rounded-lg bg-white border border-zinc-200">
-                    <p className="text-[10px] text-zinc-500 mb-0.5">Arah</p>
-                    <p className="text-xs font-semibold" style={{ color: isMasuk ? '#00AA00' : '#DD0000' }}>{doc.arah}</p>
-                  </div>
-                  <div className="p-2 rounded-lg bg-white border border-zinc-200">
-                    <p className="text-[10px] text-zinc-500 mb-0.5">Jenis</p>
-                    <p className="text-xs font-semibold text-blue-600">{doc.jenis || '-'}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Koreksi */}
-              {showKoreksi && (
-                <div className="p-2.5 rounded-lg bg-white border border-zinc-200 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-zinc-500 w-12">Jenis</span>
-                    <select value={formData.jenis} onChange={(e) => setFormData({...formData, jenis: e.target.value})} className="flex-1 text-xs p-1.5 border border-zinc-200 rounded">
-                      <option value="Purchase Order">Purchase Order</option>
-                      <option value="Invoice">Invoice</option>
-                      <option value="Surat Penawaran">Surat Penawaran</option>
-                      <option value="Nota Dinas">Nota Dinas</option>
-                      <option value="Kontrak">Kontrak</option>
-                      <option value="Surat Jalan">Surat Jalan</option>
-                      <option value="Batal Order">Batal Order</option>
-                      <option value="MoU">MoU</option>
-                      <option value="Lainnya">Lainnya</option>
-                    </select>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-zinc-500 w-12">Arah</span>
-                    <select value={formData.arah} onChange={(e) => setFormData({...formData, arah: e.target.value})} className="flex-1 text-xs p-1.5 border border-zinc-200 rounded">
-                      <option value="Masuk">Masuk</option>
-                      <option value="Keluar">Keluar</option>
-                    </select>
-                  </div>
-                  <div className="flex gap-2">
-                    <button onClick={handleKoreksi} className="flex-1 text-xs font-medium py-1.5 bg-amber-500 text-white rounded hover:bg-amber-600">Simpan</button>
-                    <button onClick={() => setShowKoreksi(false)} className="text-xs px-3 py-1.5 bg-zinc-100 rounded hover:bg-zinc-200">Batal</button>
-                  </div>
-                </div>
-              )}
-
-              {/* Action Buttons */}
-              <div className="flex items-center gap-2 pt-1">
-                {editing ? (
-                  <>
-                    <button onClick={handleSave} disabled={saving} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 text-white text-xs font-medium hover:bg-amber-600 disabled:opacity-50">
-                      {saving ? 'Menyimpan...' : 'Simpan'}
-                    </button>
-                    <button onClick={() => setEditing(false)} className="px-3 py-1.5 rounded-lg bg-zinc-100 text-xs text-zinc-600 hover:bg-zinc-200">Batal</button>
-                  </>
-                ) : (
-                  <>
-                    <button onClick={() => setEditing(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-zinc-200 text-xs font-medium text-zinc-700 hover:bg-zinc-50">
-                      <Pencil className="w-3 h-3" /> Edit
-                    </button>
-                    <button onClick={() => setShowKoreksi(!showKoreksi)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-zinc-200 text-xs font-medium text-zinc-700 hover:bg-zinc-50">
-                      <Pencil className="w-3 h-3" /> Koreksi
-                    </button>
-                    {confirmDelete ? (
-                      <div className="flex items-center gap-1 ml-auto">
-                        <span className="text-[10px] text-zinc-500">Yakin?</span>
-                        <button onClick={handleDelete} className="text-[10px] text-red-600 font-medium px-2 py-1 bg-red-50 rounded">Ya, Hapus</button>
-                        <button onClick={() => setConfirmDelete(false)} className="text-[10px] text-zinc-500 px-2 py-1 bg-zinc-50 rounded">Batal</button>
-                      </div>
-                    ) : (
-                      <button onClick={() => setConfirmDelete(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-red-100 text-xs font-medium text-red-600 hover:bg-red-50 ml-auto">
-                        <Trash2 className="w-3 h-3" /> Hapus
-                      </button>
-                    )}
-                  </>
-                )}
+              {/* Akurasi Badge */}
+              <div className="flex flex-col items-end gap-2">
+                <span className="text-[10px] font-semibold px-2.5 py-1 rounded text-white" style={{ backgroundColor: getAkurasiColor(doc.confidence) }}>
+                  {akurasi}
+                </span>
               </div>
             </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-zinc-200">
+              {editing ? (
+                <>
+                  <button onClick={handleSave} disabled={saving} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 text-white text-xs font-medium hover:bg-amber-600 disabled:opacity-50">
+                    {saving ? 'Menyimpan...' : 'Simpan'}
+                  </button>
+                  <button onClick={() => setEditing(false)} className="px-3 py-1.5 rounded-lg bg-zinc-100 text-xs text-zinc-600 hover:bg-zinc-200">Batal</button>
+                </>
+              ) : (
+                <>
+                  <button onClick={() => setEditing(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-zinc-200 text-xs font-medium text-zinc-700 hover:bg-zinc-50">
+                    <Pencil className="w-3 h-3" /> Edit
+                  </button>
+                  <button onClick={() => setShowPreview(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-zinc-200 text-xs font-medium text-zinc-700 hover:bg-zinc-50">
+                    <Eye className="w-3 h-3" /> Preview
+                  </button>
+                  <a href={`${API_URL}/api/documents/${doc.id}/download`} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-zinc-200 text-xs font-medium text-zinc-700 hover:bg-zinc-50">
+                    <Download className="w-3 h-3" /> Unduh
+                  </a>
+                  {confirmDelete ? (
+                    <div className="flex items-center gap-1 ml-auto">
+                      <span className="text-[10px] text-zinc-500">Yakin ingin menghapus?</span>
+                      <button onClick={handleDelete} className="text-[10px] text-red-600 font-medium px-2 py-1 bg-red-50 rounded">Ya, Hapus</button>
+                      <button onClick={() => setConfirmDelete(false)} className="text-[10px] text-zinc-500 px-2 py-1 bg-zinc-50 rounded">Batal</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setConfirmDelete(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-red-100 text-xs font-medium text-red-600 hover:bg-red-50 ml-auto">
+                      <Trash2 className="w-3 h-3" /> Hapus
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
           </div>
-        </div>
-      </td>
-    </tr>
+        </td>
+      </tr>
     </>
   );
 }
