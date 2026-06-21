@@ -80,9 +80,9 @@ export default function FilterBar({ filters, onFilterChange, totalResults }) {
             <FileBadge className="w-3.5 h-3.5 text-zinc-400" />
             <select value={filters.confidence} onChange={(e) => onFilterChange('confidence', e.target.value)} className="text-xs text-zinc-600 bg-transparent outline-none cursor-pointer">
               <option value="">Akurasi</option>
-              <option value="90">≥ 90%</option>
-              <option value="75">75-89%</option>
-              <option value="low">&lt; 75%</option>
+              <option value="90">Akurat</option>
+              <option value="75">Cukup</option>
+              <option value="low">Tidak Akurat</option>
             </select>
           </div>
 

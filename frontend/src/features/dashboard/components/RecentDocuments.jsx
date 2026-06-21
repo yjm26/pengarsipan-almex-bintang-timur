@@ -5,30 +5,27 @@ import api from '../../../lib/api';
 
 function getConfidenceBadge(score) {
   const pct = Math.round(score * 100);
-  if (pct >= 90) {
-    return {
-      bg: 'bg-emerald-50',
-      border: 'border-emerald-100',
-      text: 'text-emerald-700',
-      icon: CheckCircle2,
-      label: `${pct}%`,
-    };
-  }
   if (pct >= 75) {
     return {
-      bg: 'bg-amber-50',
-      border: 'border-amber-100',
-      text: 'text-amber-700',
+      bg: 'bg-green-600',
+      text: 'text-white',
+      icon: CheckCircle2,
+      label: 'Akurat',
+    };
+  }
+  if (pct >= 50) {
+    return {
+      bg: 'bg-yellow-500',
+      text: 'text-white',
       icon: AlertTriangle,
-      label: `${pct}%`,
+      label: 'Cukup',
     };
   }
   return {
-    bg: 'bg-red-50',
-    border: 'border-red-100',
-    text: 'text-red-700',
+    bg: 'bg-red-600',
+    text: 'text-white',
     icon: AlertTriangle,
-    label: `${pct}%`,
+    label: 'Tidak Akurat',
   };
 }
 

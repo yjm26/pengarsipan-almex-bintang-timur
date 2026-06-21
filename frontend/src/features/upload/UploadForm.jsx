@@ -207,9 +207,9 @@ export default function UploadForm({ onUpload }) {
                 {/* Confidence & Metadata */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="p-4 rounded-lg bg-zinc-50 border border-zinc-100">
-                    <p className="text-xs text-zinc-500 mb-1">Confidence Score</p>
-                    <p className={`text-lg font-semibold ${result.confidence >= 90 ? 'text-emerald-600' : result.confidence >= 75 ? 'text-amber-600' : 'text-red-600'}`}>
-                      {result.confidence}%
+                    <p className="text-xs text-zinc-500 mb-1">Hasil Klasifikasi</p>
+                    <p className={`text-lg font-semibold ${result.confidence >= 75 ? 'text-green-600' : result.confidence >= 50 ? 'text-yellow-600' : 'text-red-600'}`}>
+                      {result.confidence >= 75 ? 'Akurat' : result.confidence >= 50 ? 'Cukup' : 'Tidak Akurat'}
                     </p>
                   </div>
                   <div className="p-4 rounded-lg bg-zinc-50 border border-zinc-100">

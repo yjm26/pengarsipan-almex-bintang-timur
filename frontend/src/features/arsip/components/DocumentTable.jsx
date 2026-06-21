@@ -4,13 +4,13 @@ import { FileText, Eye, CheckCircle2, AlertTriangle, XCircle, Pencil, Trash2, Ar
 import { api } from '../../../lib/api';
 
 function getConfidenceBadge(score) {
-  if (score >= 90) {
-    return { bg: 'bg-emerald-50', border: 'border-emerald-100', text: 'text-emerald-700', icon: CheckCircle2, label: `${score}%` };
-  }
   if (score >= 75) {
-    return { bg: 'bg-amber-50', border: 'border-amber-100', text: 'text-amber-700', icon: AlertTriangle, label: `${score}%` };
+    return { bg: 'bg-green-600', border: 'border-green-700', text: 'text-white', icon: CheckCircle2, label: 'Akurat' };
   }
-  return { bg: 'bg-red-50', border: 'border-red-100', text: 'text-red-700', icon: XCircle, label: `${score}%` };
+  if (score >= 50) {
+    return { bg: 'bg-yellow-500', border: 'border-yellow-600', text: 'text-white', icon: AlertTriangle, label: 'Cukup' };
+  }
+  return { bg: 'bg-red-600', border: 'border-red-700', text: 'text-white', icon: XCircle, label: 'Tidak Akurat' };
 }
 
 /* ===== DETAIL PANEL (Feature 1) ===== */
@@ -18,6 +18,8 @@ function DetailPanel({ doc, onClose, onCorrect }) {
   const [correcting, setCorrecting] = useState(false);
   const [correction, setCorrection] = useState({ arah: doc.arah, jenis: doc.jenis });
   const [saving, setSaving] = useState(false);
+  const badge = getConfidenceBadge(doc.confidence);
+  const BadgeIcon = badge.icon;
 
   const handleCorrect = () => {
     setSaving(true);
@@ -116,9 +118,10 @@ function DetailPanel({ doc, onClose, onCorrect }) {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Hasil Klasifikasi</h3>
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold ${
-                    doc.confidence >= 90 ? 'bg-emerald-50 text-emerald-700' : doc.confidence >= 75 ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700'
-                  }`}>{doc.confidence}%</span>
+                  <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-semibold ${badge.bg} ${badge.text}`}>
+                    <BadgeIcon className="w-3 h-3" />
+                    {badge.label}
+                  </span>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between p-3 rounded-lg bg-emerald-50/50 border border-emerald-100">
