@@ -46,8 +46,12 @@ def extract_date(text: str) -> Optional[datetime]:
 
 @router.post("/upload", response_model=DocumentOut)
 async def upload_document(file: UploadFile = File(...), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    if not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Hanya file PDF yang diizinkan")
+    PDF_EXT = {".pdf"}
+    IMG_EXT = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif"}
+    SUPPORTED_EXT = PDF_EXT | IMG_EXT
+    file_ext = os.path.splitext(file.filename)[1].lower()
+    if file_ext not in SUPPORTED_EXT:
+        raise HTTPException(status_code=400, detail="Hanya file PDF dan gambar (JPG/PNG/BMP/TIFF) yang diizinkan")
 
     # Save file
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
@@ -58,15 +62,45 @@ async def upload_document(file: UploadFile = File(...), db: Session = Depends(ge
         f.write(content)
     file_size = len(content)
 
-    # Extract text
+    # Extract text (PyMuPDF + EasyOCR untuk scanned PDF & gambar)
     extracted_text = ""
     try:
-        import pdfplumber
-        with pdfplumber.open(file_path) as pdf:
-            for page in pdf.pages:
-                t = page.extract_text()
-                if t:
-                    extracted_text += t + "\n"
+        import fitz  # PyMuPDF
+        import easyocr
+        import cv2
+        import numpy as np
+
+        # Lazy-load EasyOCR reader (singleton)
+        if not hasattr(upload_document, "_ocr_reader"):
+            upload_document._ocr_reader = easyocr.Reader(["id", "en"], gpu=False)
+        ocr_reader = upload_document._ocr_reader
+
+        def ocr_image(img_np):
+            try:
+                results = ocr_reader.readtext(img_np, detail=0)
+                return " ".join(results)
+            except Exception:
+                return ""
+
+        if file_ext in PDF_EXT:
+            doc = fitz.open(file_path)
+            for page in doc:
+                page_text = page.get_text().strip()
+                if page_text:
+                    extracted_text += page_text + "\n"
+                else:
+                    pix = page.get_pixmap(dpi=300)
+                    img_bytes = pix.tobytes("png")
+                    img_np = cv2.imdecode(np.frombuffer(img_bytes, np.uint8), cv2.IMREAD_COLOR)
+                    if img_np is not None:
+                        extracted_text += ocr_image(img_np) + "\n"
+            doc.close()
+
+        elif file_ext in IMG_EXT:
+            img_np = cv2.imread(file_path)
+            if img_np is not None:
+                extracted_text += ocr_image(img_np) + "\n"
+
     except Exception:
         extracted_text = ""
 
@@ -167,7 +201,16 @@ def download_document(doc_id: int, db: Session = Depends(get_db), current_user: 
     doc = db.query(Document).filter(Document.id == doc_id).first()
     if not doc or not os.path.exists(doc.file_path):
         raise HTTPException(status_code=404, detail="File tidak ditemukan")
-    return FileResponse(doc.file_path, filename=doc.nama_file, media_type="application/pdf")
+    # Detect media type from extension
+    ext = os.path.splitext(doc.file_path)[1].lower()
+    media_map = {
+        ".pdf": "application/pdf",
+        ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+        ".png": "image/png", ".bmp": "image/bmp",
+        ".tiff": "image/tiff", ".tif": "image/tiff",
+    }
+    media_type = media_map.get(ext, "application/octet-stream")
+    return FileResponse(doc.file_path, filename=doc.nama_file, media_type=media_type)
 
 @router.put("/{doc_id}", response_model=DocumentOut)
 def update_document(doc_id: int, data: DocumentUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
