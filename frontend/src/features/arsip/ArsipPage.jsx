@@ -46,7 +46,7 @@ export default function ArsipPage() {
 
       const mapped = (res.data || []).map((doc) => ({
         id: doc.id,
-        nama: doc.nama_file || '',
+        namaFile: doc.nama_file || '',
         namaPt: doc.nama_pt || '',
         tanggalSurat: doc.tanggal_surat || '',
         tanggalUnggah: doc.tanggal_unggah || '',
