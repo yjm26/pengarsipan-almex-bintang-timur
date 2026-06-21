@@ -20,19 +20,31 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 def extract_company_name(text: str) -> str:
     if not text:
         return ""
-    # Pattern 1: PT/CV followed by name
+    
+    # Improved patterns for company name extraction
     patterns = [
-        r'(?:PT|CV|PT\.|CV\.)\s*([A-Z][A-Za-z\s&.]+?)(?:\n|,|\s{2,}|JL\.|Jl\.|jl\.)',
+        # Pattern 1: PT/CV with dot and space, followed by uppercase name
+        r'(?:PT|CV)\.\s*([A-Z][A-Z\s&.]+?)(?:\n|,|\s{2,}|JL\.|Jl\.|jl\.|Gedung|Gd\.|Kawasan|Jl\s)',
+        # Pattern 2: PT/CV without dot, followed by space and name
+        r'(?:PT|CV)\s+([A-Z][A-Z\s&.]+?)(?:\n|,|\s{2,}|JL\.|Jl\.|jl\.|Gedung|Gd\.|Kawasan|Jl\s)',
+        # Pattern 3: After "Kepada" or "Yth"
         r'(?:kepada|yth\.?|ditujukan\s+kepada)\s*:?\s*(?:PT|CV)\s*\.?\s*([A-Za-z\s&.]+?)(?:\n|,)',
-        r'(?:PT|CV)\s*\.?\s*([A-Z][A-Za-z\s&.]+?)(?:\s*[-,]|\s*$)',
+        # Pattern 4: PT/CV at end of line
+        r'(?:PT|CV)\s*\.?\s*([A-Z][A-Za-z\s&.]+?)(?:\s*$)',
+        # Pattern 5: More flexible - PT followed by any word characters
+        r'(?:PT|CV)\s*\.?\s*([A-Za-z][A-Za-z\s&.]{2,}?)(?:\s*[-,]|\s*$|\n)',
     ]
+    
     for pat in patterns:
         m = re.search(pat, text, re.IGNORECASE)
         if m:
-            full_match = m.group(0).strip()
+            company = m.group(1).strip()
             # Clean up: remove trailing whitespace, commas, etc
-            full_match = re.sub(r'\s+$', '', full_match)
-            return full_match[:200]
+            company = re.sub(r'\s+$', '', company)
+            # Filter out too short matches (likely false positives)
+            if len(company) >= 3:
+                return company[:200]
+    
     return ""
 
 def extract_date(text: str) -> Optional[datetime]:
