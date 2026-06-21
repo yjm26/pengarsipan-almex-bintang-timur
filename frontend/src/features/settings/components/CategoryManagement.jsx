@@ -114,7 +114,7 @@ export default function CategoryManagement() {
             </div>
             <div>
               <h2 className="text-base font-semibold tracking-tight text-zinc-900">Manajemen Kategori</h2>
-              <p className="text-sm text-zinc-500 mt-1">Kelola hierarki kategori untuk klasifikasi 2-Level AI.</p>
+              <p className="text-sm text-zinc-500 mt-1">Kelola hierarki kategori untuk klasifikasi dokumen.</p>
             </div>
           </div>
           <motion.button
@@ -196,7 +196,7 @@ export default function CategoryManagement() {
         {/* Info Box */}
         <div className="mt-8 p-4 rounded-lg bg-amber-50/50 border border-amber-100">
           <p className="text-xs text-amber-700 leading-relaxed">
-            <strong>Perhatian:</strong> Mengubah atau menghapus kategori yang sudah digunakan oleh dokumen dapat mempengaruhi hasil klasifikasi AI. Pastikan untuk meninjau dokumen terkait sebelum melakukan perubahan.
+            <strong>Perhatian:</strong> Mengubah atau menghapus kategori yang sudah digunakan oleh dokumen dapat mempengaruhi hasil klasifikasi. Pastikan untuk meninjau dokumen terkait sebelum melakukan perubahan.
           </p>
         </div>
       </div>

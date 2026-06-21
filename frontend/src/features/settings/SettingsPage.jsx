@@ -12,7 +12,7 @@ const tabs = [
   { id: 'profile', label: 'Profil Saya', icon: User },
   { id: 'users', label: 'Manajemen User', icon: Users },
   { id: 'categories', label: 'Kategori', icon: FolderTree },
-  { id: 'ai', label: 'AI Model', icon: Brain },
+  { id: 'ai', label: 'Model', icon: Brain },
   { id: 'audit', label: 'Audit Log', icon: ClipboardList },
   { id: 'backup', label: 'Backup & Export', icon: Database },
 ];
@@ -30,7 +30,7 @@ export default function SettingsPage() {
           </div>
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Pengaturan</h1>
-            <p className="text-sm text-zinc-500 mt-1.5 font-light">Kelola user, kategori, model AI, dan data sistem.</p>
+            <p className="text-sm text-zinc-500 mt-1.5 font-light">Kelola user, kategori, model klasifikasi, dan data sistem.</p>
           </div>
         </div>
       </motion.div>

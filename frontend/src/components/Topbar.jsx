@@ -3,11 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, User, Search, Moon, Sun, Menu, FileText, CheckCircle2, AlertTriangle, X } from 'lucide-react';
 
 const mockNotifications = [
-  { id: 1, type: 'success', title: 'Klasifikasi Selesai', desc: '12 dokumen baru telah diproses oleh AI.', time: '2 menit lalu', read: false },
+  { id: 1, type: 'success', title: 'Klasifikasi Selesai', desc: '12 dokumen baru telah diklasifikasi.', time: '2 menit lalu', read: false },
   { id: 2, type: 'warning', title: 'Confidence Rendah', desc: '3 dokumen memiliki akurasi di bawah 75%.', time: '15 menit lalu', read: false },
   { id: 3, type: 'info', title: 'Upload Berhasil', desc: 'Surat_PO_ABT_042.pdf berhasil diarsipkan.', time: '1 jam lalu', read: true },
   { id: 4, type: 'info', title: 'Backup Harian', desc: 'Backup database otomatis selesai.', time: '3 jam lalu', read: true },
-  { id: 5, type: 'success', title: 'Model Retrained', desc: 'Model NB telah di-retrain dengan 45 dokumen baru.', time: 'Kemarin', read: true },
+  { id: 5, type: 'success', title: 'Model Retrained', desc: 'Model klasifikasi telah di-retrain dengan 45 dokumen baru.', time: 'Kemarin', read: true },
 ];
 
 export default function Topbar({ onOpenSidebar }) {

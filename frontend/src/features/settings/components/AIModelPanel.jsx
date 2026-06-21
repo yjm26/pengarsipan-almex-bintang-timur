@@ -24,7 +24,7 @@ export default function AIModelPanel() {
           trainingData: data.training_data ?? data.trainingData ?? 0,
           lastRetrain: data.last_retrain ?? data.lastRetrain ?? '-',
           modelVersion: data.model_version ?? data.modelVersion ?? '-',
-          algorithm: data.algorithm ?? 'Multinomial Naïve Bayes + TF-IDF',
+          algorithm: data.algorithm ?? 'Klasifikasi Dokumen',
         });
         if (data.threshold != null) {
           setThreshold(Math.round(data.threshold * 100));
@@ -66,7 +66,7 @@ export default function AIModelPanel() {
               trainingData: data.training_data ?? data.trainingData ?? 0,
               lastRetrain: data.last_retrain ?? data.lastRetrain ?? '-',
               modelVersion: data.model_version ?? data.modelVersion ?? '-',
-              algorithm: data.algorithm ?? 'Multinomial Naïve Bayes + TF-IDF',
+              algorithm: data.algorithm ?? 'Klasifikasi Dokumen',
             });
           } catch (_) {}
         }
@@ -122,7 +122,7 @@ export default function AIModelPanel() {
             <Brain className="w-6 h-6 text-[#D49A28]" />
           </div>
           <div>
-            <h2 className="text-base font-semibold tracking-tight text-zinc-900">Status Model AI</h2>
+            <h2 className="text-base font-semibold tracking-tight text-zinc-900">Status Model Klasifikasi</h2>
             <p className="text-sm text-zinc-500 mt-1">Model {modelStats.modelVersion} — {modelStats.algorithm}</p>
           </div>
         </div>

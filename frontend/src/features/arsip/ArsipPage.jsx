@@ -111,7 +111,7 @@ export default function ArsipPage() {
     <div className="space-y-6">
       <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.05 }}>
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Arsip Surat</h1>
-        <p className="text-sm text-zinc-500 mt-1.5 font-light">Semua dokumen terklasifikasi beserta hasil analisis AI.</p>
+        <p className="text-sm text-zinc-500 mt-1.5 font-light">Semua dokumen terklasifikasi beserta hasil klasifikasi.</p>
       </motion.div>
 
       <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }}>

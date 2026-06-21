@@ -6,7 +6,7 @@ import api from '../../../lib/api';
 const typeConfig = {
   upload: { icon: Upload, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100', label: 'Dokumen' },
   auth: { icon: ClipboardList, color: 'text-zinc-500', bg: 'bg-zinc-50', border: 'border-zinc-100', label: 'Auth' },
-  ai: { icon: RotateCw, color: 'text-[#D49A28]', bg: 'bg-amber-50', border: 'border-amber-100', label: 'AI' },
+  ai: { icon: RotateCw, color: 'text-[#D49A28]', bg: 'bg-amber-50', border: 'border-amber-100', label: 'Klasifikasi' },
   user: { icon: UserPlus, color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100', label: 'User' },
   category: { icon: Settings, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', label: 'Kategori' },
   settings: { icon: Settings, color: 'text-cyan-600', bg: 'bg-cyan-50', border: 'border-cyan-100', label: 'Settings' },
@@ -70,7 +70,7 @@ export default function AuditLog() {
             <option value="">Semua Tipe</option>
             <option value="upload">Dokumen</option>
             <option value="auth">Auth</option>
-            <option value="ai">AI</option>
+            <option value="ai">Klasifikasi</option>
             <option value="user">User</option>
             <option value="category">Kategori</option>
             <option value="settings">Settings</option>

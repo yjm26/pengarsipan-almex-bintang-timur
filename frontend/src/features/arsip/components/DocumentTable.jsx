@@ -3,6 +3,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, Eye, CheckCircle2, AlertTriangle, XCircle, Pencil, Trash2, ArrowDownLeft, ArrowUpRight, X, ChevronRight, Edit3, Download, Check, Loader2 } from 'lucide-react';
 import { api } from '../../../lib/api';
 
+const MONTHS_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+function formatDate(str) {
+  if (!str) return '-';
+  // Handle ISO strings like "2024-01-15T00:00:00" or "2024-01-15"
+  const clean = String(str).split('T')[0];
+  const parts = clean.split('-');
+  if (parts.length === 3) {
+    const [y, m, d] = parts;
+    return `${parseInt(d)} ${MONTHS_ID[parseInt(m) - 1]} ${y}`;
+  }
+  // If it's already formatted (e.g. "15 Januari 2024"), return as-is
+  return str;
+}
+
 function getConfidenceBadge(score) {
   if (score >= 75) {
     return { bg: '#00AA00', border: '#009900', text: 'text-white', icon: CheckCircle2, label: 'Akurat' };
@@ -95,7 +109,7 @@ function DetailPanel({ doc, onClose, onCorrect }) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-zinc-900 truncate">{doc.nama}</p>
-                  <p className="text-xs text-zinc-400 mt-0.5">Diunggah {doc.tanggalUnggah}</p>
+                  <p className="text-xs text-zinc-400 mt-0.5">Diunggah {formatDate(doc.tanggalUnggah)}</p>
                 </div>
               </div>
 
@@ -104,7 +118,7 @@ function DetailPanel({ doc, onClose, onCorrect }) {
                 <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Metadata</h3>
                 {[
                   { label: 'Perusahaan', value: doc.namaPt },
-                  { label: 'Tanggal Surat', value: doc.tanggalSurat },
+                  { label: 'Tanggal Surat', value: formatDate(doc.tanggalSurat) },
                   { label: 'Status', value: doc.status === 'verified' ? 'Terverifikasi' : doc.status === 'review' ? 'Perlu Review' : 'Pending' },
                 ].map((item, i) => (
                   <div key={i} className="flex items-center justify-between py-2 border-b border-zinc-50 last:border-0">
@@ -114,7 +128,7 @@ function DetailPanel({ doc, onClose, onCorrect }) {
                 ))}
               </div>
 
-              {/* AI Result */}
+              {/* Classification Result */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Hasil Klasifikasi</h3>
@@ -124,14 +138,14 @@ function DetailPanel({ doc, onClose, onCorrect }) {
                   </span>
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-emerald-50/50 border border-emerald-100">
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-zinc-200">
                     <span className="text-xs text-zinc-600">Arah</span>
                     <div className="flex items-center gap-1.5">
                       {doc.arah === 'Masuk' ? <ArrowDownLeft className="w-3.5 h-3.5" style={{ color: '#00AA00' }} /> : <ArrowUpRight className="w-3.5 h-3.5" style={{ color: '#DD0000' }} />}
                       <span className="text-sm font-semibold text-zinc-900">{doc.arah}</span>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-blue-50/50 border border-blue-100">
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-zinc-200">
                     <span className="text-xs text-zinc-600">Jenis</span>
                     <span className="text-sm font-semibold text-zinc-900">{doc.jenis}</span>
                   </div>
@@ -261,7 +275,7 @@ export default function DocumentTable({ documents, selectedIds, onToggleSelect }
                     <span className="text-sm text-zinc-600 truncate max-w-[180px] block">{doc.namaPt}</span>
                   </td>
                   <td className="px-8 py-3.5 hidden sm:table-cell">
-                    <span className="text-sm text-zinc-600 whitespace-nowrap">{doc.tanggalSurat}</span>
+                    <span className="text-sm text-zinc-600 whitespace-nowrap">{formatDate(doc.tanggalSurat)}</span>
                   </td>
                   <td className="px-8 py-3.5">
                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium ${                      isMasuk ? 'text-emerald-700 border border-emerald-100' : 'text-red-700 border border-red-100'                    }`} style={{ backgroundColor: isMasuk ? '#E8F5E9' : '#FFEBEE' }}>
