@@ -166,7 +166,7 @@ export default function ArsipPage() {
           </div>
         ) : (
           <>
-            <DocumentTable documents={documents} selected={[...selectedIds]} onToggleSelect={handleToggleSelect} onDelete={handleDelete} />
+            <DocumentTable documents={documents} selected={[...selectedIds]} onSelect={handleToggleSelect} onDelete={handleDelete} onUpdate={(id, updates) => setDocuments(prev => prev.map(d => d.id === id ? { ...d, ...updates } : d))} />
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
