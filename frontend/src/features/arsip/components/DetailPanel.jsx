@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, ArrowDownLeft, ArrowUpRight, FileText, Trash2, Save, ExternalLink, ZoomIn, ZoomOut, Pencil, Eye } from 'lucide-react';
+import api from '../../../lib/api';
 
 const AKURASI_COLORS = {
   bg: { Akurat: '#00AA00', Cukup: '#D4A000', 'Tidak Akurat': '#DD0000' },
@@ -28,27 +29,28 @@ export default function DetailPanel({ doc, onClose, onUpdate, onDelete }) {
   const [zoom, setZoom] = useState(1);
   const badge = getBadge(doc.confidence);
   const isMasuk = doc.arah === 'Masuk';
-  const previewUrl = `/api/documents/${doc.id}/preview`;
-  const downloadUrl = `/api/documents/${doc.id}/download`;
+  const previewUrl = `${(import.meta.env.VITE_API_URL || '').replace(/\/$/, '')}/api/documents/${doc.id}/preview`;
+  const downloadUrl = `${(import.meta.env.VITE_API_URL || '').replace(/\/$/, '')}/api/documents/${doc.id}/download`;
 
   async function handleSave() {
     setSaving(true);
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`/api/documents/${doc.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(form),
-      });
-      if (res.ok) { const updated = await res.json(); onUpdate(updated); setEditing(false); }
+      const updated = await api.updateDocument(doc.id, form);
+      onUpdate(updated);
+      setEditing(false);
+    } catch (err) {
+      console.error('Gagal menyimpan:', err);
     } finally { setSaving(false); }
   }
 
   async function handleDelete() {
     if (!confirm('Hapus dokumen ini?')) return;
-    const token = localStorage.getItem('token');
-    const res = await fetch(`/api/documents/${doc.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
-    if (res.ok) onDelete(doc.id);
+    try {
+      await api.deleteDocument(doc.id);
+      onDelete(doc.id);
+    } catch (err) {
+      console.error('Gagal menghapus:', err);
+    }
   }
 
   return (
@@ -159,11 +161,10 @@ export default function DetailPanel({ doc, onClose, onUpdate, onDelete }) {
             </div>
             <div className="overflow-auto max-h-[80vh] rounded-xl bg-white">
               <img
-                src={(() => { const base = (import.meta.env.VITE_API_URL || '').replace(/\/$/, ''); return base ? `${base}${previewUrl}` : previewUrl; })()}
+                src={previewUrl}
                 alt={doc.nama_file}
                 style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}
                 className="max-w-full"
-                crossOrigin="use-credentials"
               />
             </div>
           </div>
