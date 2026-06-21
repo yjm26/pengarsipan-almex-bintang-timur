@@ -142,8 +142,8 @@ export default function DocumentTable({ documents, loading, onRefresh, onDelete,
                     <td className="px-2 py-1.5 text-[11px] text-zinc-600 max-w-[100px] truncate">{doc.jenis}</td>
                     <td className="pr-3 py-1.5" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-1">
-                        <button onClick={() => setDetailDoc(doc)} className="p-1.5 rounded-lg bg-zinc-100 hover:bg-blue-100 text-zinc-500 hover:text-blue-600 transition-all" title="Detail"><Eye className="w-3.5 h-3.5" /></button>
-                        <button onClick={() => onDelete(doc.id)} className="p-1.5 rounded-lg bg-zinc-100 hover:bg-red-100 text-zinc-500 hover:text-red-600 transition-all" title="Hapus"><Trash2 className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => setDetailDoc(doc)} className="p-1.5 rounded-lg bg-zinc-200 hover:bg-blue-100 text-zinc-700 hover:text-blue-600 transition-all" title="Detail"><Eye className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => onDelete(doc.id)} className="p-1.5 rounded-lg bg-zinc-200 hover:bg-red-100 text-zinc-700 hover:text-red-600 transition-all" title="Hapus"><Trash2 className="w-3.5 h-3.5" /></button>
                       </div>
                     </td>
                   </tr>
