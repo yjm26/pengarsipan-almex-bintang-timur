@@ -232,7 +232,7 @@ export default function UploadForm({ onUpload }) {
       {/* Header */}
       <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.05 }}>
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Upload Dokumen</h1>
-        <p className="text-sm text-zinc-500 mt-1.5 font-light">Upload surat untuk diproses dan diklasifikasi. Maksimal {MAX_FILES} file.</p>
+        <p className="text-sm text-zinc-500 mt-1.5 font-light">Upload surat masuk dan keluar untuk diproses. Maksimal {MAX_FILES} file.</p>
       </motion.div>
 
       {/* Upload Zone */}
