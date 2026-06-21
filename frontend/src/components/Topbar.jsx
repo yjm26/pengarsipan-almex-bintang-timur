@@ -31,7 +31,7 @@ export default function Topbar({ onOpenSidebar }) {
   };
 
   return (
-    <header className="h-16 bg-white dark:bg-zinc-900 border-b border-zinc-200/60 dark:border-zinc-800 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-10 transition-colors">
+    <header className="h-16 bg-white dark:bg-zinc-900 border-b border-zinc-200/60 dark:border-zinc-800 flex items-center gap-4 px-4 lg:px-6 sticky top-0 z-10 transition-colors">
       {/* Mobile Hamburger */}
       <motion.button
         whileTap={{ scale: 0.95 }}
@@ -41,12 +41,13 @@ export default function Topbar({ onOpenSidebar }) {
         <Menu className="w-5 h-5" />
       </motion.button>
 
-      <div className="flex items-center gap-3 lg:gap-4 ml-auto lg:ml-0">
-        {/* Search Bar */}
-        <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 text-sm w-64 focus-within:border-zinc-400 focus-within:ring-1 focus-within:ring-zinc-400 transition-all">
-          <Search className="w-4 h-4" />
-          <input type="text" placeholder="Cari dokumen..." className="bg-transparent outline-none w-full placeholder:text-zinc-400 dark:placeholder:text-zinc-500" />
-        </div>
+      {/* Search Bar - full width */}
+      <div className="hidden md:flex flex-1 items-center gap-2 px-4 py-2 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 text-sm max-w-xl focus-within:border-zinc-400 focus-within:ring-1 focus-within:ring-zinc-400 transition-all">
+        <Search className="w-4 h-4 flex-shrink-0" />
+        <input type="text" placeholder="Cari dokumen..." className="bg-transparent outline-none w-full placeholder:text-zinc-400 dark:placeholder:text-zinc-500" />
+      </div>
+
+      <div className="flex items-center gap-3 lg:gap-4 ml-auto">
 
         {/* Dark Mode Toggle */}
         <motion.button
