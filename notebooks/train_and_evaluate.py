@@ -213,12 +213,11 @@ def remove_keywords(text, jenis):
     kws = KEYWORDS.get(jenis, [])
     return ' '.join([w for w in words if not any(kw in w or w in kw for kw in kws)])
 
-# Skenario C: middle only
-def middle_only(text, ratio=0.4):
+# Skenario C: hapus header 25% (simulasi template berubah, header tidak standar)
+def remove_header(text, ratio=0.25):
     words = text.split()
-    s = int(len(words) * ratio)
-    e = int(len(words) * (1 - ratio))
-    return ' '.join(words[s:e]) if e > s else text
+    start = int(len(words) * ratio)  # skip 25% awal
+    return ' '.join(words[start:])   # sisa 75% body+footer
 
 # Skenario D: OCR error 10%
 import random
@@ -255,11 +254,11 @@ df['clean_no_kw'] = df['no_kw'].apply(preprocess)
 p_nokw_j = pipe_jenis.predict(df['clean_no_kw'])
 p_nokw_a = pipe_arah.predict(df['clean_no_kw'])
 
-# C. Middle only
-df['mid'] = df['text'].apply(lambda t: middle_only(t, 0.4))
-df['clean_mid'] = df['mid'].apply(preprocess)
-p_mid_j = pipe_jenis.predict(df['clean_mid'])
-p_mid_a = pipe_arah.predict(df['clean_mid'])
+# C. Hapus Header 25%
+df['no_header'] = df['text'].apply(lambda t: remove_header(t, 0.25))
+df['clean_no_header'] = df['no_header'].apply(preprocess)
+p_noh_j = pipe_jenis.predict(df['clean_no_header'])
+p_noh_a = pipe_arah.predict(df['clean_no_header'])
 
 # D. OCR error
 df['ocr'] = df['text'].apply(ocr_error)
