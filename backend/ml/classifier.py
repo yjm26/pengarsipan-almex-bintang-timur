@@ -63,6 +63,7 @@ def preprocess_text(text: str) -> str:
     if not text:
         return ""
     # Case folding
+    # Case folding
     text = text.lower()
     # Cleaning: remove years (4 digits), punctuation, numbers, special chars
     text = re.sub(r'\b\d{4}\b', ' ', text)
