@@ -22,7 +22,9 @@ import joblib
 warnings.filterwarnings('ignore')
 
 # === KONFIGURASI ===
-DATASET_DIR = Path('/root/data_skripsi/NgeData')
+# Ganti path ini sesuai lokasi dataset di laptop
+# Default: folder './dataset/' di repo root (camelCase folders)
+DATASET_DIR = Path('./dataset')
 MODEL_DIR = Path('/root/pengarsipan-almex-bintang-timur/backend/ml_model')
 os.makedirs(MODEL_DIR, exist_ok=True)
 
@@ -34,20 +36,15 @@ JENIS_KE_ARAH = {
     'SuratJalan': 'Keluar',
 }
 
-# === EASYOCR (lazy load) ===
-reader = None
-def get_ocr_reader():
-    global reader
-    if reader is None:
-        import easyocr
-        print('[EasyOCR] Loading model (first time, ~30s)...')
-        reader = easyocr.Reader(['id', 'en'], gpu=False)
-    return reader
+# === OCR FALLBACK (Tesseract - lebih ringan RAM) ===
+from PIL import Image
+import pytesseract
 
 def ocr_image(img_np):
-    rdr = get_ocr_reader()
+    """OCR pakai Tesseract (pytesseract). img_np = numpy array (OpenCV BGR)."""
     try:
-        return ' '.join(rdr.readtext(img_np, detail=0))
+        img_rgb = Image.fromarray(img_np[:, :, ::-1])  # BGR to RGB
+        return pytesseract.image_to_string(img_rgb, lang='ind').strip()
     except Exception as e:
         return ''
 
