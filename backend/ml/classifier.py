@@ -13,7 +13,7 @@ MODEL_DIR = "/root/pengarsipan-almex-bintang-timur/backend/ml_model"
 os.makedirs(MODEL_DIR, exist_ok=True)
 
 ARAH_LABELS = ["Masuk", "Keluar"]
-JENIS_LABELS = ["Purchase Order", "Invoice", "Surat Penawaran", "Kontrak", "Nota Dinas", "MoU", "Lainnya"]
+JENIS_LABELS = ["purchaseOrder", "invoice", "penawaran", "SalesOrder", "suratJalan"]
 
 # Sastrawi stopwords (lazy load — same approach as notebook)
 _stopword_set = None
@@ -34,6 +34,14 @@ def get_stopwords():
             'ini', 'itu', 'adalah', 'ke', 'oleh', 'sebagai', 'juga',
             'akan', 'telah', 'sudah', 'atau', 'dalam', 'tidak',
             'ada', 'dapat', 'bisa', 'lebih',
+            # Domain stopwords (dari notebook Training_Model_Produksi)
+            'rucika', 'pcs', 'batang', 'total', 'harga', 'diskon', 'tanggal', 'kode',
+            'barang', 'nama', 'qty', 'satuan', 'rupiah', 'ribu', 'juta', 'indonesia',
+            'tangerang', 'banten', 'kota', 'green', 'lake', 'city', 'ruko', 'timur',
+            'bintang', 'almex', 'jan', 'feb', 'mar', 'apr', 'mei', 'jun', 'jul', 'agu',
+            'sep', 'okt', 'nov', 'des', 'no', 'jumlah', 'sub', 'lain', 'biaya', 'ppn',
+            'dpp', 'net', 'cash', 'transfer', 'dibuat', 'disetujui', 'pengirim',
+            'penerima', 'keterangan',
         }
     return _stopword_set
 
@@ -56,7 +64,8 @@ def preprocess_text(text: str) -> str:
         return ""
     # Case folding
     text = text.lower()
-    # Cleaning: remove punctuation, numbers, special chars
+    # Cleaning: remove years (4 digits), punctuation, numbers, special chars
+    text = re.sub(r'\b\d{4}\b', ' ', text)
     text = re.sub(r'[^a-z\s]', ' ', text)
     text = re.sub(r'\s+', ' ', text).strip()
     # Tokenizing
