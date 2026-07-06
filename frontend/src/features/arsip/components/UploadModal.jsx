@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Upload, FileText, CheckCircle, AlertCircle, Loader2, ArrowDownLeft, ArrowUpRight, RefreshCw } from 'lucide-react';
 import api from '../../../lib/api';
-import { useToast } from '../../../../contexts/ToastContext.jsx';
+import { useToast } from '../../../contexts/ToastContext.jsx';
 
 export default function UploadModal({ onClose, onSuccess }) {
   const { addToast } = useToast();

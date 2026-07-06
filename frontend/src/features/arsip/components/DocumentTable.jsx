@@ -4,7 +4,7 @@ import FilterBar from './FilterBar';
 import DetailPanel from './DetailPanel';
 import PreviewModal from './PreviewModal';
 import api from '../../../lib/api';
-import { useToast } from '../../../../contexts/ToastContext.jsx';
+import { useToast } from '../../../contexts/ToastContext.jsx';
 
 const PAGE_SIZE = 10;
 const DEBOUNCE_MS = 300;
