@@ -12,6 +12,13 @@ export default function CategoryManagement() {
   const [expandedParent, setExpandedParent] = useState(null);
   const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+    if (!showModal) return;
+    const onKey = (e) => { if (e.key === 'Escape') setShowModal(false); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [showModal]);
+
   const fetchCategories = async () => {
     try {
       const data = await api.getCategories();
