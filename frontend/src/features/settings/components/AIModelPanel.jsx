@@ -77,6 +77,7 @@ export default function AIModelPanel() {
   };
 
   const handleRetrain = async () => {
+    if (!confirm('Retrain model akan memakan waktu beberapa menit. Lanjutkan?')) return;
     setRetraining(true);
     setRetrainDone(false);
     try {

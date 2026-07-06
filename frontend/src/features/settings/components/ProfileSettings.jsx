@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { User, Mail, Shield, Edit2, Check, X, Lock } from 'lucide-react';
 import api from '../../../lib/api';
+import { useToast } from '../../../contexts/ToastContext.jsx';
 
 export default function ProfileSettings() {
+  const { addToast } = useToast();
   const [editing, setEditing] = useState(false);
   const [profile, setProfile] = useState({
     nama: '',
@@ -195,6 +197,23 @@ export default function ProfileSettings() {
           </div>
           <motion.button
             whileTap={{ scale: 0.98 }}
+            onClick={async () => {
+              if (!passwords.current || !passwords.new) {
+                addToast('Password lama dan baru harus diisi', 'error');
+                return;
+              }
+              if (passwords.new !== passwords.confirm) {
+                addToast('Password baru dan konfirmasi tidak cocok', 'error');
+                return;
+              }
+              try {
+                await api.updateProfile({ password: passwords.new });
+                addToast('Password berhasil diperbarui', 'success');
+                setPasswords({ current: '', new: '', confirm: '' });
+              } catch (err) {
+                addToast('Gagal memperbarui password: ' + err.message, 'error');
+              }
+            }}
             className="px-5 py-2.5 bg-[#D49A28] text-white text-sm font-medium rounded-lg hover:bg-[#C08A20] transition-colors"
           >
             Update Password

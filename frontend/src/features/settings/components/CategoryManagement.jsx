@@ -57,6 +57,7 @@ export default function CategoryManagement() {
   };
 
   const handleDelete = async (id) => {
+    if (!confirm('Hapus kategori ini? Dokumen terkait mungkin tidak terklasifikasi dengan benar.')) return;
     try {
       await api.deleteCategory(id);
       setCategories(categories.filter((c) => c.id !== id));
