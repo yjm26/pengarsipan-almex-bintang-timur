@@ -10,8 +10,6 @@ backend/database/*.db
 backend/uploads/*
 backend/__pycache__/
 backend/**/__pycache__/
-backend/ml_model/*.pkl
-backend/.env
 
 # Frontend
 frontend/node_modules/
