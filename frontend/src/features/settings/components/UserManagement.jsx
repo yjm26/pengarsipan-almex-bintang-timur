@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { UserPlus, Pencil, UserMinus, Key, Shield, Users, User, Loader2, AlertTriangle } from 'lucide-react';
 import api from '../../../lib/api';
+import { useToast } from '../../../contexts/ToastContext.jsx';
 
 export default function UserManagement() {
+  const { addToast } = useToast();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -11,6 +13,13 @@ export default function UserManagement() {
   const [formData, setFormData] = useState({ nama_lengkap: '', username: '', role: 'admin', password: '', is_active: true });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!showModal) return;
+    const onKey = (e) => { if (e.key === 'Escape') setShowModal(false); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [showModal]);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -55,13 +64,14 @@ export default function UserManagement() {
     try {
       await api.deleteUser(id);
       setUsers(users.map((u) => (u.id === id ? { ...u, is_active: false } : u)));
+      addToast('User berhasil dinonaktifkan', 'success');
     } catch (err) {
-      alert('Gagal menonaktifkan: ' + err.message);
+      addToast('Gagal menonaktifkan: ' + err.message, 'error');
     }
   };
 
   const handleResetPassword = async (id) => {
-    alert('Fitur reset password belum diimplementasikan. Hubungi super admin.');
+    addToast('Fitur reset password belum diimplementasikan. Hubungi super admin.', 'info');
   };
 
   const handleSave = async () => {

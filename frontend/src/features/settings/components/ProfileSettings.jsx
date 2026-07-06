@@ -44,8 +44,9 @@ export default function ProfileSettings() {
       await api.updateProfile({ nama: tempProfile.nama, email: tempProfile.email });
       setProfile({ ...tempProfile });
       setEditing(false);
+      addToast('Profil berhasil diperbarui', 'success');
     } catch (err) {
-      console.error('Failed to update profile:', err);
+      addToast('Gagal memperbarui profil: ' + err.message, 'error');
     } finally {
       setSaving(false);
     }

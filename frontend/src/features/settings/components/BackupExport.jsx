@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Database, Download, HardDrive, FileSpreadsheet, FileText, Archive, Clock, Loader2, Lock } from 'lucide-react';
 import api from '../../../lib/api';
+import { useToast } from '../../../contexts/ToastContext.jsx';
 
 export default function BackupExport() {
+  const { addToast } = useToast();
   const [exporting, setExporting] = useState(null);
   const [storageStats, setStorageStats] = useState({
     totalDocuments: 0,
@@ -65,7 +67,7 @@ export default function BackupExport() {
         res = await api.exportExcel();
       } else if (type === 'backup') {
         res = await api.backupDatabase();
-        alert(`Backup berhasil:\n${res.backups?.join('\n') || ''}`);
+        addToast('Backup berhasil dibuat', 'success');
         return;
       } else {
         return;
@@ -75,9 +77,10 @@ export default function BackupExport() {
         const blob = await res.blob();
         const ext = type === 'csv' ? 'csv' : 'xlsx';
         downloadFile(blob, `arsip_export.${ext}`);
+        addToast(`${type.toUpperCase()} berhasil diunduh`, 'success');
       }
     } catch (err) {
-      alert('Gagal: ' + err.message);
+      addToast('Gagal: ' + err.message, 'error');
     } finally {
       setExporting(null);
     }
