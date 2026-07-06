@@ -5,19 +5,17 @@ const UploadContext = createContext(null);
 
 export function UploadProvider({ children }) {
   const [uploads, setUploads] = useState([]);
+  const uploadsRef = useRef([]);
   const processingRef = useRef(false);
+
+  // Keep ref in sync with state
+  uploadsRef.current = uploads;
 
   // Process queue: pick next 'waiting' item and upload it
   const processQueue = useCallback(async () => {
     if (processingRef.current) return;
     
-    // Find next waiting item
-    let nextItem = null;
-    setUploads(prev => {
-      nextItem = prev.find(u => u.status === 'waiting');
-      return prev;
-    });
-    
+    const nextItem = uploadsRef.current.find(u => u.status === 'waiting');
     if (!nextItem) return;
     
     processingRef.current = true;
