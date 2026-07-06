@@ -1,13 +1,57 @@
+import os
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy import func, extract
-from database import get_db
+from sqlalchemy import func
+from database import get_db, engine
 from models import Document, Category, User
 from schemas import DashboardStats, DocumentOut, MonthlyActivity
 from auth import get_current_user
 from datetime import datetime, timedelta, timezone
 
+DB_PATH = "/root/pengarsipan-almex-bintang-timur/backend/database/almex.db"
+UPLOADS_DIR = "/root/pengarsipan-almex-bintang-timur/backend/uploads"
+
 router = APIRouter(prefix="/api/dashboard", tags=["Dashboard"])
+
+@router.get("/storage")
+def get_storage_stats(current_user: User = Depends(get_current_user)):
+    total_docs = 0
+    total_bytes = 0
+    db_size = 0
+    uploads_size = 0
+    
+    with Session(engine) as db:
+        total_docs = db.query(Document).count()
+        total_bytes = db.query(func.sum(Document.ukuran)).scalar() or 0
+    
+    try:
+        db_size = os.path.getsize(DB_PATH)
+    except OSError:
+        pass
+    
+    try:
+        for root, dirs, files in os.walk(UPLOADS_DIR):
+            for f in files:
+                fp = os.path.join(root, f)
+                uploads_size += os.path.getsize(fp)
+    except OSError:
+        pass
+    
+    def fmt(b):
+        if b < 1024: return f"{b} B"
+        if b < 1024 * 1024: return f"{b / 1024:.1f} KB"
+        if b < 1024 * 1024 * 1024: return f"{b / 1024 / 1024:.1f} MB"
+        return f"{b / 1024 / 1024 / 1024:.1f} GB"
+    
+    total = db_size + uploads_size
+    return {
+        "total_documents": total_docs,
+        "total_size": fmt(total),
+        "used_percent": min(100, round(total / (15 * 1024 * 1024 * 1024) * 100)),
+        "database_size": fmt(db_size),
+        "file_storage": fmt(uploads_size),
+        "last_backup": "Belum ada backup otomatis",
+    }
 
 @router.get("/stats", response_model=DashboardStats)
 def get_stats(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):

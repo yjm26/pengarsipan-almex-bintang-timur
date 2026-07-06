@@ -21,17 +21,17 @@ export default function BackupExport() {
     const load = async () => {
       try {
         const [stats, me] = await Promise.all([
-          api.getDashboardStats().catch(() => null),
+          api.getStorageStats().catch(() => null),
           api.getMe().catch(() => null),
         ]);
         if (stats) {
           setStorageStats({
             totalDocuments: stats.total_documents ?? 0,
-            totalSize: '-',
-            usedPercent: 0,
-            databaseSize: '-',
-            fileStorage: '-',
-            lastBackup: '-',
+            totalSize: stats.total_size ?? '0 B',
+            usedPercent: stats.used_percent ?? 0,
+            databaseSize: stats.database_size ?? '-',
+            fileStorage: stats.file_storage ?? '-',
+            lastBackup: stats.last_backup ?? '-',
           });
         }
         if (me) setIsSuperAdmin(me.role === 'super_admin');

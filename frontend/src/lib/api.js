@@ -66,6 +66,10 @@ class ApiClient {
     return this.request('/api/dashboard/stats');
   }
 
+  getStorageStats() {
+    return this.request('/api/dashboard/storage');
+  }
+
   // Documents
   getDocuments(params = {}) {
     const qs = new URLSearchParams(params).toString();
