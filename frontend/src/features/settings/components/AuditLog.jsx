@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ClipboardList, FileUp, Upload, UserPlus, Key, Trash2, Settings, RotateCw, Search } from 'lucide-react';
+import { ClipboardList, Upload, UserPlus, Settings, RotateCw, Search } from 'lucide-react';
 import api from '../../../lib/api';
 
 const typeConfig = {
@@ -11,6 +11,34 @@ const typeConfig = {
   category: { icon: Settings, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', label: 'Kategori' },
   settings: { icon: Settings, color: 'text-cyan-600', bg: 'bg-cyan-50', border: 'border-cyan-100', label: 'Settings' },
 };
+
+function formatTimestamp(ts) {
+  if (!ts) return '-';
+  const date = new Date(ts);
+  if (isNaN(date.getTime())) return ts;
+
+  const now = new Date();
+  const diffMs = now - date;
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHour = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHour / 24);
+
+  if (diffSec < 60) return 'Baru saja';
+  if (diffMin < 60) return `${diffMin} menit yang lalu`;
+  if (diffHour < 24) return `${diffHour} jam yang lalu`;
+  if (diffDay === 1) return `Kemarin, ${date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`;
+  if (diffDay < 7) return `${diffDay} hari yang lalu`;
+
+  return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function fullTimestamp(ts) {
+  if (!ts) return '';
+  const date = new Date(ts);
+  if (isNaN(date.getTime())) return ts;
+  return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
 
 export default function AuditLog() {
   const [logs, setLogs] = useState([]);
@@ -103,7 +131,7 @@ export default function AuditLog() {
                     <p className="text-sm text-zinc-900 truncate">{log.detail}</p>
                     <p className="text-xs text-zinc-400 mt-0.5">{log.user} · {config.label}</p>
                   </div>
-                  <span className="text-xs text-zinc-400 whitespace-nowrap">{log.timestamp}</span>
+                  <span className="text-xs text-zinc-400 whitespace-nowrap" title={fullTimestamp(log.timestamp)}>{formatTimestamp(log.timestamp)}</span>
                 </motion.div>
               );
             })}
