@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { Upload, FileText, X, CheckCircle2, Loader2, AlertTriangle, ChevronDown, ChevronUp, Pencil, Clock } from 'lucide-react';
 import { useUpload } from '../../store/uploadStore';
 import api from '../../lib/api';
+import { useToast } from '../../contexts/ToastContext.jsx';
 
 const MAX_FILES = 5;
 
@@ -17,6 +18,7 @@ function formatDate(dateStr) {
 }
 
 export default function UploadForm() {
+  const { addToast } = useToast();
   const { uploads, addFiles, removeUpload, updateResult, clearAll } = useUpload();
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef(null);
@@ -41,8 +43,9 @@ export default function UploadForm() {
       });
       window.dispatchEvent(new CustomEvent('doc-updated'));
       removeUpload(item.id);
+      addToast('Dokumen berhasil disimpan ke arsip', 'success');
     } catch (err) {
-      alert('Gagal menyimpan: ' + err.message);
+      addToast('Gagal menyimpan: ' + err.message, 'error');
     }
   };
 
@@ -63,7 +66,7 @@ export default function UploadForm() {
           <Upload className="w-6 h-6 text-amber-500" />
         </div>
         <p className="text-sm font-medium text-zinc-700 mb-1">Upload surat masuk dan keluar untuk diproses</p>
-        <p className="text-xs text-zinc-400 mt-1">PDF atau gambar (JPG/PNG/BMP/TIFF) • Maksimal {MAX_FILES} file</p>
+        <p className="text-xs text-zinc-400 mt-1">PDF atau gambar (JPG/PNG/BMP/TIFF) &bull; Maksimal {MAX_FILES} file</p>
       </div>
 
       {/* Queue */}
@@ -104,6 +107,7 @@ export default function UploadForm() {
                 }
                 window.dispatchEvent(new CustomEvent('doc-updated'));
                 clearAll();
+                addToast(`${done.length} dokumen berhasil disimpan ke arsip`, 'success');
               }}
               className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-medium text-sm flex items-center justify-center gap-2"
             >
@@ -117,6 +121,7 @@ export default function UploadForm() {
 }
 
 function FileCard({ item, onRemove, onUpdateResult, onSimpan }) {
+  const { addToast } = useToast();
   const [expanded, setExpanded] = useState(true);
   const [showKoreksi, setShowKoreksi] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
@@ -279,6 +284,7 @@ function FileCard({ item, onRemove, onUpdateResult, onSimpan }) {
 }
 
 function KoreksiInline({ docId, currentJenis, currentArah, onClose, onUpdate }) {
+  const { addToast } = useToast();
   const [jenis, setJenis] = useState(currentJenis);
   const [arah, setArah] = useState(currentArah);
   const [saving, setSaving] = useState(false);
@@ -288,8 +294,9 @@ function KoreksiInline({ docId, currentJenis, currentArah, onClose, onUpdate }) 
     try {
       await api.updateDocument(docId, { jenis, arah });
       onUpdate({ jenis, arah });
+      addToast('Koreksi klasifikasi berhasil disimpan', 'success');
     } catch (err) {
-      alert('Gagal menyimpan koreksi: ' + err.message);
+      addToast('Gagal menyimpan koreksi: ' + err.message, 'error');
     } finally {
       setSaving(false);
     }

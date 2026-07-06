@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, ArrowDownLeft, ArrowUpRight, FileText, Trash2, Save, ExternalLink, Pencil, Eye } from 'lucide-react';
 import api from '../../../lib/api';
 import PreviewModal from './PreviewModal';
+import { useToast } from '../../../../contexts/ToastContext.jsx';
 
 const AKURASI_COLORS = {
   bg: { Akurat: '#00AA00', Cukup: '#D4A000', 'Tidak Akurat': '#DD0000' },
@@ -23,6 +24,7 @@ function formatDate(d) {
 }
 
 export default function DetailPanel({ doc, onClose, onUpdate, onDelete }) {
+  const { addToast } = useToast();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ nama_pt: doc.nama_pt || '', tanggal_surat: doc.tanggal_surat?.split('T')[0] || '', arah: doc.arah || '', jenis: doc.jenis || '' });
   const [saving, setSaving] = useState(false);
@@ -42,8 +44,9 @@ export default function DetailPanel({ doc, onClose, onUpdate, onDelete }) {
       const updated = await api.updateDocument(doc.id, form);
       onUpdate(updated);
       setEditing(false);
+      addToast('Perubahan berhasil disimpan', 'success');
     } catch (err) {
-      console.error('Gagal menyimpan:', err);
+      addToast('Gagal menyimpan: ' + err.message, 'error');
     } finally { setSaving(false); }
   }
 
@@ -52,8 +55,9 @@ export default function DetailPanel({ doc, onClose, onUpdate, onDelete }) {
     try {
       await api.deleteDocument(doc.id);
       onDelete(doc.id);
+      addToast('Dokumen berhasil dihapus', 'success');
     } catch (err) {
-      console.error('Gagal menghapus:', err);
+      addToast('Gagal menghapus: ' + err.message, 'error');
     }
   }
 
@@ -69,8 +73,9 @@ export default function DetailPanel({ doc, onClose, onUpdate, onDelete }) {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      addToast(`"${doc.nama_file}" berhasil diunduh`, 'success');
     } catch (err) {
-      alert('Gagal download: ' + err.message);
+      addToast('Gagal download: ' + err.message, 'error');
     }
   }
 
