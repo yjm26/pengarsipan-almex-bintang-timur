@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { X, ArrowDownLeft, ArrowUpRight, FileText, Trash2, Save, ExternalLink, ZoomIn, ZoomOut, Pencil, Eye } from 'lucide-react';
+import { X, ArrowDownLeft, ArrowUpRight, FileText, Trash2, Save, ExternalLink, Pencil, Eye } from 'lucide-react';
 import api from '../../../lib/api';
+import PreviewModal from './PreviewModal';
 
 const AKURASI_COLORS = {
   bg: { Akurat: '#00AA00', Cukup: '#D4A000', 'Tidak Akurat': '#DD0000' },
@@ -25,9 +26,7 @@ export default function DetailPanel({ doc, onClose, onUpdate, onDelete }) {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ nama_pt: doc.nama_pt || '', tanggal_surat: doc.tanggal_surat?.split('T')[0] || '', arah: doc.arah || '', jenis: doc.jenis || '' });
   const [saving, setSaving] = useState(false);
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState(null);
-  const [zoom, setZoom] = useState(1);
+  const [showPreview, setShowPreview] = useState(false);
   const badge = getBadge(doc.confidence);
   const isMasuk = doc.arah === 'Masuk';
 
@@ -70,22 +69,8 @@ export default function DetailPanel({ doc, onClose, onUpdate, onDelete }) {
   }
 
   async function handlePreview() {
-    try {
-      const res = await api.request(`/api/documents/${doc.id}/preview`);
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      setPreviewUrl(url);
-      setPreviewOpen(true);
-    } catch (err) {
-      alert('Gagal preview: ' + err.message);
-    }
+    setShowPreview(true);
   }
-
-  const closePreview = () => {
-    setPreviewOpen(false);
-    setZoom(1);
-    if (previewUrl) { URL.revokeObjectURL(previewUrl); setPreviewUrl(null); }
-  };
 
   return (
     <>
@@ -184,25 +169,8 @@ export default function DetailPanel({ doc, onClose, onUpdate, onDelete }) {
       </div>
 
       {/* Preview Modal */}
-      {previewOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80" onClick={closePreview}>
-          <div className="relative max-w-[90vw] max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-2 mb-3 justify-center">
-              <button onClick={() => setZoom(z => Math.max(0.25, z - 0.25))} className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-white transition-all"><ZoomOut className="w-4 h-4" /></button>
-              <span className="text-xs text-white font-medium px-2">{Math.round(zoom * 100)}%</span>
-              <button onClick={() => setZoom(z => Math.min(4, z + 0.25))} className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-white transition-all"><ZoomIn className="w-4 h-4" /></button>
-              <button onClick={closePreview} className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-white transition-all ml-2"><X className="w-4 h-4" /></button>
-            </div>
-            <div className="overflow-auto max-h-[80vh] rounded-xl bg-white">
-              <img
-                src={previewUrl || ''}
-                alt={doc.nama_file}
-                style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}
-                className="max-w-full"
-              />
-            </div>
-          </div>
-        </div>
+      {showPreview && (
+        <PreviewModal doc={doc} onClose={() => setShowPreview(false)} />
       )}
     </>
   );

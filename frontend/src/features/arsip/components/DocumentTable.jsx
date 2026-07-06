@@ -1,7 +1,9 @@
 import { useState, useMemo } from 'react';
-import { Search, Filter, ChevronLeft, ChevronRight, Eye, Pencil, Trash2, Download, ArrowDownLeft, ArrowUpRight, X, ChevronDown, RefreshCw } from 'lucide-react';
+import { Search, Filter, ChevronLeft, ChevronRight, Eye, Pencil, Trash2, Download, ArrowDownLeft, ArrowUpRight, X, ChevronDown, RefreshCw, FileText } from 'lucide-react';
 import FilterBar from './FilterBar';
 import DetailPanel from './DetailPanel';
+import PreviewModal from './PreviewModal';
+import api from '../../../lib/api';
 
 const PAGE_SIZE = 10;
 
@@ -12,6 +14,7 @@ export default function DocumentTable({ documents, loading, onRefresh, onDelete,
   const [selected, setSelected] = useState([]);
   const [expanded, setExpanded] = useState(false);
   const [detailDoc, setDetailDoc] = useState(null);
+  const [previewDoc, setPreviewDoc] = useState(null);
 
   const filtered = useMemo(() => {
     let data = [...documents];
@@ -85,15 +88,8 @@ export default function DocumentTable({ documents, loading, onRefresh, onDelete,
     }
   };
 
-  const handlePreview = async (doc) => {
-    try {
-      const res = await api.request(`/api/documents/${doc.id}/preview`);
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      window.open(url, '_blank');
-    } catch (err) {
-      alert('Gagal preview: ' + err.message);
-    }
+  const handlePreview = (doc) => {
+    setPreviewDoc(doc);
   };
 
   if (loading) {
@@ -158,7 +154,7 @@ export default function DocumentTable({ documents, loading, onRefresh, onDelete,
                 return (
                   <tr key={doc.id} className={`group border-b border-zinc-50 hover:bg-zinc-50/50 cursor-pointer transition-colors ${selected.includes(doc.id) ? 'bg-zinc-50' : ''}`} onClick={() => setDetailDoc(doc)}>
                     <td className="pl-3 pr-1 py-1.5" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selected.includes(doc.id)} onChange={() => toggleSelect(doc.id)} className="rounded border-zinc-300 w-3 h-3" /></td>
-                    <td className="px-2 py-1.5"><div className="flex items-center gap-1.5 min-w-0"><div className="w-5 h-5 rounded flex items-center justify-center bg-zinc-100 flex-shrink-0"><Download className="w-2.5 h-2.5 text-zinc-500" /></div><div className="min-w-0"><p className="text-[11px] font-medium text-zinc-900 truncate max-w-[140px]">{doc.nama_file}</p><p className="text-[9px] text-zinc-400">{doc.ukuran ? `${(doc.ukuran / 1024 / 1024).toFixed(1)} MB` : ''}</p></div></div></td>
+                    <td className="px-2 py-1.5"><div className="flex items-center gap-1.5 min-w-0"><div className="w-5 h-5 rounded flex items-center justify-center bg-zinc-100 flex-shrink-0"><FileText className="w-2.5 h-2.5 text-zinc-500" /></div><div className="min-w-0"><p className="text-[11px] font-medium text-zinc-900 truncate max-w-[140px]">{doc.nama_file}</p><p className="text-[9px] text-zinc-400">{doc.ukuran ? `${(doc.ukuran / 1024 / 1024).toFixed(1)} MB` : ''}</p></div></div></td>
                     <td className="px-2 py-1.5 text-[11px] text-zinc-600 max-w-[120px] truncate">{doc.nama_pt || <span className="text-zinc-300">-</span>}</td>
                     <td className="px-2 py-1.5 text-[11px] text-zinc-600 whitespace-nowrap">{doc.tanggalSurat || <span className="text-zinc-300">-</span>}</td>
                     <td className="px-2 py-1.5">
@@ -200,6 +196,11 @@ export default function DocumentTable({ documents, loading, onRefresh, onDelete,
       {/* Detail panel */}
       {detailDoc && (
         <DetailPanel doc={detailDoc} onClose={() => setDetailDoc(null)} onUpdate={handleUpdate} onDelete={(id) => { onDelete(id); setDetailDoc(null); }} />
+      )}
+
+      {/* Preview modal */}
+      {previewDoc && (
+        <PreviewModal doc={previewDoc} onClose={() => setPreviewDoc(null)} />
       )}
     </div>
   );
