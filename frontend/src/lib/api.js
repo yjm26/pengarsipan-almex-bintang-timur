@@ -39,7 +39,8 @@ class ApiClient {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: 'Request failed' }));
-      throw new Error(err.detail || 'Request failed');
+      const msg = typeof err.detail === 'string' ? err.detail : JSON.stringify(err.detail || err);
+      throw new Error(msg || 'Request failed');
     }
 
     const contentType = res.headers.get('content-type');

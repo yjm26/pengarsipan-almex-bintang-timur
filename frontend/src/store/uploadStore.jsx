@@ -26,9 +26,7 @@ export function UploadProvider({ children }) {
     ));
 
     try {
-      const formData = new FormData();
-      formData.append('file', nextItem.file);
-      const doc = await api.uploadDocument(formData);
+      const doc = await api.uploadDocument(nextItem.file);
 
       setUploads(prev => prev.map(u =>
         u.id === nextItem.id ? {
