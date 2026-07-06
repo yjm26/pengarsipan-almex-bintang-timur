@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { useSearchParams } from 'react-router-dom';
-import { FileText, Trash2, Tag, Download, X } from 'lucide-react';
+import { Upload } from 'lucide-react';
 import DocumentTable from './components/DocumentTable';
+import UploadModal from './components/UploadModal';
 import api from '../../lib/api';
 
 export default function ArsipPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showUpload, setShowUpload] = useState(false);
 
   const fetchDocuments = useCallback(async () => {
     setLoading(true);
@@ -66,14 +66,30 @@ export default function ArsipPage() {
     }
   };
 
+  const handleUploadSuccess = (newDoc) => {
+    setDocuments(prev => [newDoc, ...prev]);
+  };
+
   return (
     <div className="space-y-6">
-      <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.05 }}>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Arsip Surat</h1>
-        <p className="text-sm text-zinc-500 mt-1.5 font-light">Semua dokumen terklasifikasi.</p>
-      </motion.div>
+      <div className="flex items-end justify-between">
+        <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.05 }}>
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Arsip Surat</h1>
+          <p className="text-sm text-zinc-500 mt-1.5 font-light">Semua dokumen terklasifikasi.</p>
+        </motion.div>
+        <motion.button
+          initial={{ y: 10, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => setShowUpload(true)}
+          className="flex items-center gap-2 px-4 py-2.5 bg-[#D49A28] text-white text-sm font-medium rounded-lg hover:bg-[#C08A20] transition-colors"
+        >
+          <Upload className="w-4 h-4" /> Unggah Dokumen
+        </motion.button>
+      </div>
 
-      <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }}>
+      <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.15 }}>
         <DocumentTable
           documents={documents}
           loading={loading}
@@ -83,6 +99,10 @@ export default function ArsipPage() {
           onUpdate={handleUpdate}
         />
       </motion.div>
+
+      {showUpload && (
+        <UploadModal onClose={() => setShowUpload(false)} onSuccess={handleUploadSuccess} />
+      )}
     </div>
   );
 }
