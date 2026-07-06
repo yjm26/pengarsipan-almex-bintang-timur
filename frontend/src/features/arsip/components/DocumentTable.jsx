@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Search, Filter, ChevronLeft, ChevronRight, Eye, Pencil, Trash2, Download, ArrowDownLeft, ArrowUpRight, X, ChevronDown, RefreshCw, FileText } from 'lucide-react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { Search, Filter, ChevronLeft, ChevronRight, Eye, Pencil, Trash2, Download, ArrowDownLeft, ArrowUpRight, X, ChevronDown, RefreshCw, FileText, SearchX, FilePlus } from 'lucide-react';
 import FilterBar from './FilterBar';
 import DetailPanel from './DetailPanel';
 import PreviewModal from './PreviewModal';
@@ -7,10 +7,63 @@ import api from '../../../lib/api';
 import { useToast } from '../../../../contexts/ToastContext.jsx';
 
 const PAGE_SIZE = 10;
+const DEBOUNCE_MS = 300;
+
+function useDebounce(value, delay) {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debounced;
+}
+
+function Pagination({ page, totalPages, onChange }) {
+  if (totalPages <= 1) return null;
+
+  const getPages = () => {
+    const pages = [];
+    const add = (p) => pages.push({ type: 'page', num: p, active: p === page });
+    const ellipsis = () => { if (pages[pages.length - 1]?.type !== 'ellipsis') pages.push({ type: 'ellipsis' }); };
+
+    add(1);
+    if (page > 4) ellipsis();
+    for (let p = Math.max(2, page - 2); p <= Math.min(totalPages - 1, page + 2); p++) add(p);
+    if (page < totalPages - 3) ellipsis();
+    if (totalPages > 1) add(totalPages);
+    return pages;
+  };
+
+  const pages = getPages();
+
+  return (
+    <div className="flex items-center justify-between mt-3">
+      <p className="text-xs text-zinc-500">Halaman {page} dari {totalPages}</p>
+      <div className="flex items-center gap-1">
+        <button onClick={() => onChange(page - 1)} disabled={page === 1} className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 disabled:opacity-30 transition-all">
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+        {pages.map((p, i) =>
+          p.type === 'ellipsis' ? (
+            <span key={`e${i}`} className="w-7 h-7 flex items-center justify-center text-xs text-zinc-400">...</span>
+          ) : (
+            <button key={p.num} onClick={() => onChange(p.num)} className={`w-7 h-7 text-xs rounded-lg transition-all ${p.active ? 'bg-zinc-900 text-white' : 'hover:bg-zinc-100 text-zinc-600'}`}>
+              {p.num}
+            </button>
+          )
+        )}
+        <button onClick={() => onChange(page + 1)} disabled={page === totalPages} className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 disabled:opacity-30 transition-all">
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function DocumentTable({ documents, loading, onRefresh, onDelete, onBulkDelete, onUpdate }) {
   const { addToast } = useToast();
-  const [search, setSearch] = useState('');
+  const [searchRaw, setSearchRaw] = useState('');
+  const search = useDebounce(searchRaw, DEBOUNCE_MS);
   const [filters, setFilters] = useState({ arah: '', jenis: '', confidence: '' });
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState([]);
@@ -36,10 +89,13 @@ export default function DocumentTable({ documents, loading, onRefresh, onDelete,
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const hasActiveFilters = filters.arah || filters.jenis || filters.confidence;
 
+  useEffect(() => {
+    setPage(1);
+  }, [search, filters]);
+
   const handleFilterChange = (key, val) => {
     if (key === 'clear') setFilters({ arah: '', jenis: '', confidence: '' });
     else setFilters(prev => ({ ...prev, [key]: val }));
-    setPage(1);
   };
 
   const toggleSelectAll = () => {
@@ -113,7 +169,7 @@ export default function DocumentTable({ documents, loading, onRefresh, onDelete,
           <div className="flex items-center gap-3 flex-1">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-              <input type="text" placeholder="Cari dokumen..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-zinc-200/60 bg-zinc-50/50 outline-none focus:border-zinc-400 transition-all" />
+              <input type="text" placeholder="Cari dokumen..." value={searchRaw} onChange={(e) => setSearchRaw(e.target.value)} className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-zinc-200/60 bg-zinc-50/50 outline-none focus:border-zinc-400 transition-all" />
             </div>
             <button onClick={() => setExpanded(!expanded)} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition-all ${expanded ? 'border-zinc-400 bg-zinc-100' : 'border-zinc-200/60 bg-zinc-50/50 hover:bg-zinc-100'} ${hasActiveFilters ? 'border-zinc-900 bg-zinc-900 text-white hover:bg-zinc-800' : 'text-zinc-600'}`}>
               <Filter className="w-3.5 h-3.5" /> Filter {hasActiveFilters && `(${Object.values(filters).filter(Boolean).length})`}
@@ -152,7 +208,39 @@ export default function DocumentTable({ documents, loading, onRefresh, onDelete,
             </thead>
             <tbody>
               {paginated.length === 0 ? (
-                <tr><td colSpan={7} className="text-center py-12"><p className="text-sm text-zinc-400">{hasActiveFilters ? 'Tidak ada dokumen yang cocok' : 'Belum ada dokumen'}</p></td></tr>
+                <tr>
+                  <td colSpan={7} className="text-center py-14">
+                    <div className="flex flex-col items-center gap-3">
+                      {hasActiveFilters || search ? (
+                        <>
+                          <div className="w-12 h-12 rounded-xl bg-zinc-50 border border-zinc-100 flex items-center justify-center">
+                            <SearchX className="w-6 h-6 text-zinc-300" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-zinc-500">Tidak ada dokumen yang cocok</p>
+                            <p className="text-xs text-zinc-400 mt-0.5">Coba ubah kata kunci atau filter</p>
+                          </div>
+                          <button
+                            onClick={() => { setSearchRaw(''); setFilters({ arah: '', jenis: '', confidence: '' }); }}
+                            className="mt-1 px-3 py-1.5 text-xs font-medium text-zinc-600 bg-zinc-100 rounded-lg hover:bg-zinc-200 transition-all"
+                          >
+                            Reset pencarian
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <div className="w-12 h-12 rounded-xl bg-zinc-50 border border-zinc-100 flex items-center justify-center">
+                            <FilePlus className="w-6 h-6 text-zinc-300" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-zinc-500">Belum ada dokumen</p>
+                            <p className="text-xs text-zinc-400 mt-0.5">Unggah dokumen pertama Anda</p>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                </tr>
               ) : paginated.map((doc) => {
                 const isMasuk = doc.arah === 'Masuk';
                 return (
@@ -183,18 +271,7 @@ export default function DocumentTable({ documents, loading, onRefresh, onDelete,
         </div>
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between mt-3">
-            <p className="text-xs text-zinc-500">Halaman {page} dari {totalPages}</p>
-            <div className="flex items-center gap-1">
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 disabled:opacity-30"><ChevronLeft className="w-4 h-4" /></button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-                <button key={p} onClick={() => setPage(p)} className={`w-7 h-7 text-xs rounded-lg ${p === page ? 'bg-zinc-900 text-white' : 'hover:bg-zinc-100 text-zinc-600'}`}>{p}</button>
-              ))}
-              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 disabled:opacity-30"><ChevronRight className="w-4 h-4" /></button>
-            </div>
-          </div>
-        )}
+        <Pagination page={page} totalPages={totalPages} onChange={setPage} />
       </div>
 
       {/* Detail panel */}
