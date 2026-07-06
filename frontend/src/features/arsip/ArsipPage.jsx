@@ -4,8 +4,10 @@ import { Upload } from 'lucide-react';
 import DocumentTable from './components/DocumentTable';
 import UploadModal from './components/UploadModal';
 import api from '../../lib/api';
+import { useToast } from '../../contexts/ToastContext.jsx';
 
 export default function ArsipPage() {
+  const { addToast } = useToast();
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
@@ -43,8 +45,9 @@ export default function ArsipPage() {
     try {
       await api.deleteDocument(id);
       setDocuments(prev => prev.filter(d => d.id !== id));
+      addToast('Dokumen berhasil dihapus', 'success');
     } catch (err) {
-      console.error('Gagal menghapus dokumen:', err);
+      addToast('Gagal menghapus dokumen: ' + err.message, 'error');
     }
   };
 
@@ -52,8 +55,9 @@ export default function ArsipPage() {
     try {
       await Promise.all(ids.map(id => api.deleteDocument(id)));
       setDocuments(prev => prev.filter(d => !ids.includes(d.id)));
+      addToast(`${ids.length} dokumen berhasil dihapus`, 'success');
     } catch (err) {
-      console.error('Gagal menghapus:', err);
+      addToast('Gagal menghapus dokumen: ' + err.message, 'error');
     }
   };
 
@@ -61,8 +65,9 @@ export default function ArsipPage() {
     try {
       const res = await api.updateDocument(id, data);
       setDocuments(prev => prev.map(d => d.id === id ? { ...d, ...res } : d));
+      addToast('Dokumen berhasil diperbarui', 'success');
     } catch (err) {
-      console.error('Gagal update:', err);
+      addToast('Gagal memperbarui dokumen: ' + err.message, 'error');
     }
   };
 

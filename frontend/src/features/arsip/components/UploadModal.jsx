@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Upload, FileText, CheckCircle, AlertCircle, Loader2, ArrowDownLeft, ArrowUpRight, RefreshCw } from 'lucide-react';
 import api from '../../../lib/api';
@@ -109,6 +109,25 @@ export default function UploadModal({ onClose, onSuccess }) {
 
   const isMasuk = result?.arah === 'Masuk';
   const confidencePct = Math.round((result?.confidence || 0) * 100);
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    const onDragOver = (e) => { e.preventDefault(); };
+    const onDrop = (e) => {
+      if (!e.target.closest('.upload-drop-zone')) {
+        e.preventDefault();
+        addToast('Taruh file di area yang ditandai', 'info');
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('dragover', onDragOver);
+    document.addEventListener('drop', onDrop);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('dragover', onDragOver);
+      document.removeEventListener('drop', onDrop);
+    };
+  }, [onClose, addToast]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
@@ -229,7 +248,7 @@ export default function UploadModal({ onClose, onSuccess }) {
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
                     onClick={() => inputRef.current?.click()}
-                    className={`relative flex flex-col items-center justify-center gap-3 p-8 rounded-xl border-2 border-dashed cursor-pointer transition-all ${
+                    className={`upload-drop-zone relative flex flex-col items-center justify-center gap-3 p-8 rounded-xl border-2 border-dashed cursor-pointer transition-all ${
                       dragOver
                         ? 'border-[#D49A28] bg-[#D49A28]/5'
                         : 'border-zinc-200 bg-zinc-50/50 hover:border-zinc-300 hover:bg-zinc-50'

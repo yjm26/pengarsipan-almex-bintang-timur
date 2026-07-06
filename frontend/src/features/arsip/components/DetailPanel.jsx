@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, ArrowDownLeft, ArrowUpRight, FileText, Trash2, Save, ExternalLink, Pencil, Eye } from 'lucide-react';
 import api from '../../../lib/api';
 import PreviewModal from './PreviewModal';
@@ -29,6 +29,12 @@ export default function DetailPanel({ doc, onClose, onUpdate, onDelete }) {
   const [showPreview, setShowPreview] = useState(false);
   const badge = getBadge(doc.confidence);
   const isMasuk = doc.arah === 'Masuk';
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
 
   async function handleSave() {
     setSaving(true);
