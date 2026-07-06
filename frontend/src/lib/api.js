@@ -201,6 +201,14 @@ class ApiClient {
   exportExcel() {
     return this.request('/api/export/excel', { method: 'POST' });
   }
+
+  backupDatabase() {
+    return this.request('/api/export/backup', { method: 'POST' });
+  }
+
+  getBackups() {
+    return this.request('/api/export/backups');
+  }
 }
 
 export const api = new ApiClient();

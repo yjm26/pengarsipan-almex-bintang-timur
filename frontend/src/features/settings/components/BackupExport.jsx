@@ -1,19 +1,48 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Database, Download, HardDrive, FileSpreadsheet, FileText, Archive, Clock, Loader2 } from 'lucide-react';
+import { Database, Download, HardDrive, FileSpreadsheet, FileText, Archive, Clock, Loader2, Lock } from 'lucide-react';
 import api from '../../../lib/api';
 
 export default function BackupExport() {
-  const [exporting, setExporting] = useState(null); // 'csv' | 'excel' | null
+  const [exporting, setExporting] = useState(null);
+  const [storageStats, setStorageStats] = useState({
+    totalDocuments: 0,
+    totalSize: '0 B',
+    usedPercent: 0,
+    databaseSize: '-',
+    fileStorage: '-',
+    lastBackup: '-',
+  });
+  const [backups, setBackups] = useState([]);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [loadingStats, setLoadingStats] = useState(true);
 
-  const storageStats = {
-    totalDocuments: 1245,
-    totalSize: '4.8 GB',
-    usedPercent: 32,
-    databaseSize: '1.2 GB',
-    fileStorage: '3.6 GB',
-    lastBackup: '19 Mei 2025, 02:00',
-  };
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [stats, me] = await Promise.all([
+          api.getDashboardStats().catch(() => null),
+          api.getMe().catch(() => null),
+        ]);
+        if (stats) {
+          setStorageStats({
+            totalDocuments: stats.total_documents ?? 0,
+            totalSize: '-',
+            usedPercent: 0,
+            databaseSize: '-',
+            fileStorage: '-',
+            lastBackup: '-',
+          });
+        }
+        if (me) setIsSuperAdmin(me.role === 'super_admin');
+      } catch (err) {
+        console.error('Failed to load stats:', err);
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+    load();
+  }, []);
 
   const downloadFile = (blob, filename) => {
     const url = URL.createObjectURL(blob);
@@ -34,28 +63,35 @@ export default function BackupExport() {
         res = await api.exportCSV();
       } else if (type === 'excel') {
         res = await api.exportExcel();
+      } else if (type === 'backup') {
+        res = await api.backupDatabase();
+        alert(`Backup berhasil:\n${res.backups?.join('\n') || ''}`);
+        return;
       } else {
         return;
       }
 
-      // If the response is a Response object (blob), download it
       if (res instanceof Response) {
         const blob = await res.blob();
         const ext = type === 'csv' ? 'csv' : 'xlsx';
         downloadFile(blob, `arsip_export.${ext}`);
       }
-      // If JSON response, it may have a download URL
-      // No action needed for JSON - file was downloaded
     } catch (err) {
-      console.error(`Export ${type} failed:`, err);
+      alert('Gagal: ' + err.message);
     } finally {
       setExporting(null);
     }
   };
 
+  const exportOptions = [
+    { type: 'csv', icon: FileSpreadsheet, label: 'Export CSV', desc: 'Semua data dokumen dalam format CSV', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', disabled: false },
+    { type: 'excel', icon: FileSpreadsheet, label: 'Export Excel (.xlsx)', desc: 'Format spreadsheet dengan format lengkap', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100', disabled: false },
+    { type: 'report', icon: FileText, label: 'Export Klasifikasi Report', desc: 'Laporan akurasi klasifikasi dan distribusi kategori', color: 'text-[#D49A28]', bg: 'bg-amber-50', border: 'border-amber-100', disabled: true, soon: true },
+    { type: 'backup', icon: Archive, label: 'Full Database Backup', desc: 'Backup seluruh database + file upload', color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100', disabled: !isSuperAdmin },
+  ];
+
   return (
     <div className="space-y-6">
-      {/* Storage Info */}
       <div className="bg-white rounded-xl border border-zinc-200/60 p-8">
         <div className="flex items-center gap-4 mb-8">
           <div className="w-12 h-12 rounded-xl bg-zinc-100 border border-zinc-200/60 flex items-center justify-center">
@@ -107,33 +143,48 @@ export default function BackupExport() {
         {/* Export Options */}
         <h3 className="text-sm font-semibold text-zinc-900 mb-4">Export Data</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {[
-            { type: 'csv', icon: FileSpreadsheet, label: 'Export CSV', desc: 'Semua data dokumen dalam format CSV', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
-            { type: 'excel', icon: FileSpreadsheet, label: 'Export Excel (.xlsx)', desc: 'Format spreadsheet dengan format lengkap', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
-            { type: null, icon: FileText, label: 'Export Klasifikasi Report', desc: 'Laporan akurasi klasifikasi dan distribusi kategori', color: 'text-[#D49A28]', bg: 'bg-amber-50', border: 'border-amber-100' },
-            { type: null, icon: Archive, label: 'Full Database Backup', desc: 'Backup seluruh database + file upload', color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100' },
-          ].map((option, i) => (
-            <motion.button
-              key={i}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => option.type && handleExport(option.type)}
-              disabled={!!exporting}
-              className="flex items-start gap-4 p-5 rounded-lg bg-zinc-50 border border-zinc-100 hover:bg-white hover:border-zinc-200 hover:shadow-sm transition-all text-left group"
-            >
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${option.bg} border ${option.border}`}>
-                {exporting === option.type ? (
-                  <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
-                ) : (
-                  <option.icon className={`w-5 h-5 ${option.color}`} />
+          {exportOptions.map((option, i) => {
+            const isDisabled = option.disabled || !!exporting;
+            return (
+              <motion.button
+                key={i}
+                whileTap={isDisabled ? {} : { scale: 0.98 }}
+                onClick={() => !isDisabled && handleExport(option.type)}
+                disabled={isDisabled}
+                className={`flex items-start gap-4 p-5 rounded-lg border text-left group transition-all ${
+                  isDisabled
+                    ? 'bg-zinc-50 border-zinc-100 opacity-60 cursor-not-allowed'
+                    : 'bg-white border-zinc-200 hover:border-zinc-300 hover:shadow-sm'
+                }`}
+              >
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${option.bg} border ${option.border}`}>
+                  {exporting === option.type ? (
+                    <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
+                  ) : option.soon ? (
+                    <Lock className={`w-5 h-5 ${option.color}`} />
+                  ) : (
+                    <option.icon className={`w-5 h-5 ${option.color}`} />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className={`text-sm font-semibold ${isDisabled ? 'text-zinc-500' : 'text-zinc-900 group-hover:text-[#D49A28]'} transition-colors`}>
+                      {option.label}
+                    </p>
+                    {option.soon && (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-zinc-100 text-zinc-500 border border-zinc-200">
+                        Segera
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-zinc-500 mt-1">{option.desc}</p>
+                </div>
+                {!isDisabled && (
+                  <Download className="w-4 h-4 text-zinc-300 group-hover:text-[#D49A28] transition-colors flex-shrink-0 mt-1" />
                 )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-zinc-900 group-hover:text-[#D49A28] transition-colors">{option.label}</p>
-                <p className="text-xs text-zinc-500 mt-1">{option.desc}</p>
-              </div>
-              <Download className="w-4 h-4 text-zinc-300 group-hover:text-[#D49A28] transition-colors flex-shrink-0 mt-1" />
-            </motion.button>
-          ))}
+              </motion.button>
+            );
+          })}
         </div>
       </div>
     </div>
