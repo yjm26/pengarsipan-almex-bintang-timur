@@ -2,10 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Brain, Zap, BarChart3, RotateCw, CheckCircle2, Clock, Target, Database } from 'lucide-react';
 import api from '../../../lib/api';
+import { useToast } from '../../../contexts/ToastContext.jsx';
 
 export default function AIModelPanel() {
+  const { addToast } = useToast();
   const [retraining, setRetraining] = useState(false);
   const [retrainDone, setRetrainDone] = useState(false);
+  const [showConfirmRetrain, setShowConfirmRetrain] = useState(false);
   const [threshold, setThreshold] = useState(75);
   const [modelStats, setModelStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -30,7 +33,7 @@ export default function AIModelPanel() {
           setThreshold(Math.round(data.threshold * 100));
         }
       } catch (err) {
-        console.error('Failed to fetch AI model stats:', err);
+        addToast('Gagal memuat statistik model: ' + err.message, 'error');
       } finally {
         setLoading(false);
       }
@@ -77,14 +80,15 @@ export default function AIModelPanel() {
   };
 
   const handleRetrain = async () => {
-    if (!confirm('Retrain model akan memakan waktu beberapa menit. Lanjutkan?')) return;
+    setShowConfirmRetrain(false);
     setRetraining(true);
     setRetrainDone(false);
     try {
       await api.retrainModel();
+      addToast('Training dimulai', 'success');
       pollRetrainStatus();
     } catch (err) {
-      console.error('Failed to start retrain:', err);
+      addToast('Gagal memulai training: ' + err.message, 'error');
       setRetraining(false);
     }
   };
@@ -93,8 +97,9 @@ export default function AIModelPanel() {
     setSavingThreshold(true);
     try {
       await api.updateThreshold(threshold / 100);
+      addToast('Threshold berhasil disimpan', 'success');
     } catch (err) {
-      console.error('Failed to save threshold:', err);
+      addToast('Gagal menyimpan threshold: ' + err.message, 'error');
     } finally {
       setSavingThreshold(false);
     }
@@ -164,19 +169,27 @@ export default function AIModelPanel() {
             <h3 className="text-sm font-semibold text-zinc-900">Retrain Model</h3>
             <p className="text-xs text-zinc-500 mt-1">Latih ulang model menggunakan data dokumen yang sudah terverifikasi.</p>
           </div>
-          <motion.button
-            whileTap={{ scale: 0.98 }}
-            onClick={handleRetrain}
-            disabled={retraining}
-            className={`flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg transition-colors ${
-              retraining
-                ? 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
-                : 'bg-[#D49A28] text-white hover:bg-[#C08A20]'
-            }`}
-          >
-            <RotateCw className={`w-4 h-4 ${retraining ? 'animate-spin' : ''}`} />
-            {retraining ? 'Sedang Training...' : retrainDone ? 'Selesai ✓' : 'Retrain Model'}
-          </motion.button>
+          {showConfirmRetrain ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-amber-700 font-medium">Training memakan waktu. Lanjutkan?</span>
+              <button onClick={handleRetrain} className="px-4 py-2 rounded-lg text-xs font-semibold text-white bg-amber-500 hover:bg-amber-600">Ya</button>
+              <button onClick={() => setShowConfirmRetrain(false)} className="px-4 py-2 rounded-lg text-xs font-semibold text-zinc-600 bg-zinc-100">Batal</button>
+            </div>
+          ) : (
+            <motion.button
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setShowConfirmRetrain(true)}
+              disabled={retraining}
+              className={`flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                retraining
+                  ? 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
+                  : 'bg-[#D49A28] text-white hover:bg-[#C08A20]'
+              }`}
+            >
+              <RotateCw className={`w-4 h-4 ${retraining ? 'animate-spin' : ''}`} />
+              {retraining ? 'Sedang Training...' : retrainDone ? 'Selesai ✓' : 'Retrain Model'}
+            </motion.button>
+          )}
         </div>
 
         {retrainDone && (

@@ -11,6 +11,7 @@ export default function UserManagement() {
   const [showModal, setShowModal] = useState(false);
   const [editUser, setEditUser] = useState(null);
   const [formData, setFormData] = useState({ nama_lengkap: '', username: '', role: 'admin', password: '', is_active: true });
+  const [showConfirmDelete, setShowConfirmDelete] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
@@ -28,7 +29,6 @@ export default function UserManagement() {
       const data = await api.getUsers();
       setUsers(data);
     } catch (err) {
-      console.error('Failed to fetch users:', err);
       setError(err.message || 'Gagal memuat data user');
     } finally {
       setLoading(false);
@@ -60,13 +60,14 @@ export default function UserManagement() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Yakin ingin menonaktifkan user ini?')) return;
     try {
       await api.deleteUser(id);
       setUsers(users.map((u) => (u.id === id ? { ...u, is_active: false } : u)));
       addToast('User berhasil dinonaktifkan', 'success');
     } catch (err) {
       addToast('Gagal menonaktifkan: ' + err.message, 'error');
+    } finally {
+      setShowConfirmDelete(null);
     }
   };
 
@@ -211,9 +212,17 @@ export default function UserManagement() {
                         <Pencil className="w-4 h-4" />
                       </button>
                       {user.is_active && (
-                        <button onClick={() => handleDelete(user.id)} className="p-2 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-600 transition-all" title="Nonaktifkan">
-                          <UserMinus className="w-4 h-4" />
-                        </button>
+                        showConfirmDelete === user.id ? (
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs text-red-600 font-medium">Yakin?</span>
+                            <button onClick={() => handleDelete(user.id)} className="px-2 py-1 rounded text-xs font-semibold text-white bg-red-500 hover:bg-red-600">Ya</button>
+                            <button onClick={() => setShowConfirmDelete(null)} className="px-2 py-1 rounded text-xs text-zinc-600 bg-zinc-100">Batal</button>
+                          </div>
+                        ) : (
+                          <button onClick={() => setShowConfirmDelete(user.id)} className="p-2 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-600 transition-all" title="Nonaktifkan">
+                            <UserMinus className="w-4 h-4" />
+                          </button>
+                        )
                       )}
                     </div>
                   </td>

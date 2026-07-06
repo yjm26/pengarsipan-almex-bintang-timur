@@ -2,14 +2,17 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Pencil, Trash2, FolderTree, FolderOpen, FileText, ChevronDown, ChevronRight } from 'lucide-react';
 import api from '../../../lib/api';
+import { useToast } from '../../../contexts/ToastContext.jsx';
 
 export default function CategoryManagement() {
+  const { addToast } = useToast();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editCategory, setEditCategory] = useState(null);
   const [formData, setFormData] = useState({ nama: '', parent: null });
   const [expandedParent, setExpandedParent] = useState(null);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -64,12 +67,14 @@ export default function CategoryManagement() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Hapus kategori ini? Dokumen terkait mungkin tidak terklasifikasi dengan benar.')) return;
     try {
       await api.deleteCategory(id);
       setCategories(categories.filter((c) => c.id !== id));
+      addToast('Kategori berhasil dihapus', 'success');
     } catch (err) {
-      console.error('Failed to delete category:', err);
+      addToast('Gagal menghapus kategori: ' + err.message, 'error');
+    } finally {
+      setShowConfirmDelete(null);
     }
   };
 
@@ -91,7 +96,7 @@ export default function CategoryManagement() {
       }
       setShowModal(false);
     } catch (err) {
-      console.error('Failed to save category:', err);
+      addToast('Gagal menyimpan kategori: ' + err.message, 'error');
     } finally {
       setSaving(false);
     }
@@ -170,9 +175,17 @@ export default function CategoryManagement() {
                     <button onClick={() => handleAdd(parent.id)} className="p-1.5 rounded-lg hover:bg-emerald-50 text-zinc-400 hover:text-emerald-600 transition-all" title="Tambah Sub-kategori">
                       <Plus className="w-3.5 h-3.5" />
                     </button>
-                    <button onClick={() => handleDelete(parent.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-600 transition-all">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    {showConfirmDelete === parent.id ? (
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-red-600 font-medium">Yakin?</span>
+                        <button onClick={() => handleDelete(parent.id)} className="px-2 py-1 rounded text-xs font-semibold text-white bg-red-500 hover:bg-red-600">Ya</button>
+                        <button onClick={() => setShowConfirmDelete(null)} className="px-2 py-1 rounded text-xs text-zinc-600 bg-zinc-100">Batal</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => setShowConfirmDelete(parent.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-600 transition-all">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
 
