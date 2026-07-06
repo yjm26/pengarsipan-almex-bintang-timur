@@ -146,24 +146,48 @@ print('\n' + '=' * 60)
 print('3. TRAINING MODEL')
 print('=' * 60)
 
-tfidf = TfidfVectorizer(max_features=max_features, ngram_range=(1, 2),
-                        min_df=min_df, max_df=max_df, sublinear_tf=True)
-X_train_tfidf = tfidf.fit_transform(X_train)
-X_test_tfidf = tfidf.transform(X_test)
+# Build pipelines (TFIDF + Classifier dalam satu objek)
+pipe_arah = Pipeline([
+    ('tfidf', TfidfVectorizer(max_features=max_features, ngram_range=(1, 2),
+                               min_df=min_df, max_df=max_df, sublinear_tf=True)),
+    ('clf', MultinomialNB(alpha=1.0))
+])
+pipe_jenis = Pipeline([
+    ('tfidf', TfidfVectorizer(max_features=max_features, ngram_range=(1, 2),
+                               min_df=min_df, max_df=max_df, sublinear_tf=True)),
+    ('clf', MultinomialNB(alpha=1.0))
+])
 
-model_arah = MultinomialNB(alpha=1.0)
-model_arah.fit(X_train_tfidf, y_train_arah)
+# Fit on FULL dataset (production model uses all data)
+pipe_arah.fit(X, y_arah)
+pipe_jenis.fit(X, y_jenis)
 
-model_jenis = MultinomialNB(alpha=1.0)
-model_jenis.fit(X_train_tfidf, y_train_jenis)
-
-# === EVALUASI ===
+# === EVALUASI (hold-out test set) ===
 print('\n' + '=' * 60)
 print('4. EVALUASI TEST SET')
 print('=' * 60)
 
-y_pred_arah = model_arah.predict(X_test_tfidf)
-y_pred_jenis = model_jenis.predict(X_test_tfidf)
+# Split untuk evaluasi
+X_train, X_test, y_train_arah, y_test_arah, y_train_jenis, y_test_jenis = train_test_split(
+    X, y_arah, y_jenis, test_size=0.2, random_state=42, stratify=y_jenis
+)
+
+# Fit eval pipelines on train, test on test
+eval_arah = Pipeline([
+    ('tfidf', TfidfVectorizer(max_features=max_features, ngram_range=(1, 2),
+                               min_df=min_df, max_df=max_df, sublinear_tf=True)),
+    ('clf', MultinomialNB(alpha=1.0))
+])
+eval_jenis = Pipeline([
+    ('tfidf', TfidfVectorizer(max_features=max_features, ngram_range=(1, 2),
+                               min_df=min_df, max_df=max_df, sublinear_tf=True)),
+    ('clf', MultinomialNB(alpha=1.0))
+])
+eval_arah.fit(X_train, y_train_arah)
+eval_jenis.fit(X_train, y_train_jenis)
+
+y_pred_arah = eval_arah.predict(X_test)
+y_pred_jenis = eval_jenis.predict(X_test)
 
 print(f'Accuracy Arah : {accuracy_score(y_test_arah, y_pred_arah):.4f}')
 print(f'F1 Arah       : {f1_score(y_test_arah, y_pred_arah, average="weighted"):.4f}')
@@ -176,17 +200,6 @@ print(classification_report(y_test_jenis, y_pred_jenis))
 print('\n' + '=' * 60)
 print('5. CROSS-VALIDATION (5-Fold)')
 print('=' * 60)
-
-pipe_arah = Pipeline([
-    ('tfidf', TfidfVectorizer(max_features=max_features, ngram_range=(1, 2),
-                               min_df=min_df, max_df=max_df, sublinear_tf=True)),
-    ('clf', MultinomialNB(alpha=1.0))
-])
-pipe_jenis = Pipeline([
-    ('tfidf', TfidfVectorizer(max_features=max_features, ngram_range=(1, 2),
-                               min_df=min_df, max_df=max_df, sublinear_tf=True)),
-    ('clf', MultinomialNB(alpha=1.0))
-])
 
 cv_arah = cross_val_score(pipe_arah, X, y_arah, cv=StratifiedKFold(n_splits=5, shuffle=True, random_state=42), scoring='f1_weighted')
 cv_jenis = cross_val_score(pipe_jenis, X, y_jenis, cv=StratifiedKFold(n_splits=5, shuffle=True, random_state=42), scoring='f1_weighted')
@@ -213,13 +226,11 @@ def remove_keywords(text, jenis):
     kws = KEYWORDS.get(jenis.lower(), [])
     return ' '.join([w for w in words if not any(kw in w or w in kw for kw in kws)])
 
-# Skenario C: hapus header 25% (simulasi template berubah, header tidak standar)
 def remove_header(text, ratio=0.25):
     words = text.split()
-    start = int(len(words) * ratio)  # skip 25% awal
-    return ' '.join(words[start:])   # sisa 75% body+footer
+    start = int(len(words) * ratio)
+    return ' '.join(words[start:])
 
-# Skenario D: OCR error 10%
 import random
 random.seed(42)
 def ocr_error(text, rate=0.10):
@@ -239,10 +250,6 @@ def ocr_error(text, rate=0.10):
         else:
             out.append(w)
     return ' '.join(out)
-
-# Fit pipelines dulu
-pipe_arah.fit(X, y_arah)
-pipe_jenis.fit(X, y_jenis)
 
 # Prediksi skenario
 y_true_jenis = y_jenis
@@ -287,8 +294,13 @@ print('\n' + '=' * 60)
 print('7. SAVE MODEL')
 print('=' * 60)
 
-joblib.dump(model_arah, MODEL_DIR / 'arah_pipeline.pkl')
-joblib.dump(model_jenis, MODEL_DIR / 'jenis_pipeline.pkl')
-joblib.dump(tfidf, MODEL_DIR / 'tfidf_vectorizer.pkl')
-print(f'Saved to {MODEL_DIR}')
+joblib.dump(pipe_arah, MODEL_DIR / 'arah_pipeline.pkl')
+joblib.dump(pipe_jenis, MODEL_DIR / 'jenis_pipeline.pkl')
+# Hapus tfidf terpisah (sudah dalam pipeline)
+import os as _os
+tfidf_path = MODEL_DIR / 'tfidf_vectorizer.pkl'
+if _os.path.exists(tfidf_path):
+    _os.remove(tfidf_path)
+    print('Removed obsolete tfidf_vectorizer.pkl (now inside pipeline)')
+print(f'Saved pipelines to {MODEL_DIR}')
 print('Done!')

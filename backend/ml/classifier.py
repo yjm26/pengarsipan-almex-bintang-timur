@@ -26,7 +26,7 @@ def get_stopwords():
             base = set(factory.getStopWords())
         except Exception:
             base = set()
-        # Custom additions for company letter context
+        # Custom additions for company letter context (MUST match training script)
         _stopword_set = base | {
             'pt', 'cv', 'tbk', 'abt', 'vi', '2025',
             'nomor', 'perihal', 'lampiran', 'kepada', 'yth',
@@ -34,7 +34,7 @@ def get_stopwords():
             'ini', 'itu', 'adalah', 'ke', 'oleh', 'sebagai', 'juga',
             'akan', 'telah', 'sudah', 'atau', 'dalam', 'tidak',
             'ada', 'dapat', 'bisa', 'lebih',
-            # Domain stopwords (dari notebook Training_Model_Produksi)
+            # Domain stopwords (MUST match train_and_evaluate.py)
             'rucika', 'pcs', 'batang', 'total', 'harga', 'diskon', 'tanggal', 'kode',
             'barang', 'nama', 'qty', 'satuan', 'rupiah', 'ribu', 'juta', 'indonesia',
             'tangerang', 'banten', 'kota', 'green', 'lake', 'city', 'ruko', 'timur',
