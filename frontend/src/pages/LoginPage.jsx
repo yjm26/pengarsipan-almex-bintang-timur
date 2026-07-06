@@ -98,7 +98,7 @@ export default function LoginPage() {
             </motion.div>
             
             <motion.div variants={item} className="flex justify-end">
-              <a href="#" className="text-sm font-medium text-[#D49A28] hover:text-[#b8841f] transition-colors">Lupa password?</a>
+              <span className="text-sm font-medium text-zinc-400 cursor-default">Lupa password? Hubungi admin</span>
             </motion.div>
 
             {error && (

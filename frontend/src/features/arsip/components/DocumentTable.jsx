@@ -169,7 +169,12 @@ export default function DocumentTable({ documents, loading, onRefresh, onDelete,
           <div className="flex items-center gap-3 flex-1">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-              <input type="text" placeholder="Cari dokumen..." value={searchRaw} onChange={(e) => setSearchRaw(e.target.value)} className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-zinc-200/60 bg-zinc-50/50 outline-none focus:border-zinc-400 transition-all" />
+              <input type="text" placeholder="Cari dokumen..." value={searchRaw} onChange={(e) => setSearchRaw(e.target.value)} className="w-full pl-9 pr-8 py-1.5 text-xs rounded-lg border border-zinc-200/60 bg-zinc-50/50 outline-none focus:border-zinc-400 transition-all" />
+              {searchRaw && (
+                <button onClick={() => setSearchRaw('')} className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-zinc-200 text-zinc-400 hover:text-zinc-600 transition-all">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
             <button onClick={() => setExpanded(!expanded)} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition-all ${expanded ? 'border-zinc-400 bg-zinc-100' : 'border-zinc-200/60 bg-zinc-50/50 hover:bg-zinc-100'} ${hasActiveFilters ? 'border-zinc-900 bg-zinc-900 text-white hover:bg-zinc-800' : 'text-zinc-600'}`}>
               <Filter className="w-3.5 h-3.5" /> Filter {hasActiveFilters && `(${Object.values(filters).filter(Boolean).length})`}
