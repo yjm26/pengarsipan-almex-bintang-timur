@@ -4,10 +4,12 @@ import FilterBar from './FilterBar';
 import DetailPanel from './DetailPanel';
 import PreviewModal from './PreviewModal';
 import api from '../../../lib/api';
+import { useToast } from '../../../../contexts/ToastContext.jsx';
 
 const PAGE_SIZE = 10;
 
 export default function DocumentTable({ documents, loading, onRefresh, onDelete, onBulkDelete, onUpdate }) {
+  const { addToast } = useToast();
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState({ arah: '', jenis: '', confidence: '' });
   const [page, setPage] = useState(1);
@@ -53,9 +55,10 @@ export default function DocumentTable({ documents, loading, onRefresh, onDelete,
     if (!selected.length || !confirm(`Hapus ${selected.length} dokumen?`)) return;
     try {
       await onBulkDelete(selected);
+      addToast(`${selected.length} dokumen berhasil dihapus`, 'success');
       setSelected([]);
     } catch (err) {
-      alert(err.message);
+      addToast(err.message || 'Gagal menghapus dokumen', 'error');
     }
   };
 
@@ -83,8 +86,9 @@ export default function DocumentTable({ documents, loading, onRefresh, onDelete,
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      addToast(`"${doc.nama_file}" berhasil diunduh`, 'success');
     } catch (err) {
-      alert('Gagal download: ' + err.message);
+      addToast('Gagal download: ' + err.message, 'error');
     }
   };
 

@@ -2,8 +2,10 @@ import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Upload, FileText, CheckCircle, AlertCircle, Loader2, ArrowDownLeft, ArrowUpRight, RefreshCw } from 'lucide-react';
 import api from '../../../lib/api';
+import { useToast } from '../../../../contexts/ToastContext.jsx';
 
 export default function UploadModal({ onClose, onSuccess }) {
+  const { addToast } = useToast();
   const [file, setFile] = useState(null);
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -79,10 +81,12 @@ export default function UploadModal({ onClose, onSuccess }) {
       };
       setResult(mapped);
       onSuccess?.(mapped);
+      addToast(`Dokumen "${mapped.nama_file}" berhasil diunggah — ${mapped.arah}, ${mapped.jenis}`, 'success');
     } catch (err) {
       clearInterval(progressInterval);
       setProgress(0);
       setError(err.message || 'Gagal mengunggah dokumen');
+      addToast(err.message || 'Gagal mengunggah dokumen', 'error');
     } finally {
       setUploading(false);
     }
