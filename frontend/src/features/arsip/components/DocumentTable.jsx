@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Search, Filter, ChevronLeft, ChevronRight, Eye, Pencil, Trash2, Download, ArrowDownLeft, ArrowUpRight, X, ChevronDown, RefreshCw, FileText, SearchX, FilePlus } from 'lucide-react';
-import FilterBar from './FilterBar';
 import DetailPanel from './DetailPanel';
 import PreviewModal from './PreviewModal';
 import api from '../../../lib/api';
@@ -188,8 +187,51 @@ export default function DocumentTable({ documents, loading, onRefresh, onDelete,
           <button onClick={onRefresh} className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition-all"><RefreshCw className="w-4 h-4" /></button>
         </div>
 
-        {/* Filter */}
-        {expanded && <FilterBar filters={filters} onFilterChange={handleFilterChange} />}
+        {/* Filter inline */}
+        {expanded && (
+          <div className="flex flex-wrap items-center gap-2 mb-4 p-3 bg-zinc-50/50 border border-zinc-200/60 rounded-lg">
+            <select
+              value={filters.arah}
+              onChange={(e) => handleFilterChange('arah', e.target.value)}
+              className="px-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-amber-400 cursor-pointer"
+            >
+              <option value="">Semua Arah</option>
+              <option value="Masuk">Masuk</option>
+              <option value="Keluar">Keluar</option>
+            </select>
+            <select
+              value={filters.jenis}
+              onChange={(e) => handleFilterChange('jenis', e.target.value)}
+              className="px-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-amber-400 cursor-pointer"
+            >
+              <option value="">Semua Jenis</option>
+              <option value="Purchase Order">Purchase Order</option>
+              <option value="Invoice">Invoice</option>
+              <option value="Surat Penawaran">Surat Penawaran</option>
+              <option value="Nota Dinas">Nota Dinas</option>
+              <option value="Surat Jalan">Surat Jalan</option>
+              <option value="Kontrak">Kontrak</option>
+              <option value="MoU">MoU</option>
+              <option value="Batal Order">Batal Order</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
+            <select
+              value={filters.confidence}
+              onChange={(e) => handleFilterChange('confidence', e.target.value)}
+              className="px-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-amber-400 cursor-pointer"
+            >
+              <option value="">Semua Akurasi</option>
+              <option value="90">Akurat (≥90%)</option>
+              <option value="75">Cukup (75-89%)</option>
+              <option value="low">Rendah (&lt;75%)</option>
+            </select>
+            {hasActiveFilters && (
+              <button onClick={() => handleFilterChange('clear')} className="flex items-center gap-1 px-2 py-1.5 text-xs text-zinc-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
+                <X className="w-3 h-3" /> Reset
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Info */}
         <div className="flex items-center justify-between mb-2">
