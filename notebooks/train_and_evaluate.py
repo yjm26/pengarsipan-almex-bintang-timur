@@ -200,17 +200,17 @@ print('6. ROBUSTNESS TEST')
 print('=' * 60)
 
 KEYWORDS = {
-    'PurchaseOrder': ['purchase order', 'po', 'pesanan', 'pengadaan', 'pemesanan', 'order', 'pesan'],
-    'Invoice': ['invoice', 'faktur', 'tagihan', 'inv', 'pembayaran', 'bill', 'tagih'],
-    'Penawaran': ['penawaran', 'harga', 'kerjasama', 'proposal', 'offer', 'quotation', 'tawar'],
-    'SalesOrder': ['sales order', 'so', 'penjualan', 'delivery order', 'jual'],
-    'SuratJalan': ['surat jalan', 'pengiriman', 'delivery', 'sj', 'pengantar', 'kirim'],
+    'purchaseorder': ['purchase order', 'po', 'pesanan', 'pengadaan', 'pemesanan', 'order', 'pesan'],
+    'invoice': ['invoice', 'faktur', 'tagihan', 'inv', 'pembayaran', 'bill', 'tagih'],
+    'penawaran': ['penawaran', 'harga', 'kerjasama', 'proposal', 'offer', 'quotation', 'tawar'],
+    'salesorder': ['sales order', 'so', 'penjualan', 'delivery order', 'jual'],
+    'suratjalan': ['surat jalan', 'pengiriman', 'delivery', 'sj', 'pengantar', 'kirim'],
 }
 
-# Skenario B: hapus keyword
 def remove_keywords(text, jenis):
+    """Hapus keyword spesifik sesuai jenis dokumen (simulasi header tidak standar)."""
     words = text.lower().split()
-    kws = KEYWORDS.get(jenis, [])
+    kws = KEYWORDS.get(jenis.lower(), [])
     return ' '.join([w for w in words if not any(kw in w or w in kw for kw in kws)])
 
 # Skenario C: hapus header 25% (simulasi template berubah, header tidak standar)
