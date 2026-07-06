@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { UserPlus, Pencil, Trash2, Key, Shield, Users, User, Loader2, AlertTriangle } from 'lucide-react';
+import { UserPlus, Pencil, UserMinus, Key, Shield, Users, User, Loader2, AlertTriangle } from 'lucide-react';
 import api from '../../../lib/api';
 
 export default function UserManagement() {
@@ -202,7 +202,7 @@ export default function UserManagement() {
                       </button>
                       {user.is_active && (
                         <button onClick={() => handleDelete(user.id)} className="p-2 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-600 transition-all" title="Nonaktifkan">
-                          <Trash2 className="w-4 h-4" />
+                          <UserMinus className="w-4 h-4" />
                         </button>
                       )}
                     </div>
