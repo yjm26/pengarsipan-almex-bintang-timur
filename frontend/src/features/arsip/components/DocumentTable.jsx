@@ -68,6 +68,34 @@ export default function DocumentTable({ documents, loading, onRefresh, onDelete,
     setDetailDoc(prev => prev && prev.id === id ? { ...prev, ...data } : prev);
   };
 
+  const handleDownload = async (doc) => {
+    try {
+      const res = await api.request(`/api/documents/${doc.id}/download`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = doc.nama_file;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('Gagal download: ' + err.message);
+    }
+  };
+
+  const handlePreview = async (doc) => {
+    try {
+      const res = await api.request(`/api/documents/${doc.id}/preview`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    } catch (err) {
+      alert('Gagal preview: ' + err.message);
+    }
+  };
+
   if (loading) {
     return (
       <div className="bg-white rounded-xl border border-zinc-200/60 p-12 text-center">
@@ -142,7 +170,8 @@ export default function DocumentTable({ documents, loading, onRefresh, onDelete,
                     <td className="px-2 py-1.5 text-[11px] text-zinc-600 max-w-[100px] truncate">{doc.jenis}</td>
                     <td className="pr-3 py-1.5" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-1">
-                        <button onClick={() => setDetailDoc(doc)} className="p-1.5 rounded-lg bg-zinc-200 hover:bg-blue-100 text-zinc-700 hover:text-blue-600 transition-all" title="Detail"><Eye className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => handlePreview(doc)} className="p-1.5 rounded-lg bg-zinc-200 hover:bg-violet-100 text-zinc-700 hover:text-violet-600 transition-all" title="Preview"><Eye className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => handleDownload(doc)} className="p-1.5 rounded-lg bg-zinc-200 hover:bg-emerald-100 text-zinc-700 hover:text-emerald-600 transition-all" title="Download"><Download className="w-3.5 h-3.5" /></button>
                         <button onClick={() => onDelete(doc.id)} className="p-1.5 rounded-lg bg-zinc-200 hover:bg-red-100 text-zinc-700 hover:text-red-600 transition-all" title="Hapus"><Trash2 className="w-3.5 h-3.5" /></button>
                       </div>
                     </td>

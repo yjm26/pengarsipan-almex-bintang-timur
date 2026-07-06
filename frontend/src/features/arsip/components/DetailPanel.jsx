@@ -26,11 +26,10 @@ export default function DetailPanel({ doc, onClose, onUpdate, onDelete }) {
   const [form, setForm] = useState({ nama_pt: doc.nama_pt || '', tanggal_surat: doc.tanggal_surat?.split('T')[0] || '', arah: doc.arah || '', jenis: doc.jenis || '' });
   const [saving, setSaving] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [zoom, setZoom] = useState(1);
   const badge = getBadge(doc.confidence);
   const isMasuk = doc.arah === 'Masuk';
-  const previewUrl = `${(import.meta.env.VITE_API_URL || '').replace(/\/$/, '')}/api/documents/${doc.id}/preview`;
-  const downloadUrl = `${(import.meta.env.VITE_API_URL || '').replace(/\/$/, '')}/api/documents/${doc.id}/download`;
 
   async function handleSave() {
     setSaving(true);
@@ -52,6 +51,41 @@ export default function DetailPanel({ doc, onClose, onUpdate, onDelete }) {
       console.error('Gagal menghapus:', err);
     }
   }
+
+  async function handleDownload() {
+    try {
+      const res = await api.request(`/api/documents/${doc.id}/download`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = doc.nama_file;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('Gagal download: ' + err.message);
+    }
+  }
+
+  async function handlePreview() {
+    try {
+      const res = await api.request(`/api/documents/${doc.id}/preview`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      setPreviewUrl(url);
+      setPreviewOpen(true);
+    } catch (err) {
+      alert('Gagal preview: ' + err.message);
+    }
+  }
+
+  const closePreview = () => {
+    setPreviewOpen(false);
+    setZoom(1);
+    if (previewUrl) { URL.revokeObjectURL(previewUrl); setPreviewUrl(null); }
+  };
 
   return (
     <>
@@ -135,7 +169,7 @@ export default function DetailPanel({ doc, onClose, onUpdate, onDelete }) {
                 <button onClick={() => setEditing(true)} className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold text-zinc-600 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 transition-all">
                   <Pencil className="w-3.5 h-3.5" /> Edit
                 </button>
-                <button onClick={() => setPreviewOpen(true)} className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold text-zinc-600 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 transition-all">
+                <button onClick={handlePreview} className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold text-zinc-600 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 transition-all">
                   <Eye className="w-3.5 h-3.5" /> Preview
                 </button>
                 <button onClick={handleDelete} className="p-2.5 rounded-xl hover:bg-red-50 text-zinc-400 hover:text-red-500 border border-zinc-200 transition-all"><Trash2 className="w-3.5 h-3.5" /></button>
@@ -143,25 +177,25 @@ export default function DetailPanel({ doc, onClose, onUpdate, onDelete }) {
             )}
           </div>
           {/* Download lebar di bawah */}
-          <a href={downloadUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl text-xs font-medium text-zinc-600 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 transition-all">
+          <button onClick={handleDownload} className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl text-xs font-medium text-zinc-600 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 transition-all">
             <ExternalLink className="w-3.5 h-3.5" /> Download
-          </a>
+          </button>
         </div>
       </div>
 
       {/* Preview Modal */}
       {previewOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80" onClick={() => { setPreviewOpen(false); setZoom(1); }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80" onClick={closePreview}>
           <div className="relative max-w-[90vw] max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-2 mb-3 justify-center">
               <button onClick={() => setZoom(z => Math.max(0.25, z - 0.25))} className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-white transition-all"><ZoomOut className="w-4 h-4" /></button>
               <span className="text-xs text-white font-medium px-2">{Math.round(zoom * 100)}%</span>
               <button onClick={() => setZoom(z => Math.min(4, z + 0.25))} className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-white transition-all"><ZoomIn className="w-4 h-4" /></button>
-              <button onClick={() => { setPreviewOpen(false); setZoom(1); }} className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-white transition-all ml-2"><X className="w-4 h-4" /></button>
+              <button onClick={closePreview} className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-white transition-all ml-2"><X className="w-4 h-4" /></button>
             </div>
             <div className="overflow-auto max-h-[80vh] rounded-xl bg-white">
               <img
-                src={previewUrl}
+                src={previewUrl || ''}
                 alt={doc.nama_file}
                 style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}
                 className="max-w-full"
