@@ -240,6 +240,10 @@ def ocr_error(text, rate=0.10):
             out.append(w)
     return ' '.join(out)
 
+# Fit pipelines dulu
+pipe_arah.fit(X, y_arah)
+pipe_jenis.fit(X, y_jenis)
+
 # Prediksi skenario
 y_true_jenis = y_jenis
 y_true_arah = y_arah
@@ -272,7 +276,7 @@ print('-' * 70)
 for name, pa, pj in [
     ('A. Data Lengkap', p_full_a, p_full_j),
     ('B. Tanpa Kata Kunci', p_nokw_a, p_nokw_j),
-    ('C. Hanya Tengah (40% potong)', p_mid_a, p_mid_j),
+    ('C. Hapus Header 25%', p_noh_a, p_noh_j),
     ('D. OCR Error 10%', p_ocr_a, p_ocr_j),
 ]:
     print(f'{name:<40} {accuracy_score(y_true_arah, pa):<10.4f} {f1_score(y_true_arah, pa, average="weighted"):<10.4f} '
