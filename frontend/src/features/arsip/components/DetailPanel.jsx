@@ -29,6 +29,7 @@ export default function DetailPanel({ doc, onClose, onUpdate, onDelete }) {
   const [form, setForm] = useState({ nama_pt: doc.nama_pt || '', tanggal_surat: doc.tanggal_surat?.split('T')[0] || '', arah: doc.arah || '', jenis: doc.jenis || '' });
   const [saving, setSaving] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const badge = getBadge(doc.confidence);
   const isMasuk = doc.arah === 'Masuk';
 
@@ -51,13 +52,14 @@ export default function DetailPanel({ doc, onClose, onUpdate, onDelete }) {
   }
 
   async function handleDelete() {
-    if (!confirm('Hapus dokumen ini?')) return;
     try {
       await api.deleteDocument(doc.id);
       onDelete(doc.id);
       addToast('Dokumen berhasil dihapus', 'success');
     } catch (err) {
       addToast('Gagal menghapus: ' + err.message, 'error');
+    } finally {
+      setShowConfirmDelete(false);
     }
   }
 
@@ -168,7 +170,15 @@ export default function DetailPanel({ doc, onClose, onUpdate, onDelete }) {
                 <button onClick={handlePreview} className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold text-zinc-600 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 transition-all">
                   <Eye className="w-3.5 h-3.5" /> Preview
                 </button>
-                <button onClick={handleDelete} className="p-2.5 rounded-xl hover:bg-red-50 text-zinc-400 hover:text-red-500 border border-zinc-200 transition-all"><Trash2 className="w-3.5 h-3.5" /></button>
+                {showConfirmDelete ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-red-600 font-medium">Yakin?</span>
+                    <button onClick={handleDelete} className="px-3 py-2 rounded-xl text-xs font-semibold text-white bg-red-500 hover:bg-red-600">Ya</button>
+                    <button onClick={() => setShowConfirmDelete(false)} className="px-3 py-2 rounded-xl text-xs font-semibold text-zinc-600 bg-zinc-100">Batal</button>
+                  </div>
+                ) : (
+                  <button onClick={() => setShowConfirmDelete(true)} className="p-2.5 rounded-xl hover:bg-red-50 text-zinc-400 hover:text-red-500 border border-zinc-200 transition-all"><Trash2 className="w-3.5 h-3.5" /></button>
+                )}
               </>
             )}
           </div>

@@ -69,6 +69,7 @@ export default function DocumentTable({ documents, loading, onRefresh, onDelete,
   const [expanded, setExpanded] = useState(false);
   const [detailDoc, setDetailDoc] = useState(null);
   const [previewDoc, setPreviewDoc] = useState(null);
+  const [showConfirmBulkDelete, setShowConfirmBulkDelete] = useState(false);
 
   const filtered = useMemo(() => {
     let data = [...documents];
@@ -107,13 +108,15 @@ export default function DocumentTable({ documents, loading, onRefresh, onDelete,
   };
 
   const handleBulkDelete = async () => {
-    if (!selected.length || !confirm(`Hapus ${selected.length} dokumen?`)) return;
+    if (!selected.length) return;
     try {
       await onBulkDelete(selected);
       addToast(`${selected.length} dokumen berhasil dihapus`, 'success');
       setSelected([]);
     } catch (err) {
       addToast(err.message || 'Gagal menghapus dokumen', 'error');
+    } finally {
+      setShowConfirmBulkDelete(false);
     }
   };
 
@@ -179,9 +182,17 @@ export default function DocumentTable({ documents, loading, onRefresh, onDelete,
               <Filter className="w-3.5 h-3.5" /> Filter {hasActiveFilters && `(${Object.values(filters).filter(Boolean).length})`}
             </button>
             {selected.length > 0 && (
-              <button onClick={handleBulkDelete} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 border border-red-100 transition-all">
-                <Trash2 className="w-3.5 h-3.5" /> Hapus ({selected.length})
-              </button>
+              showConfirmBulkDelete ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-red-600 font-medium">Hapus {selected.length} dokumen?</span>
+                  <button onClick={handleBulkDelete} className="px-3 py-1.5 text-xs font-semibold text-white bg-red-500 hover:bg-red-600 rounded-lg">Ya</button>
+                  <button onClick={() => setShowConfirmBulkDelete(false)} className="px-3 py-1.5 text-xs font-semibold text-zinc-600 bg-zinc-100 rounded-lg">Batal</button>
+                </div>
+              ) : (
+                <button onClick={() => setShowConfirmBulkDelete(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 border border-red-100 transition-all">
+                  <Trash2 className="w-3.5 h-3.5" /> Hapus ({selected.length})
+                </button>
+              )
             )}
           </div>
           <button onClick={onRefresh} className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition-all"><RefreshCw className="w-4 h-4" /></button>
