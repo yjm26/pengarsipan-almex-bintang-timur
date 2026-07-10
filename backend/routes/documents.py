@@ -166,7 +166,7 @@ async def upload_document(file: UploadFile = File(...), db: Session = Depends(ge
         extracted_text = ""
 
     # Classify
-    arah_pred, arah_conf, jenis_pred, jenis_conf = "Masuk", 0.5, "Lainnya", 0.5
+    arah_pred, arah_conf, jenis_pred, jenis_conf = "Keluar", 0.5, "Lainnya", 0.5
     if extracted_text.strip():
         try:
             arah_pred, arah_conf, jenis_pred, jenis_conf = classifier.predict(extracted_text)

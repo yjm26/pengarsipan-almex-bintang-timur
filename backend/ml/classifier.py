@@ -13,7 +13,7 @@ MODEL_DIR = "/root/pengarsipan-almex-bintang-timur/backend/ml_model"
 os.makedirs(MODEL_DIR, exist_ok=True)
 
 ARAH_LABELS = ["Masuk", "Keluar"]
-JENIS_LABELS = ["purchaseOrder", "invoice", "penawaran", "SalesOrder", "suratJalan"]
+JENIS_LABELS = ["PurchaseOrder", "Invoice", "Penawaran", "SalesOrder", "SuratJalan"]
 
 # Sastrawi stopwords (lazy load — same approach as notebook)
 _stopword_set = None
@@ -145,7 +145,7 @@ class DocumentClassifier:
         """Predict arah and jenis. Returns (arah, arah_confidence, jenis, jenis_confidence)."""
         processed = preprocess_text(text)
         if not processed.strip():
-            return "Masuk", 0.5, "Lainnya", 0.5
+            return "Keluar", 0.5, "Lainnya", 0.5
 
         arah_probs = self.arah_pipeline.predict_proba([processed])[0]
         arah_idx = np.argmax(arah_probs)

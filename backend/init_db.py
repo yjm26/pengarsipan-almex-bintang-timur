@@ -30,13 +30,13 @@ def init():
         print("[OK] Admin user already exists")
     
     # Seed categories
+    # Seed categories (HARUS match model labels)
     default_categories = [
-        ("Purchase Order", None),
+        ("PurchaseOrder", None),
         ("Invoice", None),
-        ("Surat Penawaran", None),
-        ("Kontrak", None),
-        ("Nota Dinas", None),
-        ("MoU", None),
+        ("Penawaran", None),
+        ("SalesOrder", None),
+        ("SuratJalan", None),
         ("Lainnya", None),
     ]
     if db.query(Category).count() == 0:
