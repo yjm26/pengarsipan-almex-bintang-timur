@@ -9,7 +9,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.pipeline import Pipeline
 
-MODEL_DIR = "/root/pengarsipan-almex-bintang-timur/backend/ml_model"
+MODEL_DIR = os.path.join(os.path.dirname(__file__), "..", "ml_model")
 os.makedirs(MODEL_DIR, exist_ok=True)
 
 JENIS_KEYWORDS = {
@@ -190,15 +190,25 @@ class DocumentClassifier:
             arah_kw, jenis_kw = keyword_classify(text)
             return arah_kw, 0.4, jenis_kw, 0.4
 
-        arah_probs = self.arah_pipeline.predict_proba([processed])[0]
-        arah_idx = np.argmax(arah_probs)
-        arah = self.arah_pipeline.classes_[arah_idx]
-        arah_conf = float(arah_probs[arah_idx])
-
-        jenis_probs = self.jenis_pipeline.predict_proba([processed])[0]
-        jenis_idx = np.argmax(jenis_probs)
-        jenis = self.jenis_pipeline.classes_[jenis_idx]
+        # Predict jenis pakai ML model
+        tfidf_jenis = self.jenis_pipeline.named_steps['tfidf'].transform([processed])
+        jenis_label = self.jenis_pipeline.named_steps['clf'].predict(tfidf_jenis)[0]
+        jenis_probs = self.jenis_pipeline.named_steps['clf'].predict_proba(tfidf_jenis)[0]
+        jenis_idx = list(self.jenis_pipeline.named_steps['clf'].classes_).index(jenis_label)
         jenis_conf = float(jenis_probs[jenis_idx])
+        jenis = jenis_label
+
+        # Derive arah dari jenis (hardcoded mapping, lebih reliable)
+        JENIS_KE_ARAH = {
+            'PurchaseOrder': 'Masuk',
+            'Invoice': 'Keluar',
+            'Penawaran': 'Keluar',
+            'SalesOrder': 'Keluar',
+            'SuratJalan': 'Keluar',
+            'Lainnya': 'Keluar',
+        }
+        arah = JENIS_KE_ARAH.get(jenis, 'Keluar')
+        arah_conf = jenis_conf  # confidence sama dengan jenis
 
         # Kalau confidence rendah ATAU jenis = "Lainnya" → pakai keyword heuristic
         if arah_conf < 0.5 or jenis_conf < 0.5 or jenis == "Lainnya":
