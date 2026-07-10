@@ -310,7 +310,7 @@ function KoreksiInline({ docId, currentJenis, currentArah, onClose, onUpdate }) 
           <label className="text-[10px] text-zinc-400">Jenis Dokumen</label>
           <select value={jenis} onChange={(e) => setJenis(e.target.value)} className="w-full text-xs p-1.5 border border-zinc-200 rounded bg-white">
             <option value="">Pilih...</option>
-            {['Purchase Order', 'Invoice', 'Surat Penawaran', 'Surat Jalan', 'Nota Dinas', 'Kontrak', 'Batal Order', 'MoU', 'Lainnya'].map(j => (
+            {['PurchaseOrder', 'Invoice', 'Penawaran', 'SalesOrder', 'SuratJalan', 'Lainnya'].map(j => (
               <option key={j} value={j}>{j}</option>
             ))}
           </select>
