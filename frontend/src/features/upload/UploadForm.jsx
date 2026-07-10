@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Upload, FileText, X, CheckCircle2, Loader2, AlertTriangle, ChevronDown, ChevronUp, Pencil, Clock } from 'lucide-react';
 import { useUpload } from '../../store/uploadStore';
 import api from '../../lib/api';
@@ -43,7 +44,10 @@ export default function UploadForm() {
       });
       window.dispatchEvent(new CustomEvent('doc-updated'));
       removeUpload(item.id);
-      addToast('Dokumen berhasil disimpan ke arsip', 'success');
+      addToast('Dokumen berhasil disimpan ke arsip', 'success', {
+        label: 'Lihat di Arsip',
+        onClick: () => window.location.href = '/dashboard/arsip'
+      });
     } catch (err) {
       addToast('Gagal menyimpan: ' + err.message, 'error');
     }

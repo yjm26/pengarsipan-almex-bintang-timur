@@ -7,9 +7,9 @@ const ToastContext = createContext(null);
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
 
-  const addToast = useCallback((message, type = 'success') => {
+  const addToast = useCallback((message, type = 'success', action = null) => {
     const id = Date.now() + Math.random();
-    setToasts(prev => [...prev, { id, message, type }]);
+    setToasts(prev => [...prev, { id, message, type, action }]);
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
     }, 4000);
@@ -42,6 +42,14 @@ export function ToastProvider({ children }) {
               {toast.type === 'error' && <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />}
               {toast.type === 'info' && <Info className="w-4 h-4 text-blue-600 flex-shrink-0" />}
               <p className="text-sm font-medium flex-1">{toast.message}</p>
+              {toast.action && (
+                <button 
+                  onClick={() => { toast.action.onClick(); removeToast(toast.id); }}
+                  className="text-xs font-semibold px-2 py-1 rounded bg-white/50 hover:bg-white transition-colors whitespace-nowrap"
+                >
+                  {toast.action.label}
+                </button>
+              )}
               <button onClick={() => removeToast(toast.id)} className="p-1 rounded hover:bg-black/5 transition-all">
                 <X className="w-3.5 h-3.5 opacity-60" />
               </button>
