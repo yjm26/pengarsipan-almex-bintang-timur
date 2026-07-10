@@ -1,17 +1,20 @@
 import { motion } from 'framer-motion';
 import { LogOut, Search, LayoutDashboard, FileText, Upload, FileArchive, Settings, ChevronLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export default function Sidebar({ sidebarOpen, onClose }) {
   const navigate = useNavigate();
+  const location = useLocation();
   
   const menuItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', active: true, path: '/dashboard' },
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
     { icon: Upload, label: 'Upload Dokumen', path: '/dashboard/upload' },
     { icon: FileText, label: 'Arsip Surat', path: '/dashboard/arsip' },
     { icon: FileArchive, label: 'Kategori', path: '/dashboard/kategori' },
     { icon: Settings, label: 'Pengaturan', path: '/dashboard/pengaturan' },
   ];
+
+  const isActive = (path) => location.pathname === path;
 
   return (
     <motion.aside
@@ -52,13 +55,20 @@ export default function Sidebar({ sidebarOpen, onClose }) {
           <button
             key={i}
             onClick={() => navigate(item.path)}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-              item.active
-                ? 'bg-zinc-800 text-white'
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 relative overflow-hidden ${
+              isActive(item.path)
+                ? 'bg-zinc-800/80 text-white'
                 : 'text-zinc-500 hover:bg-zinc-900/50 hover:text-zinc-300'
             }`}
           >
-            <item.icon className="w-5 h-5 flex-shrink-0" />
+            {isActive(item.path) && (
+              <motion.div
+                layoutId="activeIndicator"
+                className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-amber-500 rounded-r-full"
+                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              />
+            )}
+            <item.icon className={`w-5 h-5 flex-shrink-0 transition-colors ${isActive(item.path) ? 'text-amber-500' : ''}`} />
             {item.label}
           </button>
         ))}
