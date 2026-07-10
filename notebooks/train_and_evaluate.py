@@ -39,7 +39,7 @@ JENIS_KE_ARAH = {
 
 # === EXTRACT TEXT DARI PDF ===
 def extract_text(file_path):
-    """Extract text dari PDF pakai PyMuPDF. Fallback OCR (Tesseract) kalau halaman kosong."""
+    """Extract text dari PDF pakai PyMuPDF. Fallback OCR (EasyOCR) kalau halaman kosong."""
     ext = os.path.splitext(file_path)[1].lower()
     text = ''
     if ext == '.pdf':
@@ -50,14 +50,14 @@ def extract_text(file_path):
                 text += page_text + '\n'
             else:
                 try:
-                    import pytesseract
-                    from PIL import Image
                     import cv2
+                    import easyocr
                     pix = page.get_pixmap(dpi=200)
                     img = cv2.imdecode(np.frombuffer(pix.tobytes('png'), np.uint8), cv2.IMREAD_COLOR)
                     if img is not None:
-                        img_rgb = Image.fromarray(img[:, :, ::-1])
-                        ocr = pytesseract.image_to_string(img_rgb, lang='ind').strip()
+                        reader = easyocr.Reader(['id', 'en'], gpu=False)
+                        results = reader.readtext(img, detail=0)
+                        ocr = ' '.join(results)
                         if ocr:
                             text += ocr + '\n'
                 except Exception:
