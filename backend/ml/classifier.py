@@ -200,13 +200,13 @@ class DocumentClassifier:
         jenis = self.jenis_pipeline.classes_[jenis_idx]
         jenis_conf = float(jenis_probs[jenis_idx])
 
-        # Kalau confidence rendah, blend dengan keyword heuristic
-        if arah_conf < 0.5 or jenis_conf < 0.5:
+        # Kalau confidence rendah ATAU jenis = "Lainnya" → pakai keyword heuristic
+        if arah_conf < 0.5 or jenis_conf < 0.5 or jenis == "Lainnya":
             arah_kw, jenis_kw = keyword_classify(text)
             if arah_conf < 0.5:
                 arah = arah_kw
                 arah_conf = 0.5
-            if jenis_conf < 0.5:
+            if jenis_conf < 0.5 or jenis == "Lainnya":
                 jenis = jenis_kw
                 jenis_conf = 0.5
 
