@@ -196,6 +196,7 @@ function FileCard({ item, onRemove, onUpdateResult, onSimpan }) {
               <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-1">Hasil</p>
               <p className="text-sm font-semibold" style={{ color: result.confidence >= 75 ? '#00AA00' : result.confidence >= 50 ? '#D4A000' : '#DD0000' }}>
                 {result.confidence >= 75 ? 'Akurat' : result.confidence >= 50 ? 'Cukup' : 'Tidak Akurat'}
+                <span className="text-[11px] ml-1 opacity-70">({(result.confidence || 0).toFixed(0)}%)</span>
               </p>
             </div>
             <div className="p-3 rounded-lg bg-zinc-50 border border-zinc-100">
@@ -239,21 +240,40 @@ function FileCard({ item, onRemove, onUpdateResult, onSimpan }) {
             </div>
           )}
 
+          {/* Confidence warning badge */}
+          {result.confidence < 75 && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200">
+              <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+              <p className="text-[11px] text-amber-700">
+                Confidence rendah ({(result.confidence || 0).toFixed(0)}%). Silakan <strong className="text-amber-800">periksa & koreksi</strong> sebelum menyimpan.
+              </p>
+            </div>
+          )}
+
           {/* Koreksi + Simpan */}
           <div className="flex items-center gap-3 pt-1">
             <button
               onClick={onSimpan}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium"
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                result.confidence >= 75
+                  ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                  : 'bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-300'
+              }`}
             >
-              <CheckCircle2 className="w-4 h-4" /> Simpan ke Arsip
+              <CheckCircle2 className="w-4 h-4" />
+              {result.confidence >= 75 ? 'Simpan ke Arsip' : 'Simpan Tanpa Koreksi'}
             </button>
             <button
               onClick={() => setShowKoreksi(!showKoreksi)}
-              className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-600"
+              className={`flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg transition-colors ${
+                result.confidence < 75
+                  ? 'bg-amber-500 text-white hover:bg-amber-600 font-medium'
+                  : 'text-zinc-400 hover:text-zinc-600'
+              }`}
             >
               <Pencil className="w-3.5 h-3.5" /> Koreksi
             </button>
-            <button onClick={() => window.dispatchEvent(new CustomEvent('doc-updated')) && onRemove()} className="text-xs text-zinc-400 hover:text-zinc-600">Upload Lainnya</button>
+            <button onClick={() => { window.dispatchEvent(new CustomEvent('doc-updated')); onRemove(); }} className="text-xs text-zinc-400 hover:text-zinc-600">Upload Lainnya</button>
           </div>
 
           {showKoreksi && (
