@@ -128,10 +128,12 @@ function FileCard({ item, onRemove, onUpdateResult, onSimpan }) {
   const { file, status, result, error } = item;
 
   return (
-    <div className="border border-zinc-100 rounded-xl bg-white overflow-hidden">
+    <div className={`border border-zinc-100 rounded-2xl bg-white overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 ${
+      result ? (result.confidence >= 75 ? 'border-l-4 border-l-green-500' : result.confidence >= 50 ? 'border-l-4 border-l-amber-500' : 'border-l-4 border-l-red-500') : ''
+    }`}>
       {/* Header */}
       <div className="flex items-center gap-3 p-4">
-        <div className="w-9 h-9 rounded-lg bg-zinc-50 border border-zinc-100 flex items-center justify-center flex-shrink-0">
+        <div className="w-9 h-9 rounded-xl bg-zinc-50 border border-zinc-100 flex items-center justify-center flex-shrink-0">
           <FileText className="w-4 h-4 text-zinc-400" />
         </div>
         <div className="flex-1 min-w-0">
