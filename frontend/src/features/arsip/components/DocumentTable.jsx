@@ -70,6 +70,7 @@ export default function DocumentTable({ documents, loading, onRefresh, onDelete,
   const [detailDoc, setDetailDoc] = useState(null);
   const [previewDoc, setPreviewDoc] = useState(null);
   const [showConfirmBulkDelete, setShowConfirmBulkDelete] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   const filtered = useMemo(() => {
     let data = [...documents];
@@ -147,6 +148,22 @@ export default function DocumentTable({ documents, loading, onRefresh, onDelete,
       addToast(`"${doc.nama_file}" berhasil diunduh`, 'success');
     } catch (err) {
       addToast('Gagal download: ' + err.message, 'error');
+    }
+  };
+
+  const handleDeleteRow = (id) => {
+    setConfirmDeleteId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!confirmDeleteId) return;
+    try {
+      await onDelete(confirmDeleteId);
+      addToast('Dokumen berhasil dihapus', 'success');
+    } catch (err) {
+      addToast('Gagal menghapus dokumen: ' + err.message, 'error');
+    } finally {
+      setConfirmDeleteId(null);
     }
   };
 
@@ -318,7 +335,7 @@ export default function DocumentTable({ documents, loading, onRefresh, onDelete,
                       <div className="flex items-center gap-1">
                         <button onClick={() => handlePreview(doc)} className="p-1.5 rounded-lg bg-zinc-200 hover:bg-violet-100 text-zinc-700 hover:text-violet-600 transition-all" title="Preview"><Eye className="w-3.5 h-3.5" /></button>
                         <button onClick={() => handleDownload(doc)} className="p-1.5 rounded-lg bg-zinc-200 hover:bg-emerald-100 text-zinc-700 hover:text-emerald-600 transition-all" title="Download"><Download className="w-3.5 h-3.5" /></button>
-                        <button onClick={() => onDelete(doc.id)} className="p-1.5 rounded-lg bg-zinc-200 hover:bg-red-100 text-zinc-700 hover:text-red-600 transition-all" title="Hapus"><Trash2 className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => handleDeleteRow(doc.id)} className="p-1.5 rounded-lg bg-zinc-200 hover:bg-red-100 text-zinc-700 hover:text-red-600 transition-all" title="Hapus"><Trash2 className="w-3.5 h-3.5" /></button>
                       </div>
                     </td>
                   </tr>
@@ -340,6 +357,27 @@ export default function DocumentTable({ documents, loading, onRefresh, onDelete,
       {/* Preview modal */}
       {previewDoc && (
         <PreviewModal doc={previewDoc} onClose={() => setPreviewDoc(null)} />
+      )}
+
+      {/* Modal konfirmasi hapus (tengah layar, gede) */}
+      {confirmDeleteId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4 text-center">
+            <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
+              <Trash2 className="w-6 h-6 text-red-500" />
+            </div>
+            <h3 className="text-base font-semibold text-zinc-900 mb-1">Hapus Dokumen?</h3>
+            <p className="text-sm text-zinc-500 mb-6">Dokumen akan dihapus secara permanen dari arsip.</p>
+            <div className="flex items-center gap-3 justify-center">
+              <button onClick={() => setConfirmDeleteId(null)} className="px-5 py-2.5 rounded-xl text-sm font-medium text-zinc-600 bg-zinc-100 hover:bg-zinc-200 transition-all">
+                Batal
+              </button>
+              <button onClick={confirmDelete} className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-500 hover:bg-red-600 transition-all">
+                Hapus
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

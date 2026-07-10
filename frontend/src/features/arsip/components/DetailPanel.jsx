@@ -30,6 +30,7 @@ export default function DetailPanel({ doc, onClose, onUpdate, onDelete }) {
   const [saving, setSaving] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false);
   const badge = getBadge(doc.confidence);
   const isMasuk = doc.arah === 'Masuk';
 
@@ -173,7 +174,7 @@ export default function DetailPanel({ doc, onClose, onUpdate, onDelete }) {
                 {showConfirmDelete ? (
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-red-600 font-medium">Yakin?</span>
-                    <button onClick={handleDelete} className="px-3 py-2 rounded-xl text-xs font-semibold text-white bg-red-500 hover:bg-red-600">Ya</button>
+                    <button onClick={() => setShowConfirmDeleteModal(true)} className="px-3 py-2 rounded-xl text-xs font-semibold text-white bg-red-500 hover:bg-red-600">Ya</button>
                     <button onClick={() => setShowConfirmDelete(false)} className="px-3 py-2 rounded-xl text-xs font-semibold text-zinc-600 bg-zinc-100">Batal</button>
                   </div>
                 ) : (
@@ -192,6 +193,27 @@ export default function DetailPanel({ doc, onClose, onUpdate, onDelete }) {
       {/* Preview Modal */}
       {showPreview && (
         <PreviewModal doc={doc} onClose={() => setShowPreview(false)} />
+      )}
+
+      {/* Modal konfirmasi hapus gede */}
+      {showConfirmDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4 text-center">
+            <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
+              <Trash2 className="w-6 h-6 text-red-500" />
+            </div>
+            <h3 className="text-base font-semibold text-zinc-900 mb-1">Hapus Dokumen?</h3>
+            <p className="text-sm text-zinc-500 mb-6">Dokumen akan dihapus secara permanen dari arsip.</p>
+            <div className="flex items-center gap-3 justify-center">
+              <button onClick={() => setShowConfirmDeleteModal(false)} className="px-5 py-2.5 rounded-xl text-sm font-medium text-zinc-600 bg-zinc-100 hover:bg-zinc-200 transition-all">
+                Batal
+              </button>
+              <button onClick={handleDelete} className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-500 hover:bg-red-600 transition-all">
+                Hapus
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
