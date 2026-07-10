@@ -173,7 +173,7 @@ export default function DocumentTable({ documents, loading, onRefresh, onDelete,
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl border border-zinc-200/60 p-12 text-center">
+      <div className="bg-white rounded-2xl shadow-sm border border-zinc-200/60 p-12 text-center">
         <RefreshCw className="w-6 h-6 text-zinc-400 animate-spin mx-auto mb-3" />
         <p className="text-sm text-zinc-500">Memuat dokumen...</p>
       </div>
@@ -257,7 +257,7 @@ export default function DocumentTable({ documents, loading, onRefresh, onDelete,
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-xl border border-zinc-200/60 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-sm border border-zinc-200/60 overflow-hidden">
           <table className="w-full">
             <thead>
               <tr className="border-b border-zinc-100">
