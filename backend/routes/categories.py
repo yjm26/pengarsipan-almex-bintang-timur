@@ -1,13 +1,21 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Category, User, AuditLog, now_wib
+from models import Category, Document, User, AuditLog, now_wib
 from schemas import CategoryCreate, CategoryUpdate, CategoryOut
 from auth import get_current_user
 
 router = APIRouter(prefix="/api/categories", tags=["Categories"])
 
-def build_tree(categories, parent_id=None):
+def get_doc_counts(db: Session):
+    """Hitung jumlah dokumen per kategori (Document.jenis)."""
+    counts = {}
+    for doc in db.query(Document).all():
+        j = doc.jenis or "Lainnya"
+        counts[j] = counts.get(j, 0) + 1
+    return counts
+
+def build_tree(categories, doc_counts, parent_id=None):
     result = []
     for cat in categories:
         if cat.parent_id == parent_id:
@@ -17,7 +25,8 @@ def build_tree(categories, parent_id=None):
                 parent_id=cat.parent_id,
                 status=cat.status,
                 created_at=cat.created_at,
-                children=build_tree(categories, cat.id)
+                document_count=doc_counts.get(cat.nama, 0),
+                children=build_tree(categories, doc_counts, cat.id)
             )
             result.append(item)
     return result
@@ -25,7 +34,8 @@ def build_tree(categories, parent_id=None):
 @router.get("", response_model=list[CategoryOut])
 def list_categories(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     cats = db.query(Category).all()
-    return build_tree(cats)
+    doc_counts = get_doc_counts(db)
+    return build_tree(cats, doc_counts)
 
 @router.post("", response_model=CategoryOut)
 def create_category(data: CategoryCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):

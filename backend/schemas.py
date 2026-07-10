@@ -64,6 +64,7 @@ class CategoryOut(BaseModel):
     parent_id: Optional[int] = None
     status: str
     created_at: Optional[datetime] = None
+    document_count: int = 0
     children: List["CategoryOut"] = []
     class Config:
         from_attributes = True
