@@ -331,7 +331,7 @@ function KoreksiInline({ docId, currentJenis, currentArah, onClose, onUpdate }) 
     setSaving(true);
     try {
       await api.updateDocument(docId, { jenis, arah });
-      onUpdate({ jenis, arah });
+      onUpdate({ jenis, arah, confidence: 100 });
       addToast('Koreksi klasifikasi berhasil disimpan', 'success');
     } catch (err) {
       addToast('Gagal menyimpan koreksi: ' + err.message, 'error');
