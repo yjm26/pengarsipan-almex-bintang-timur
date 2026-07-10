@@ -1,0 +1,47 @@
+#!/bin/bash
+# ALMEX Model Training Script
+# Jalankan dari root repo: ./start-training
+# Atau langsung: start-training (kalau repo ada di PATH)
+
+PYTHON="C:/WinPython/WPy64-31180/python-3.11.8.amd64/python.exe"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+cd "$SCRIPT_DIR/notebooks"
+
+if [ ! -f "train_and_evaluate.py" ]; then
+    echo "[ERROR] train_and_evaluate.py tidak ditemukan di notebooks/"
+    exit 1
+fi
+
+echo "=========================================="
+echo "   ALMEX - Training Model Klasifikasi"
+echo "=========================================="
+echo ""
+echo "Python : $PYTHON"
+echo "Script : train_and_evaluate.py"
+echo "Output : backend/ml_model/"
+echo "Dataset: dataset/"
+echo ""
+echo "------------------------------------------"
+
+"$PYTHON" train_and_evaluate.py
+
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "[ERROR] Training gagal! Cek error di atas."
+    exit 1
+fi
+
+echo ""
+echo "=========================================="
+echo "   Training SELESAI!"
+echo "=========================================="
+echo ""
+echo "Model tersimpan:"
+echo "  backend/ml_model/arah_pipeline.pkl"
+echo "  backend/ml_model/jenis_pipeline.pkl"
+echo ""
+echo "Langkah selanjutnya:"
+echo "  1. Copy model ke server, ATAU"
+echo "  2. Push ke repo: git add backend/ml_model/*.pkl -f && git commit && git push"
+echo ""
