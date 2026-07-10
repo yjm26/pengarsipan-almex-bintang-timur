@@ -22,10 +22,9 @@ import joblib
 warnings.filterwarnings('ignore')
 
 # === KONFIGURASI ===
-# Ganti path ini sesuai lokasi dataset di laptop
 # Default: folder './dataset/' di repo root (camelCase folders)
 DATASET_DIR = Path('./dataset')
-MODEL_DIR = Path('/root/pengarsipan-almex-bintang-timur/backend/ml_model')
+MODEL_DIR = Path('../backend/ml_model')
 os.makedirs(MODEL_DIR, exist_ok=True)
 
 JENIS_KE_ARAH = {
