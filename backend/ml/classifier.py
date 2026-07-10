@@ -12,8 +12,17 @@ from sklearn.pipeline import Pipeline
 MODEL_DIR = "/root/pengarsipan-almex-bintang-timur/backend/ml_model"
 os.makedirs(MODEL_DIR, exist_ok=True)
 
-ARAH_LABELS = ["Masuk", "Keluar"]
-JENIS_LABELS = ["PurchaseOrder", "Invoice", "Penawaran", "SalesOrder", "SuratJalan"]
+JENIS_KEYWORDS = {
+    'PurchaseOrder': ['purchase', 'order', 'po', 'pembelian', 'beli', 'permintaan'],
+    'Invoice': ['invoice', 'faktur', 'tagihan', 'bill', 'inv'],
+    'Penawaran': ['penawaran', 'quotation', 'quote', 'harga', 'offer'],
+    'SalesOrder': ['sales', 'order', 'so', 'penjualan', 'jual'],
+    'SuratJalan': ['surat', 'jalan', 'sj', 'pengiriman', 'delivery', 'do'],
+}
+ARAH_KEYWORDS = {
+    'Masuk': ['masuk', 'diterima', 'dari', 'supplier', 'vendor', 'penawaran'],
+    'Keluar': ['keluar', 'dikirim', 'kepada', 'customer', 'client', 'invoice', 'faktur'],
+}
 
 # Sastrawi stopwords (lazy load — same approach as notebook)
 _stopword_set = None
@@ -78,6 +87,38 @@ def preprocess_text(text: str) -> str:
     if stemmer:
         tokens = stemmer.stem(' '.join(tokens)).split()
     return ' '.join(tokens)
+
+
+def keyword_classify(text: str) -> tuple[str, str]:
+    """Keyword heuristic untuk dokumen hasil OCR jelek."""
+    t = text.lower()
+    jenis_scores = {}
+    for jenis, keywords in JENIS_KEYWORDS.items():
+        jenis_scores[jenis] = sum(1 for kw in keywords if kw in t)
+    best_jenis = max(jenis_scores, key=jenis_scores.get)
+    if jenis_scores[best_jenis] == 0:
+        best_jenis = "Lainnya"
+
+    # Map jenis ke arah langsung (hardcoded 5 kategori)
+    JENIS_KE_ARAH = {
+        'PurchaseOrder': 'Masuk',
+        'Invoice': 'Keluar',
+        'Penawaran': 'Keluar',
+        'SalesOrder': 'Keluar',
+        'SuratJalan': 'Keluar',
+    }
+    best_arah = JENIS_KE_ARAH.get(best_jenis, 'Keluar')
+
+    # Override kalau ada keyword arah yang kuat di text
+    arah_scores = {}
+    for arah, keywords in ARAH_KEYWORDS.items():
+        arah_scores[arah] = sum(1 for kw in keywords if kw in t)
+    if arah_scores.get('Masuk', 0) > arah_scores.get('Keluar', 0):
+        best_arah = 'Masuk'
+    elif arah_scores.get('Keluar', 0) > arah_scores.get('Masuk', 0):
+        best_arah = 'Keluar'
+
+    return best_arah, best_jenis
 
 
 class DocumentClassifier:
@@ -145,7 +186,9 @@ class DocumentClassifier:
         """Predict arah and jenis. Returns (arah, arah_confidence, jenis, jenis_confidence)."""
         processed = preprocess_text(text)
         if not processed.strip():
-            return "Keluar", 0.5, "Lainnya", 0.5
+            # Fallback keyword heuristic untuk text kosong dari preprocessing
+            arah_kw, jenis_kw = keyword_classify(text)
+            return arah_kw, 0.4, jenis_kw, 0.4
 
         arah_probs = self.arah_pipeline.predict_proba([processed])[0]
         arah_idx = np.argmax(arah_probs)
@@ -156,6 +199,16 @@ class DocumentClassifier:
         jenis_idx = np.argmax(jenis_probs)
         jenis = self.jenis_pipeline.classes_[jenis_idx]
         jenis_conf = float(jenis_probs[jenis_idx])
+
+        # Kalau confidence rendah, blend dengan keyword heuristic
+        if arah_conf < 0.5 or jenis_conf < 0.5:
+            arah_kw, jenis_kw = keyword_classify(text)
+            if arah_conf < 0.5:
+                arah = arah_kw
+                arah_conf = 0.5
+            if jenis_conf < 0.5:
+                jenis = jenis_kw
+                jenis_conf = 0.5
 
         return arah, round(arah_conf, 4), jenis, round(jenis_conf, 4)
 

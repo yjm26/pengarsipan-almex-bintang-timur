@@ -30,7 +30,7 @@ def init():
         print("[OK] Admin user already exists")
     
     # Seed categories
-    # Seed categories (HARUS match model labels)
+    # Seed categories (HARDCODED 5 kategori + Lainnya)
     default_categories = [
         ("PurchaseOrder", None),
         ("Invoice", None),
