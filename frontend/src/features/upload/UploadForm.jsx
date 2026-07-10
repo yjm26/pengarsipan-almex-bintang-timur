@@ -53,8 +53,12 @@ export default function UploadForm() {
     <div className="space-y-5">
       {/* Upload Area */}
       <div
-        className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${
-          dragActive ? 'border-amber-500 bg-amber-50/30' : uploads.length >= MAX_FILES ? 'border-zinc-200 bg-zinc-50 opacity-50 cursor-not-allowed' : 'border-zinc-200 hover:border-amber-400 hover:bg-amber-50/20'
+        className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer ${
+          dragActive 
+            ? 'border-amber-500 bg-amber-50/50 scale-[1.02] shadow-lg' 
+            : uploads.length >= MAX_FILES 
+              ? 'border-zinc-200 bg-zinc-50 opacity-50 cursor-not-allowed' 
+              : 'border-zinc-200 hover:border-amber-400 hover:bg-amber-50/30 hover:shadow-md'
         }`}
         onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
         onDragLeave={() => setDragActive(false)}
@@ -62,7 +66,15 @@ export default function UploadForm() {
         onClick={() => uploads.length < MAX_FILES && fileInputRef.current?.click()}
       >
         <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.bmp,.tiff,.tif" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
-        <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center mx-auto mb-4">
+        
+        {/* File count badge */}
+        {uploads.length > 0 && (
+          <div className="absolute top-3 right-3 bg-amber-500 text-white text-[11px] font-bold px-2 py-0.5 rounded-full">
+            {uploads.length}/{MAX_FILES}
+          </div>
+        )}
+        
+        <div className={`w-14 h-14 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center mx-auto mb-4 transition-transform duration-300 ${dragActive ? 'scale-110' : ''}`}>
           <Upload className="w-6 h-6 text-amber-500" />
         </div>
         <p className="text-sm font-medium text-zinc-700 mb-1">Upload surat masuk dan keluar untuk diproses</p>
@@ -128,7 +140,7 @@ function FileCard({ item, onRemove, onUpdateResult, onSimpan }) {
   const { file, status, result, error } = item;
 
   return (
-    <div className={`border border-zinc-100 rounded-2xl bg-white overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 ${
+    <div className={`border border-zinc-100 rounded-2xl bg-white overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 animate-bounce-in ${
       result ? (result.confidence >= 75 ? 'border-l-4 border-l-green-500' : result.confidence >= 50 ? 'border-l-4 border-l-amber-500' : 'border-l-4 border-l-red-500') : ''
     }`}>
       {/* Header */}
