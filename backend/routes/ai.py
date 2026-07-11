@@ -27,7 +27,7 @@ def get_model_info(db: Session = Depends(get_db), current_user: User = Depends(g
             "jenis_metrics": None,
             "train_size": 0,
             "test_size": 0,
-            "split_note": "Model dilatih offline. Hubungi admin untuk update model.",
+            "split_note": "Model dilatih offline menggunakan notebook Training_Model_Produksi.ipynb (149 dokumen, 80/20 split). Metrics di-update manual oleh admin.",
         }
     import json
     arah = json.loads(model.arah_metrics_json) if model.arah_metrics_json else None

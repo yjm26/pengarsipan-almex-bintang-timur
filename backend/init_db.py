@@ -55,6 +55,7 @@ def init():
     
     if os.path.exists(arah_path) and os.path.exists(jenis_path):
         if not db.query(AIModel).first():
+            import json
             model = AIModel(
                 version="1.0.0",
                 accuracy=0.0,
@@ -64,17 +65,43 @@ def init():
                 training_data_count=0,
                 threshold=0.7,
                 last_retrain=None,
-                created_at=now_wib()
+                created_at=now_wib(),
+                arah_metrics_json=json.dumps({"accuracy":0,"precision":0,"recall":0,"f1":0,"cv":0}),
+                jenis_metrics_json=json.dumps({"accuracy":0,"precision":0,"recall":0,"f1":0,"cv":0}),
+                train_size=0,
+                test_size=0,
+                split_note="Model belum ditrain. Latih via notebook Training_Model_Produksi.ipynb (149 dokumen, 80/20 split).",
             )
             db.add(model)
             db.commit()
-            print("[OK] AI Model entry created (model files found)")
+            print("[OK] AI Model entry created (model files found, metrics placeholder)")
         else:
             print("[OK] AI Model already exists")
         print("[OK] Trained model files found in ml_model/")
     else:
         print("[WARN] No trained model found. Train model via Jupyter notebook first!")
         print("       Run: notebooks/Training_Model_Produksi.ipynb")
+        # Create placeholder even without model files
+        if not db.query(AIModel).first():
+            model = AIModel(
+                version="Belum dilatih",
+                accuracy=0.0,
+                precision_score=0.0,
+                recall_score=0.0,
+                f1_score=0.0,
+                training_data_count=0,
+                threshold=0.7,
+                last_retrain=None,
+                created_at=now_wib(),
+                arah_metrics_json=None,
+                jenis_metrics_json=None,
+                train_size=0,
+                test_size=0,
+                split_note="Model belum dilatih. Jalankan notebook training terlebih dahulu.",
+            )
+            db.add(model)
+            db.commit()
+            print("[OK] AI Model placeholder created")
     
     db.close()
     print("\nDatabase initialized successfully!")
