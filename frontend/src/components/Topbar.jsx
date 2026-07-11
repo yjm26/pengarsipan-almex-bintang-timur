@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, User, Moon, Sun, Menu, FileText, CheckCircle2, AlertTriangle, X } from 'lucide-react';
+import api from '../lib/api';
 
 const mockNotifications = [
   { id: 1, type: 'success', title: 'Klasifikasi Selesai', desc: '12 dokumen baru telah diklasifikasi.', time: '2 menit lalu', read: false },
@@ -14,6 +15,22 @@ export default function Topbar({ onOpenSidebar }) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
   const [notifications, setNotifications] = useState(mockNotifications);
+  const [user, setUser] = useState({ nama: '', role: '' });
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const data = await api.getMe();
+        setUser({
+          nama: data.nama_lengkap || data.username || 'User',
+          role: data.role || 'User',
+        });
+      } catch (_) {
+        // silently fail — user not logged in
+      }
+    };
+    fetchUser();
+  }, []);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -134,9 +151,9 @@ export default function Topbar({ onOpenSidebar }) {
           <div className="w-9 h-9 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
             <User className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
           </div>
-          <div className="flex flex-col items-start hidden sm:block">
-            <span className="text-sm font-semibold text-zinc-900 dark:text-white leading-none">Hi, Admin</span>
-            <span className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-1 font-medium uppercase tracking-wide">Super Admin</span>
+          <div className="flex flex-col items-start hidden sm:block leading-tight">
+            <span className="text-sm font-semibold text-zinc-900 dark:text-white">Hi, {user.nama || 'Admin'}</span>
+            <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium uppercase tracking-wider">{user.role || 'User'}</span>
           </div>
         </div>
       </div>
