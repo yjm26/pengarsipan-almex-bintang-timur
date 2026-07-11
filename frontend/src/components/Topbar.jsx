@@ -198,9 +198,9 @@ export default function Topbar({ onOpenSidebar }) {
           <div className="w-9 h-9 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
             <User className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
           </div>
-          <div className="flex flex-col items-start hidden sm:block leading-tight">
-            <span className="text-sm font-semibold text-zinc-900 dark:text-white">{user.nama || 'User'}</span>
-            <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium uppercase tracking-wider">{user.role || 'User'}</span>
+          <div className="flex flex-col items-start hidden sm:block">
+            <span className="text-sm font-semibold text-zinc-900 dark:text-white leading-tight">{user.nama || 'User'}</span>
+            <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium uppercase tracking-wider mt-0.5">{user.role || 'User'}</span>
           </div>
         </div>
       </div>
