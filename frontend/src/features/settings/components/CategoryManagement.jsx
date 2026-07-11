@@ -44,7 +44,7 @@ export default function CategoryManagement() {
       flatten(data);
       setCategories(flat);
     } catch (err) {
-      console.error('Failed to fetch categories:', err);
+      addToast('Gagal memuat kategori: ' + err.message, 'error');
     } finally {
       setLoading(false);
     }
