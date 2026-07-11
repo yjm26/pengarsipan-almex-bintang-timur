@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { Eye, FileText, Clock, Download, CheckCircle2, AlertTriangle } from 'lucide-react';
 import api from '../../../lib/api';
 
+import { useToast } from '../../../contexts/ToastContext.jsx';
+
 function getConfidenceBadge(score) {
   const pct = Math.round(score * 100);
   if (pct >= 75) {
@@ -42,6 +44,7 @@ function formatTime(dateStr) {
 }
 
 export default function RecentDocuments() {
+  const { addToast } = useToast();
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -51,7 +54,7 @@ export default function RecentDocuments() {
         const stats = await api.getDashboardStats();
         setDocuments(stats.recent_documents || []);
       } catch (err) {
-        console.error('Failed to fetch recent documents:', err);
+        addToast('Gagal memuat dokumen terbaru: ' + err.message, 'error');
       } finally {
         setLoading(false);
       }
