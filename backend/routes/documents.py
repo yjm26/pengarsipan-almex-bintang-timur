@@ -187,7 +187,7 @@ async def upload_document(file: UploadFile = File(...), db: Session = Depends(ge
         arah=arah_pred,
         jenis=jenis_pred,
         confidence=confidence,
-        status="pending",
+        status="draft",
         ukuran=file_size,
         extracted_text=extracted_text[:5000],
         file_path=file_path,
@@ -198,6 +198,18 @@ async def upload_document(file: UploadFile = File(...), db: Session = Depends(ge
     db.flush()
 
     log = AuditLog(user_id=current_user.id, action="Upload Dokumen", detail=f"Mengunggah '{file.filename}' - Klasifikasi: {arah_pred}, {jenis_pred} ({confidence:.1%})", type="upload", timestamp=now_wib())
+    db.add(log)
+    db.commit()
+    db.refresh(doc)
+    return doc
+
+@router.post("/{doc_id}/confirm", response_model=DocumentOut)
+def confirm_document(doc_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    doc = db.query(Document).filter(Document.id == doc_id, Document.status == "draft").first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Dokumen draft tidak ditemukan")
+    doc.status = "archived"
+    log = AuditLog(user_id=current_user.id, action="Konfirmasi Arsip", detail=f"Menyimpan '{doc.nama_file}' ke arsip", type="upload", timestamp=now_wib())
     db.add(log)
     db.commit()
     db.refresh(doc)
