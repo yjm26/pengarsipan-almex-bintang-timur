@@ -38,7 +38,7 @@ export default function BackupExport() {
         }
         if (me) setIsSuperAdmin(me.role === 'super_admin');
       } catch (err) {
-        console.error('Failed to load stats:', err);
+        addToast('Gagal memuat statistik penyimpanan: ' + err.message, 'error');
       } finally {
         setLoadingStats(false);
       }
