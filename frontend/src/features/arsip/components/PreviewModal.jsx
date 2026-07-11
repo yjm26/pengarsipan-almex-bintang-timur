@@ -79,7 +79,7 @@ export default function PreviewModal({ doc, onClose }) {
         </div>
 
         {/* Content */}
-        <div className="overflow-auto max-h-[80vh] rounded-xl bg-white flex items-center justify-center min-w-[300px] min-h-[200px]">
+        <div className="overflow-auto bg-white rounded-2xl" style={{ maxHeight: '80vh' }}>
           {loading && (
             <div className="flex flex-col items-center gap-3 p-12">
               <Loader2 className="w-8 h-8 text-zinc-400 animate-spin" />
@@ -96,8 +96,13 @@ export default function PreviewModal({ doc, onClose }) {
             <img
               src={previewUrl}
               alt={doc.nama_file}
-              style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}
-              className="max-w-full"
+              style={{ 
+                maxWidth: zoom <= 1 ? '100%' : 'none',
+                width: zoom <= 1 ? 'auto' : `${zoom * 100}%`,
+                height: 'auto',
+                display: 'block'
+              }}
+              className="mx-auto"
             />
           )}
         </div>
