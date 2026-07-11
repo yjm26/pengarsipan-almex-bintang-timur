@@ -1,8 +1,27 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, Zap, BarChart3, Database, AlertTriangle, ChevronDown, ChevronUp, CheckCircle2 } from 'lucide-react';
+import {
+  Brain, Zap, BarChart3, Database, AlertTriangle,
+  ChevronDown, ChevronUp, CheckCircle2, Info,
+  TrendingUp, Target, Activity, ArrowRight
+} from 'lucide-react';
 import api from '../../../lib/api';
 import { useToast } from '../../../contexts/ToastContext.jsx';
+
+const METRIC_CONFIG = [
+  { key: 'accuracy', label: 'Akurasi', icon: Target, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
+  { key: 'precision', label: 'Precision', icon: BarChart3, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
+  { key: 'recall', label: 'Recall', icon: Activity, color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100' },
+  { key: 'f1Score', label: 'F1-Score', icon: Zap, color: 'text-[#D49A28]', bg: 'bg-amber-50', border: 'border-amber-100' },
+];
+
+const CLASS_METRIC_KEYS = [
+  { label: 'Akurasi', key: 'accuracy' },
+  { label: 'Precision', key: 'precision' },
+  { label: 'Recall', key: 'recall' },
+  { label: 'F1-Score', key: 'f1' },
+  { label: 'CV Score', key: 'cv' },
+];
 
 export default function AIModelPanel() {
   const { addToast } = useToast();
@@ -22,8 +41,8 @@ export default function AIModelPanel() {
           recall: data.recall_score != null ? (data.recall_score * 100).toFixed(1) : '0.0',
           f1Score: data.f1_score != null ? (data.f1_score * 100).toFixed(1) : '0.0',
           trainingData: data.training_data_count ?? 0,
-          lastRetrain: data.last_retrain ?? data.lastRetrain ?? '-',
-          modelVersion: data.version ?? data.modelVersion ?? '-',
+          lastRetrain: data.last_retrain ?? '-',
+          modelVersion: data.version ?? '-',
           arahMetrics: data.arah_metrics,
           jenisMetrics: data.jenis_metrics,
           trainSize: data.train_size ?? 0,
@@ -41,7 +60,7 @@ export default function AIModelPanel() {
       }
     };
     fetchModel();
-  }, []);
+  }, [addToast]);
 
   const handleSaveThreshold = async () => {
     setSavingThreshold(true);
@@ -55,30 +74,85 @@ export default function AIModelPanel() {
     }
   };
 
+  // ── Skeleton ──
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-8">
         <div className="bg-white rounded-xl border border-zinc-200/60 p-8">
-          <div className="h-6 w-48 bg-zinc-100 rounded animate-pulse mb-4" />
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-            {[0,1,2,3].map((i) => <div key={i} className="h-24 rounded-lg bg-zinc-50 animate-pulse" />)}
+          <div className="flex items-center gap-4 mb-8">
+            <div className="h-12 w-12 rounded-xl bg-zinc-100 animate-pulse" />
+            <div className="space-y-2">
+              <div className="h-5 w-56 bg-zinc-100 rounded animate-pulse" />
+              <div className="h-4 w-80 bg-zinc-100 rounded animate-pulse" />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {METRIC_CONFIG.map((m) => (
+              <div key={m.key} className="p-6 rounded-xl bg-zinc-50 border border-zinc-100 animate-pulse">
+                <div className="h-10 w-10 rounded-lg bg-zinc-200 mb-4" />
+                <div className="h-8 w-20 bg-zinc-200 rounded mb-2" />
+                <div className="h-3 w-16 bg-zinc-200 rounded" />
+              </div>
+            ))}
           </div>
         </div>
       </div>
     );
   }
 
-  const metrics = [
-    { label: 'Akurasi', value: `${modelStats.accuracy}%`, icon: Zap, color: 'text-emerald-600' },
-    { label: 'Precision', value: `${modelStats.precision}%`, icon: BarChart3, color: 'text-blue-600' },
-    { label: 'Recall', value: `${modelStats.recall}%`, icon: Database, color: 'text-violet-600' },
-    { label: 'F1-Score', value: `${modelStats.f1Score}%`, icon: Zap, color: 'text-[#D49A28]' },
-  ];
+  // ── Empty State ──
+  if (modelStats?.isUntrained) {
+    return (
+      <div className="space-y-8">
+        <div className="bg-white rounded-xl border border-zinc-200/60 p-8">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="w-12 h-12 rounded-xl bg-zinc-100 border border-zinc-200 flex items-center justify-center">
+              <Brain className="w-6 h-6 text-zinc-400" />
+            </div>
+            <div>
+              <h2 className="text-base font-semibold tracking-tight text-zinc-900">Status Model Klasifikasi</h2>
+              <p className="text-sm text-zinc-500 mt-1">Model belum dilatih</p>
+            </div>
+          </div>
 
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="w-20 h-20 rounded-2xl bg-zinc-50 border border-zinc-100 flex items-center justify-center mb-6">
+              <TrendingUp className="w-10 h-10 text-zinc-300" />
+            </div>
+            <h3 className="text-lg font-semibold text-zinc-900 mb-2">Model Belum Aktif</h3>
+            <p className="text-sm text-zinc-500 max-w-md mb-6">
+              Model klasifikasi dilatih secara offline menggunakan dataset 149 dokumen. 
+              Hubungi administrator untuk mengaktifkan model.
+            </p>
+            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-50 border border-zinc-100 text-xs text-zinc-500">
+              <Info className="w-3.5 h-3.5" />
+              Model: v{modelStats.modelVersion} · Data: {modelStats.trainingData} dokumen
+            </div>
+          </div>
+        </div>
+
+        {/* Threshold tetap ada */}
+        <div className="bg-white rounded-xl border border-zinc-200/60 p-8">
+          <h2 className="text-base font-semibold tracking-tight text-zinc-900 mb-1">Confidence Threshold</h2>
+          <p className="text-sm text-zinc-500 mt-1 mb-6">Akan aktif setelah model terpasang.</p>
+          <div className="max-w-md space-y-4 opacity-50">
+            <input type="range" min="50" max="95" value={75} disabled className="w-full h-2 bg-zinc-200 rounded-lg appearance-none cursor-not-allowed" />
+            <div className="flex items-center justify-between text-xs text-zinc-400">
+              <span>50%</span>
+              <span>95%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Main View ──
   return (
-    <div className="space-y-6">
-      {/* Model Info */}
+    <div className="space-y-8">
+      {/* Model Info Card */}
       <div className="bg-white rounded-xl border border-zinc-200/60 p-8">
+        {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <div className="w-12 h-12 rounded-xl bg-[#D49A28]/10 border border-[#D49A28]/20 flex items-center justify-center">
             <Brain className="w-6 h-6 text-[#D49A28]" />
@@ -86,45 +160,86 @@ export default function AIModelPanel() {
           <div>
             <h2 className="text-base font-semibold tracking-tight text-zinc-900">Status Model Klasifikasi</h2>
             <p className="text-sm text-zinc-500 mt-1">
-              {modelStats.isUntrained
-                ? 'Model belum dilatih. Hubungi admin untuk update model.'
-                : `Model ${modelStats.modelVersion} — Klasifikasi Dokumen (5 Jenis)`}
+              Model {modelStats.modelVersion} — Klasifikasi Dokumen (5 Jenis)
             </p>
           </div>
         </div>
 
-        {/* Metrics Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-          {metrics.map((m, i) => (
-            <div key={i} className="p-4 rounded-lg bg-zinc-50 border border-zinc-100">
-              <m.icon className={`w-4 h-4 ${m.color} mb-2`} />
-              <p className={`text-2xl font-semibold tracking-tight ${m.color}`}>{m.value}</p>
-              <p className="text-xs text-zinc-500 mt-1">{m.label}</p>
-            </div>
-          ))}
+        {/* KPI Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {METRIC_CONFIG.map((m) => {
+            const value = modelStats[m.key];
+            return (
+              <div
+                key={m.key}
+                className={`p-6 rounded-xl ${m.bg} border ${m.border} transition-all duration-200 hover:shadow-sm`}
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  <div className={`w-8 h-8 rounded-lg bg-white border ${m.border} flex items-center justify-center`}>
+                    <m.icon className={`w-4 h-4 ${m.color}`} />
+                  </div>
+                  <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">{m.label}</span>
+                </div>
+                <p className={`text-3xl font-bold tracking-tight ${m.color}`}>
+                  {value}%
+                </p>
+              </div>
+            );
+          })}
         </div>
 
-        {/* Disclaimer */}
-        <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50/50 border border-blue-100 mb-6">
-          <AlertTriangle className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-xs text-blue-700 font-medium">
-              {modelStats.splitNote || 'Model dilatih offline menggunakan dataset 149 dokumen dengan evaluasi 80/20 stratified split.'}
+        {/* Split Note Banner */}
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50/60 border border-blue-100 mb-8">
+          <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <Info className="w-4 h-4 text-blue-600" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-blue-800 mb-1">
+              {modelStats.splitNote || 'Evaluasi menggunakan 80/20 stratified split'}
             </p>
             {modelStats.trainSize > 0 && (
-              <p className="text-[10px] text-blue-500 mt-0.5">
-                Training: {modelStats.trainSize} dokumen | Test: {modelStats.testSize} dokumen
-              </p>
+              <div className="flex items-center gap-4 text-xs text-blue-600">
+                <span>Training: <strong>{modelStats.trainSize}</strong> dokumen</span>
+                <span>Test: <strong>{modelStats.testSize}</strong> dokumen</span>
+                <span>Total: <strong>{modelStats.trainingData}</strong> dokumen</span>
+              </div>
             )}
           </div>
         </div>
 
-        {/* Expandable: per-class metrics */}
+        {/* Meta Info */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 pb-8 border-b border-zinc-100">
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-zinc-50/50">
+            <Database className="w-4 h-4 text-zinc-400" />
+            <div>
+              <p className="text-xs text-zinc-500">Data Training</p>
+              <p className="text-sm font-semibold text-zinc-900">{modelStats.trainingData} dokumen</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-zinc-50/50">
+            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+            <div>
+              <p className="text-xs text-zinc-500">Status</p>
+              <p className="text-sm font-semibold text-emerald-600">Aktif</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-zinc-50/50">
+            <ArrowRight className="w-4 h-4 text-zinc-400" />
+            <div>
+              <p className="text-xs text-zinc-500">Versi</p>
+              <p className="text-sm font-semibold text-zinc-900">{modelStats.modelVersion}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Expandable Details */}
         <button
           onClick={() => setShowDetails(!showDetails)}
-          className="flex items-center gap-2 text-xs font-medium text-zinc-500 hover:text-zinc-700 mb-4 transition-colors"
+          className="group flex items-center gap-2 text-sm font-medium text-zinc-500 hover:text-zinc-800 transition-colors mb-2"
         >
-          {showDetails ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          <span className="w-7 h-7 rounded-lg bg-zinc-100 group-hover:bg-zinc-200 flex items-center justify-center transition-colors">
+            {showDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </span>
           Detail per klasifikasi
         </button>
 
@@ -134,98 +249,147 @@ export default function AIModelPanel() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
               className="overflow-hidden"
             >
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                 {/* Arah */}
-                <div className="p-4 rounded-lg border border-zinc-100">
-                  <p className="text-sm font-semibold text-zinc-700 mb-3">Arah Dokumen (Masuk / Keluar)</p>
+                <div className="p-6 rounded-xl border border-zinc-100 bg-zinc-50/30">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <h4 className="text-sm font-semibold text-zinc-800">Arah Dokumen</h4>
+                    <span className="text-xs text-zinc-400 ml-auto">Masuk / Keluar</span>
+                  </div>
                   {modelStats.arahMetrics ? (
-                    <div className="space-y-1.5 text-xs">
-                      <div className="flex justify-between"><span className="text-zinc-500">Akurasi:</span><span className="font-medium text-zinc-900">{(modelStats.arahMetrics.accuracy * 100).toFixed(1)}%</span></div>
-                      <div className="flex justify-between"><span className="text-zinc-500">Precision:</span><span className="font-medium text-zinc-900">{(modelStats.arahMetrics.precision * 100).toFixed(1)}%</span></div>
-                      <div className="flex justify-between"><span className="text-zinc-500">Recall:</span><span className="font-medium text-zinc-900">{(modelStats.arahMetrics.recall * 100).toFixed(1)}%</span></div>
-                      <div className="flex justify-between"><span className="text-zinc-500">F1-Score:</span><span className="font-medium text-zinc-900">{(modelStats.arahMetrics.f1 * 100).toFixed(1)}%</span></div>
-                      <div className="flex justify-between"><span className="text-zinc-500">CV Score:</span><span className="font-medium text-zinc-900">{(modelStats.arahMetrics.cv * 100).toFixed(1)}%</span></div>
+                    <div className="space-y-3">
+                      {CLASS_METRIC_KEYS.map((mk) => (
+                        <div key={mk.key} className="flex items-center justify-between">
+                          <span className="text-xs text-zinc-500">{mk.label}</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-24 h-1.5 bg-zinc-200 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-emerald-500 rounded-full"
+                                style={{ width: `${Math.min((modelStats.arahMetrics[mk.key] || 0) * 100, 100)}%` }}
+                              />
+                            </div>
+                            <span className="text-xs font-semibold text-zinc-900 w-12 text-right">
+                              {((modelStats.arahMetrics[mk.key] || 0) * 100).toFixed(1)}%
+                            </span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   ) : (
-                    <p className="text-xs text-zinc-400">Belum tersedia</p>
+                    <p className="text-sm text-zinc-400">Belum tersedia</p>
                   )}
                 </div>
+
                 {/* Jenis */}
-                <div className="p-4 rounded-lg border border-zinc-100">
-                  <p className="text-sm font-semibold text-zinc-700 mb-3">Jenis Surat (5 Kategori)</p>
+                <div className="p-6 rounded-xl border border-zinc-100 bg-zinc-50/30">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-2 h-2 rounded-full bg-[#D49A28]" />
+                    <h4 className="text-sm font-semibold text-zinc-800">Jenis Surat</h4>
+                    <span className="text-xs text-zinc-400 ml-auto">5 Kategori</span>
+                  </div>
                   {modelStats.jenisMetrics ? (
-                    <div className="space-y-1.5 text-xs">
-                      <div className="flex justify-between"><span className="text-zinc-500">Akurasi:</span><span className="font-medium text-zinc-900">{(modelStats.jenisMetrics.accuracy * 100).toFixed(1)}%</span></div>
-                      <div className="flex justify-between"><span className="text-zinc-500">Precision:</span><span className="font-medium text-zinc-900">{(modelStats.jenisMetrics.precision * 100).toFixed(1)}%</span></div>
-                      <div className="flex justify-between"><span className="text-zinc-500">Recall:</span><span className="font-medium text-zinc-900">{(modelStats.jenisMetrics.recall * 100).toFixed(1)}%</span></div>
-                      <div className="flex justify-between"><span className="text-zinc-500">F1-Score:</span><span className="font-medium text-zinc-900">{(modelStats.jenisMetrics.f1 * 100).toFixed(1)}%</span></div>
-                      <div className="flex justify-between"><span className="text-zinc-500">CV Score:</span><span className="font-medium text-zinc-900">{(modelStats.jenisMetrics.cv * 100).toFixed(1)}%</span></div>
+                    <div className="space-y-3">
+                      {CLASS_METRIC_KEYS.map((mk) => (
+                        <div key={mk.key} className="flex items-center justify-between">
+                          <span className="text-xs text-zinc-500">{mk.label}</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-24 h-1.5 bg-zinc-200 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-[#D49A28] rounded-full"
+                                style={{ width: `${Math.min((modelStats.jenisMetrics[mk.key] || 0) * 100, 100)}%` }}
+                              />
+                            </div>
+                            <span className="text-xs font-semibold text-zinc-900 w-12 text-right">
+                              {((modelStats.jenisMetrics[mk.key] || 0) * 100).toFixed(1)}%
+                            </span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   ) : (
-                    <p className="text-xs text-zinc-400">Belum tersedia</p>
+                    <p className="text-sm text-zinc-400">Belum tersedia</p>
                   )}
                 </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Details */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 pb-6 border-b border-zinc-100">
-          <div className="flex items-center gap-3 text-sm">
-            <Database className="w-4 h-4 text-zinc-400" />
-            <span className="text-zinc-500">Data Training:</span>
-            <span className="font-medium text-zinc-900">{modelStats.trainingData} dokumen</span>
-          </div>
-          <div className="flex items-center gap-3 text-sm">
-            <CheckCircle2 className="w-4 h-4 text-zinc-400" />
-            <span className="text-zinc-500">Status:</span>
-            <span className="font-medium text-emerald-600">{modelStats.isUntrained ? 'Belum aktif' : 'Aktif'}</span>
-          </div>
-        </div>
-
-        {/* Info static */}
-        <div className="p-3 rounded-lg bg-zinc-50 border border-zinc-100">
-          <p className="text-xs text-zinc-500">
-            Model dilatih offline menggunakan notebook <code>Training_Model_Produksi.ipynb</code>. 
-            Untuk update model dengan data baru, hubungi administrator sistem.
-          </p>
-        </div>
       </div>
 
-      {/* Threshold Settings */}
+      {/* Threshold Card */}
       <div className="bg-white rounded-xl border border-zinc-200/60 p-8">
-        <h2 className="text-base font-semibold tracking-tight text-zinc-900 mb-1">Confidence Threshold</h2>
-        <p className="text-sm text-zinc-500 mt-1 mb-6">Minimum confidence score agar dokumen dianggap "terverifikasi" otomatis.</p>
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h2 className="text-base font-semibold tracking-tight text-zinc-900">Confidence Threshold</h2>
+            <p className="text-sm text-zinc-500 mt-1">
+              Minimum confidence score agar dokumen dianggap terverifikasi otomatis.
+            </p>
+          </div>
+          <div className="px-3 py-1.5 rounded-lg bg-zinc-100 border border-zinc-200">
+            <span className="text-lg font-bold text-[#D49A28]">{threshold}%</span>
+          </div>
+        </div>
 
-        <div className="max-w-md space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-zinc-700">Threshold: <span className="text-[#D49A28] text-lg">{threshold}%</span></span>
-            <span className="text-xs text-zinc-400">
-              {threshold >= 90 ? 'Strict — lebih banyak manual review' : threshold >= 75 ? 'Balanced' : 'Loose — lebih banyak auto-verify'}
-            </span>
+        <div className="max-w-lg space-y-6">
+          {/* Slider Track */}
+          <div className="relative pt-2">
+            <input
+              type="range"
+              min="50"
+              max="95"
+              value={threshold}
+              onChange={(e) => setThreshold(parseInt(e.target.value))}
+              className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-[#D49A28] bg-zinc-200"
+            />
+            <div className="flex items-center justify-between mt-3 text-xs text-zinc-400">
+              <span>50% (Loose)</span>
+              <span className="font-medium text-zinc-600">
+                {threshold >= 90 ? 'Strict — lebih banyak manual review' :
+                 threshold >= 75 ? 'Balanced — rekomendasi default' :
+                 'Loose — lebih banyak auto-verify'}
+              </span>
+              <span>95% (Strict)</span>
+            </div>
           </div>
-          <input
-            type="range"
-            min="50"
-            max="95"
-            value={threshold}
-            onChange={(e) => setThreshold(parseInt(e.target.value))}
-            className="w-full h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-[#D49A28]"
-          />
-          <div className="flex items-center justify-between text-xs text-zinc-400">
-            <span>50%</span>
-            <span>95%</span>
+
+          {/* Threshold Presets */}
+          <div className="flex items-center gap-2">
+            {[50, 75, 90].map((t) => (
+              <button
+                key={t}
+                onClick={() => setThreshold(t)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  threshold === t
+                    ? 'bg-[#D49A28] text-white shadow-sm'
+                    : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                }`}
+              >
+                {t}%
+              </button>
+            ))}
           </div>
+
           <motion.button
             whileTap={{ scale: 0.98 }}
             onClick={handleSaveThreshold}
             disabled={savingThreshold}
-            className="px-5 py-2.5 bg-[#D49A28] text-white text-sm font-medium rounded-lg hover:bg-[#C08A20] transition-colors"
+            className="flex items-center gap-2 px-6 py-2.5 bg-[#D49A28] text-white text-sm font-medium rounded-lg hover:bg-[#C08A20] transition-colors disabled:opacity-60"
           >
-            {savingThreshold ? 'Menyimpan...' : 'Simpan Threshold'}
+            {savingThreshold ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Menyimpan...
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="w-4 h-4" />
+                Simpan Threshold
+              </>
+            )}
           </motion.button>
         </div>
       </div>
