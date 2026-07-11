@@ -1,17 +1,15 @@
-import threading
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-from models import AIModel, User, AuditLog, now_wib
-from schemas import AIModelOut, ThresholdUpdate
+from models import AIModel, User, now_wib
+from schemas import ThresholdUpdate
 from auth import get_current_user
 
 router = APIRouter(prefix="/api/ai", tags=["AI Model"])
 
-retrain_status = {"running": False, "message": "", "progress": 0}
-
 @router.get("/model")
 def get_model_info(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """Return static model info. Model trained offline via notebook/train_and_evaluate.py"""
     model = db.query(AIModel).order_by(AIModel.id.desc()).first()
     if not model:
         return {
@@ -29,7 +27,7 @@ def get_model_info(db: Session = Depends(get_db), current_user: User = Depends(g
             "jenis_metrics": None,
             "train_size": 0,
             "test_size": 0,
-            "split_note": "Model belum dilatih. Klik 'Retrain Model' untuk memulai.",
+            "split_note": "Model dilatih offline. Hubungi admin untuk update model.",
         }
     import json
     arah = json.loads(model.arah_metrics_json) if model.arah_metrics_json else None
@@ -52,77 +50,7 @@ def get_model_info(db: Session = Depends(get_db), current_user: User = Depends(g
         "split_note": model.split_note,
     }
 
-@router.post("/retrain", status_code=202)
-def trigger_retrain(background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    if retrain_status["running"]:
-        raise HTTPException(status_code=409, detail="Proses retrain sedang berjalan")
-    background_tasks.add_task(do_retrain, current_user.id)
-    return {"message": "Proses retrain dimulai"}
-
-def do_retrain(user_id: int):
-    global retrain_status
-    retrain_status = {"running": True, "message": "Melatih model...", "progress": 10}
-    try:
-        from database import SessionLocal
-        from ml.classifier import classifier
-        from models import AIModel, Document
-        from datetime import datetime, timedelta, timezone
-
-        db = SessionLocal()
-
-        # Use uploaded documents as training data
-        docs = db.query(Document).filter(Document.extracted_text != '').all()
-        if len(docs) < 10:
-            retrain_status = {"running": False, "message": f"Data kurang ({len(docs)} dokumen). Minimal 10 dokumen diperlukan.", "progress": 0}
-            db.close()
-            return
-
-        texts = [str(d.extracted_text) for d in docs]
-        arah_labels = [str(d.arah) for d in docs]
-        jenis_labels = [str(d.jenis) for d in docs]
-        retrain_status["progress"] = 30
-
-        metrics = classifier.train(texts, arah_labels, jenis_labels)
-        retrain_status["progress"] = 80
-
-        model_info = db.query(AIModel).order_by(AIModel.id.desc()).first()
-        ver = "1.0.0"
-        if model_info:
-            parts = model_info.version.split(".")
-            ver = f"{parts[0]}.{parts[1]}.{int(parts[2]) + 1}"
-
-        import json
-        new_model = AIModel(
-            version=ver,
-            accuracy=metrics["accuracy"],
-            precision_score=metrics["precision"],
-            recall_score=metrics["recall"],
-            f1_score=metrics["f1"],
-            training_data_count=metrics["train_size"] + metrics["test_size"],
-            threshold=0.7,
-            last_retrain=datetime.now(timezone(timedelta(hours=7))),
-            created_at=datetime.now(timezone(timedelta(hours=7))),
-            arah_metrics_json=json.dumps(metrics["arah"]),
-            jenis_metrics_json=json.dumps(metrics["jenis"]),
-            train_size=metrics["train_size"],
-            test_size=metrics["test_size"],
-            split_note=metrics["split_note"],
-        )
-        db.add(new_model)
-        log = AuditLog(user_id=user_id, action="Retrain Model AI", detail=f"Model v{ver} - Akurasi: {metrics['accuracy']:.2%} (arah: {metrics['arah']['accuracy']:.2%}, jenis: {metrics['jenis']['accuracy']:.2%})", type="ai", timestamp=datetime.now(timezone(timedelta(hours=7))))
-        db.add(log)
-        db.commit()
-        db.close()
-
-        retrain_status = {"running": False, "message": f"Retrain selesai. Model v{ver}", "progress": 100}
-    except Exception as e:
-        retrain_status = {"running": False, "message": f"Error: {str(e)}", "progress": 0}
-
-@router.get("/retrain/status")
-def get_retrain_status(current_user: User = Depends(get_current_user)):
-    return retrain_status
-
-@router.put("/threshold", response_model=AIModelOut)
+@router.put("/threshold")
 def update_threshold(data: ThresholdUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     if data.threshold < 0.5 or data.threshold > 0.95:
         raise HTTPException(status_code=400, detail="Threshold harus antara 50% - 95%")
@@ -132,4 +60,13 @@ def update_threshold(data: ThresholdUpdate, db: Session = Depends(get_db), curre
     model.threshold = data.threshold
     db.commit()
     db.refresh(model)
-    return model
+    return {
+        "id": model.id,
+        "version": model.version,
+        "accuracy": model.accuracy,
+        "precision_score": model.precision_score,
+        "recall_score": model.recall_score,
+        "f1_score": model.f1_score,
+        "training_data_count": model.training_data_count,
+        "threshold": model.threshold,
+    }

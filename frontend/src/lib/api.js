@@ -178,14 +178,6 @@ class ApiClient {
     return this.request('/api/ai/model');
   }
 
-  retrainModel() {
-    return this.request('/api/ai/retrain', { method: 'POST' });
-  }
-
-  getRetrainStatus() {
-    return this.request('/api/ai/retrain/status');
-  }
-
   updateThreshold(threshold) {
     return this.request('/api/ai/threshold', {
       method: 'PUT',

@@ -1,22 +1,16 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, Zap, BarChart3, RotateCw, CheckCircle2, Clock, Target, Database, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Brain, Zap, BarChart3, Database, AlertTriangle, ChevronDown, ChevronUp, CheckCircle2 } from 'lucide-react';
 import api from '../../../lib/api';
 import { useToast } from '../../../contexts/ToastContext.jsx';
 
 export default function AIModelPanel() {
   const { addToast } = useToast();
-  const [retraining, setRetraining] = useState(false);
-  const [retrainDone, setRetrainDone] = useState(false);
-  const [retrainMessage, setRetrainMessage] = useState('');
-  const [showConfirmRetrain, setShowConfirmRetrain] = useState(false);
   const [threshold, setThreshold] = useState(75);
   const [modelStats, setModelStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [savingThreshold, setSavingThreshold] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
-  const pollRef = useRef(null);
-  const lastErrorRef = useRef(0);
 
   useEffect(() => {
     const fetchModel = async () => {
@@ -30,7 +24,6 @@ export default function AIModelPanel() {
           trainingData: data.training_data_count ?? 0,
           lastRetrain: data.last_retrain ?? data.lastRetrain ?? '-',
           modelVersion: data.version ?? data.modelVersion ?? '-',
-          algorithm: data.algorithm ?? 'Klasifikasi Dokumen',
           arahMetrics: data.arah_metrics,
           jenisMetrics: data.jenis_metrics,
           trainSize: data.train_size ?? 0,
@@ -49,76 +42,6 @@ export default function AIModelPanel() {
     };
     fetchModel();
   }, []);
-
-  // Cleanup polling on unmount
-  useEffect(() => {
-    return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
-    };
-  }, []);
-
-  const pollRetrainStatus = () => {
-    pollRef.current = setInterval(async () => {
-      try {
-        const status = await api.getRetrainStatus();
-        if (!status.running) {
-          clearInterval(pollRef.current);
-          pollRef.current = null;
-          setRetraining(false);
-          setRetrainDone(true);
-          setRetrainMessage(status.message || 'Training selesai');
-          if (status.message?.includes('kurang') || status.message?.includes('Error')) {
-            addToast(status.message, 'error');
-          } else {
-            addToast(status.message || 'Training selesai', 'success');
-          }
-          setTimeout(() => setRetrainDone(false), 6000);
-          // Refresh model stats
-          try {
-            const data = await api.getAIModel();
-            setModelStats({
-              accuracy: data.accuracy != null ? (data.accuracy * 100).toFixed(1) : '0.0',
-              precision: data.precision_score != null ? (data.precision_score * 100).toFixed(1) : '0.0',
-              recall: data.recall_score != null ? (data.recall_score * 100).toFixed(1) : '0.0',
-              f1Score: data.f1_score != null ? (data.f1_score * 100).toFixed(1) : '0.0',
-              trainingData: data.training_data_count ?? 0,
-              lastRetrain: data.last_retrain ?? data.lastRetrain ?? '-',
-              modelVersion: data.version ?? data.modelVersion ?? '-',
-              algorithm: data.algorithm ?? 'Klasifikasi Dokumen',
-              arahMetrics: data.arah_metrics,
-              jenisMetrics: data.jenis_metrics,
-              trainSize: data.train_size ?? 0,
-              testSize: data.test_size ?? 0,
-              splitNote: data.split_note ?? '',
-              isUntrained: data.version === 'Belum dilatih' || data.id === 0,
-            });
-          } catch (_) {}
-        }
-      } catch (err) {
-        // Debounce: max 1 toast per 30 detik untuk polling error
-        const now = Date.now();
-        if (now - lastErrorRef.current > 30000) {
-          lastErrorRef.current = now;
-          console.error('Failed to poll retrain status:', err);
-        }
-      }
-    }, 3000);
-  };
-
-  const handleRetrain = async () => {
-    setShowConfirmRetrain(false);
-    setRetraining(true);
-    setRetrainDone(false);
-    setRetrainMessage('');
-    try {
-      await api.retrainModel();
-      addToast('Training dimulai', 'success');
-      pollRetrainStatus();
-    } catch (err) {
-      addToast('Gagal memulai training: ' + err.message, 'error');
-      setRetraining(false);
-    }
-  };
 
   const handleSaveThreshold = async () => {
     setSavingThreshold(true);
@@ -140,14 +63,13 @@ export default function AIModelPanel() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
             {[0,1,2,3].map((i) => <div key={i} className="h-24 rounded-lg bg-zinc-50 animate-pulse" />)}
           </div>
-          <div className="h-10 bg-zinc-50 rounded animate-pulse" />
         </div>
       </div>
     );
   }
 
   const metrics = [
-    { label: 'Akurasi', value: `${modelStats.accuracy}%`, icon: Target, color: 'text-emerald-600' },
+    { label: 'Akurasi', value: `${modelStats.accuracy}%`, icon: Zap, color: 'text-emerald-600' },
     { label: 'Precision', value: `${modelStats.precision}%`, icon: BarChart3, color: 'text-blue-600' },
     { label: 'Recall', value: `${modelStats.recall}%`, icon: Database, color: 'text-violet-600' },
     { label: 'F1-Score', value: `${modelStats.f1Score}%`, icon: Zap, color: 'text-[#D49A28]' },
@@ -165,8 +87,8 @@ export default function AIModelPanel() {
             <h2 className="text-base font-semibold tracking-tight text-zinc-900">Status Model Klasifikasi</h2>
             <p className="text-sm text-zinc-500 mt-1">
               {modelStats.isUntrained
-                ? 'Model belum dilatih. Upload dokumen kemudian klik "Retrain Model".'
-                : `Model ${modelStats.modelVersion} — ${modelStats.algorithm}`}
+                ? 'Model belum dilatih. Hubungi admin untuk update model.'
+                : `Model ${modelStats.modelVersion} — Klasifikasi Dokumen (5 Jenis)`}
             </p>
           </div>
         </div>
@@ -182,12 +104,12 @@ export default function AIModelPanel() {
           ))}
         </div>
 
-        {/* Split info / disclaimer */}
+        {/* Disclaimer */}
         <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50/50 border border-blue-100 mb-6">
           <AlertTriangle className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-xs text-blue-700 font-medium">
-              {modelStats.splitNote || 'Evaluasi menggunakan 80/20 stratified split — data training tidak dipakai untuk testing.'}
+              {modelStats.splitNote || 'Model dilatih offline menggunakan dataset 149 dokumen dengan evaluasi 80/20 stratified split.'}
             </p>
             {modelStats.trainSize > 0 && (
               <p className="text-[10px] text-blue-500 mt-0.5">
@@ -251,54 +173,26 @@ export default function AIModelPanel() {
         </AnimatePresence>
 
         {/* Details */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 pb-8 border-b border-zinc-100">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 pb-6 border-b border-zinc-100">
           <div className="flex items-center gap-3 text-sm">
             <Database className="w-4 h-4 text-zinc-400" />
             <span className="text-zinc-500">Data Training:</span>
             <span className="font-medium text-zinc-900">{modelStats.trainingData} dokumen</span>
           </div>
           <div className="flex items-center gap-3 text-sm">
-            <Clock className="w-4 h-4 text-zinc-400" />
-            <span className="text-zinc-500">Terakhir Retrain:</span>
-            <span className="font-medium text-zinc-900">{modelStats.lastRetrain}</span>
+            <CheckCircle2 className="w-4 h-4 text-zinc-400" />
+            <span className="text-zinc-500">Status:</span>
+            <span className="font-medium text-emerald-600">{modelStats.isUntrained ? 'Belum aktif' : 'Aktif'}</span>
           </div>
         </div>
 
-        {/* Retraining Section */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          <div className="flex-1">
-            <h3 className="text-sm font-semibold text-zinc-900">Retrain Model</h3>
-            <p className="text-xs text-zinc-500 mt-1">Latih ulang model menggunakan data dokumen yang sudah terverifikasi. Minimal 10 dokumen.</p>
-          </div>
-          {showConfirmRetrain ? (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-amber-700 font-medium">Training memakan waktu. Lanjutkan?</span>
-              <button onClick={handleRetrain} className="px-4 py-2 rounded-lg text-xs font-semibold text-white bg-amber-500 hover:bg-amber-600">Ya</button>
-              <button onClick={() => setShowConfirmRetrain(false)} className="px-4 py-2 rounded-lg text-xs font-semibold text-zinc-600 bg-zinc-100">Batal</button>
-            </div>
-          ) : (
-            <motion.button
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setShowConfirmRetrain(true)}
-              disabled={retraining}
-              className={`flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg transition-colors ${
-                retraining
-                  ? 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
-                  : 'bg-[#D49A28] text-white hover:bg-[#C08A20]'
-              }`}
-            >
-              <RotateCw className={`w-4 h-4 ${retraining ? 'animate-spin' : ''}`} />
-              {retraining ? 'Sedang Training...' : retrainDone ? 'Selesai ✓' : 'Retrain Model'}
-            </motion.button>
-          )}
+        {/* Info static */}
+        <div className="p-3 rounded-lg bg-zinc-50 border border-zinc-100">
+          <p className="text-xs text-zinc-500">
+            Model dilatih offline menggunakan notebook <code>Training_Model_Produksi.ipynb</code>. 
+            Untuk update model dengan data baru, hubungi administrator sistem.
+          </p>
         </div>
-
-        {retrainDone && (
-          <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="mt-4 p-3 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            <span className="text-sm text-emerald-700">{retrainMessage || 'Model berhasil di-retrain!'}</span>
-          </motion.div>
-        )}
       </div>
 
       {/* Threshold Settings */}
