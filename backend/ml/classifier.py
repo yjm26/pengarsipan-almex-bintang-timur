@@ -146,40 +146,66 @@ class DocumentClassifier:
 
     def train(self, texts: list[str], arah_labels: list[str], jenis_labels: list[str]) -> dict:
         """Train both pipelines and return metrics."""
+        from sklearn.model_selection import train_test_split
+
         processed = [preprocess_text(t) for t in texts]
 
+        # Split 80/20 untuk evaluasi proper (tidak overfit training data)
+        X_train, X_test, arah_train, arah_test, jenis_train, jenis_test = train_test_split(
+            processed, arah_labels, jenis_labels, test_size=0.2, random_state=42, stratify=jenis_labels
+        )
+
         # Train arah classifier
-        self.arah_pipeline.fit(processed, arah_labels)
-        arah_pred = self.arah_pipeline.predict(processed)
+        self.arah_pipeline.fit(X_train, arah_train)
+        arah_pred = self.arah_pipeline.predict(X_test)
 
         # Train jenis classifier
-        self.jenis_pipeline.fit(processed, jenis_labels)
-        jenis_pred = self.jenis_pipeline.predict(processed)
+        self.jenis_pipeline.fit(X_train, jenis_train)
+        jenis_pred = self.jenis_pipeline.predict(X_test)
 
-        # Cross-validation for metrics
-        arah_scores = cross_val_score(self.arah_pipeline, processed, arah_labels, cv=min(3, len(set(arah_labels))), scoring='accuracy') if len(set(arah_labels)) > 1 else [1.0]
-        jenis_scores = cross_val_score(self.jenis_pipeline, processed, jenis_labels, cv=min(3, len(set(jenis_labels))), scoring='accuracy') if len(set(jenis_labels)) > 1 else [1.0]
+        # Cross-validation pada training data (internal consistency)
+        arah_cv = cross_val_score(self.arah_pipeline, X_train, arah_train, cv=min(3, len(set(arah_train))), scoring='accuracy') if len(set(arah_train)) > 1 else [1.0]
+        jenis_cv = cross_val_score(self.jenis_pipeline, X_train, jenis_train, cv=min(3, len(set(jenis_train))), scoring='accuracy') if len(set(jenis_train)) > 1 else [1.0]
 
-        avg_accuracy = (np.mean(arah_scores) + np.mean(jenis_scores)) / 2
+        # Test metrics (proper — gak overfit)
+        arah_acc = accuracy_score(arah_test, arah_pred)
+        jenis_acc = accuracy_score(jenis_test, jenis_pred)
 
-        # Compute per-class metrics on training data
-        from sklearn.preprocessing import label_binarize
-        arah_acc = accuracy_score(arah_labels, arah_pred)
-        jenis_acc = accuracy_score(jenis_labels, jenis_pred)
+        arah_prec = precision_score(arah_test, arah_pred, average='weighted', zero_division=0)
+        jenis_prec = precision_score(jenis_test, jenis_pred, average='weighted', zero_division=0)
 
-        avg_prec = (precision_score(arah_labels, arah_pred, average='weighted', zero_division=0) + precision_score(jenis_labels, jenis_pred, average='weighted', zero_division=0)) / 2
-        avg_rec = (recall_score(arah_labels, arah_pred, average='weighted', zero_division=0) + recall_score(jenis_labels, jenis_pred, average='weighted', zero_division=0)) / 2
-        avg_f1 = (f1_score(arah_labels, arah_pred, average='weighted', zero_division=0) + f1_score(jenis_labels, jenis_pred, average='weighted', zero_division=0)) / 2
+        arah_rec = recall_score(arah_test, arah_pred, average='weighted', zero_division=0)
+        jenis_rec = recall_score(jenis_test, jenis_pred, average='weighted', zero_division=0)
+
+        arah_f1 = f1_score(arah_test, arah_pred, average='weighted', zero_division=0)
+        jenis_f1 = f1_score(jenis_test, jenis_pred, average='weighted', zero_division=0)
 
         # Save models
         joblib.dump(self.arah_pipeline, os.path.join(MODEL_DIR, "arah_pipeline.pkl"))
         joblib.dump(self.jenis_pipeline, os.path.join(MODEL_DIR, "jenis_pipeline.pkl"))
 
         return {
-            "accuracy": round(float(avg_accuracy), 4),
-            "precision": round(float(avg_prec), 4),
-            "recall": round(float(avg_rec), 4),
-            "f1": round(float(avg_f1), 4),
+            "accuracy": round(float((arah_acc + jenis_acc) / 2), 4),
+            "precision": round(float((arah_prec + jenis_prec) / 2), 4),
+            "recall": round(float((arah_rec + jenis_rec) / 2), 4),
+            "f1": round(float((arah_f1 + jenis_f1) / 2), 4),
+            "arah": {
+                "accuracy": round(float(arah_acc), 4),
+                "precision": round(float(arah_prec), 4),
+                "recall": round(float(arah_rec), 4),
+                "f1": round(float(arah_f1), 4),
+                "cv": round(float(np.mean(arah_cv)), 4),
+            },
+            "jenis": {
+                "accuracy": round(float(jenis_acc), 4),
+                "precision": round(float(jenis_prec), 4),
+                "recall": round(float(jenis_rec), 4),
+                "f1": round(float(jenis_f1), 4),
+                "cv": round(float(np.mean(jenis_cv)), 4),
+            },
+            "test_size": len(X_test),
+            "train_size": len(X_train),
+            "split_note": "80/20 stratified split",
         }
 
     def predict(self, text: str) -> tuple[str, float, str, float]:

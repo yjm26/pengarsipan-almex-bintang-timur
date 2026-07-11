@@ -93,6 +93,13 @@ class ThresholdUpdate(BaseModel):
     threshold: float
 
 # AI Model
+class AIModelMetrics(BaseModel):
+    accuracy: float
+    precision: float
+    recall: float
+    f1: float
+    cv: float
+
 class AIModelOut(BaseModel):
     id: int
     version: str
@@ -104,6 +111,11 @@ class AIModelOut(BaseModel):
     threshold: float
     last_retrain: Optional[datetime] = None
     created_at: Optional[datetime] = None
+    arah_metrics: Optional[AIModelMetrics] = None
+    jenis_metrics: Optional[AIModelMetrics] = None
+    train_size: Optional[int] = None
+    test_size: Optional[int] = None
+    split_note: Optional[str] = None
     class Config:
         from_attributes = True
 

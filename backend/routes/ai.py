@@ -14,7 +14,24 @@ retrain_status = {"running": False, "message": "", "progress": 0}
 def get_model_info(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     model = db.query(AIModel).order_by(AIModel.id.desc()).first()
     if not model:
-        raise HTTPException(status_code=404, detail="Model AI belum dilatih")
+        # Return default placeholder jangan 404
+        return {
+            "id": 0,
+            "version": "Belum dilatih",
+            "accuracy": 0.0,
+            "precision_score": 0.0,
+            "recall_score": 0.0,
+            "f1_score": 0.0,
+            "training_data_count": 0,
+            "threshold": 0.7,
+            "last_retrain": None,
+            "created_at": None,
+            "arah_metrics": None,
+            "jenis_metrics": None,
+            "train_size": 0,
+            "test_size": 0,
+            "split_note": "Model belum dilatih. Klik 'Retrain Model' untuk memulai.",
+        }
     return model
 
 @router.post("/retrain", status_code=202)
@@ -42,9 +59,9 @@ def do_retrain(user_id: int):
             db.close()
             return
 
-        texts = [d.extracted_text for d in docs]
-        arah_labels = [d.arah for d in docs]
-        jenis_labels = [d.jenis for d in docs]
+        texts = [str(d.extracted_text) for d in docs]
+        arah_labels = [str(d.arah) for d in docs]
+        jenis_labels = [str(d.jenis) for d in docs]
         retrain_status["progress"] = 30
 
         metrics = classifier.train(texts, arah_labels, jenis_labels)
@@ -62,13 +79,13 @@ def do_retrain(user_id: int):
             precision_score=metrics["precision"],
             recall_score=metrics["recall"],
             f1_score=metrics["f1"],
-            training_data_count=len(texts),
+            training_data_count=metrics["train_size"] + metrics["test_size"],
             threshold=0.7,
             last_retrain=datetime.now(timezone(timedelta(hours=7))),
             created_at=datetime.now(timezone(timedelta(hours=7)))
         )
         db.add(new_model)
-        log = AuditLog(user_id=user_id, action="Retrain Model AI", detail=f"Model v{ver} - Akurasi: {metrics['accuracy']:.2%}", type="ai", timestamp=datetime.now(timezone(timedelta(hours=7))))
+        log = AuditLog(user_id=user_id, action="Retrain Model AI", detail=f"Model v{ver} - Akurasi: {metrics['accuracy']:.2%} (arah: {metrics['arah']['accuracy']:.2%}, jenis: {metrics['jenis']['accuracy']:.2%})", type="ai", timestamp=datetime.now(timezone(timedelta(hours=7))))
         db.add(log)
         db.commit()
         db.close()
