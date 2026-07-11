@@ -232,6 +232,9 @@ def list_documents(
     current_user: User = Depends(get_current_user)
 ):
     q = db.query(Document)
+    # Default: hide draft (tampil di upload view saja)
+    if not status:
+        q = q.filter(Document.status != "draft")
     if search:
         q = q.filter(Document.nama_file.ilike(f"%{search}%") | Document.nama_pt.ilike(f"%{search}%") | Document.extracted_text.ilike(f"%{search}%"))
     if arah:
