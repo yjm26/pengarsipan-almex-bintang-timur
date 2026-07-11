@@ -30,7 +30,7 @@ export default function ArsipPage() {
       }));
       setDocuments(mapped);
     } catch (err) {
-      console.error('Failed to fetch documents:', err);
+      addToast('Gagal memuat dokumen arsip: ' + err.message, 'error');
     } finally {
       setLoading(false);
     }
