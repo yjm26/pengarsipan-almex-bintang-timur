@@ -25,12 +25,10 @@ export default function KPICard({ title, value, subtitle, icon: Icon, accent = '
           <Icon className="w-5 h-5" />
         </div>
         {isClickable && (
-          <span className="text-xs text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity">
-            →
-          </span>
+          <span className="text-xs text-zinc-400">→</span>
         )}
       </div>
-      <p className="text-3xl font-semibold tracking-tight text-zinc-900">{value}</p>
+      <p className="text-3xl font-semibold tracking-tight text-zinc-900">{value || '—'}</p>
       <p className="text-sm font-medium text-zinc-900 mt-1">{title}</p>
       {subtitle && (
         <p className="text-xs text-zinc-400 mt-1 font-light">{subtitle}</p>

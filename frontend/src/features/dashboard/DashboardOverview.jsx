@@ -26,6 +26,13 @@ export default function DashboardOverview({ onNavigate }) {
         ]);
       } catch (err) {
         addToast('Gagal memuat statistik dashboard: ' + err.message, 'error');
+        // Default 0 biar card tetap muncul
+        setKpiData([
+          { title: 'Total Dokumen', value: '0', subtitle: 'Seluruh arsip tersimpan', icon: FileText, accent: 'gold', filter: null },
+          { title: 'Surat Masuk', value: '0', subtitle: 'Bulan ini', icon: ArrowDownRight, accent: 'blue', filter: { arah: 'Masuk' } },
+          { title: 'Surat Keluar', value: '0', subtitle: 'Bulan ini', icon: ArrowUpRight, accent: 'green', filter: { arah: 'Keluar' } },
+          { title: 'Perlu Verifikasi', value: '0', subtitle: 'Akurasi di bawah 80%', icon: AlertTriangle, accent: 'red', filter: { confidence: 'low' } },
+        ]);
       } finally {
         setLoading(false);
       }
