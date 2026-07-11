@@ -30,7 +30,7 @@ export default function ProfileSettings() {
         setProfile(mapped);
         setTempProfile(mapped);
       } catch (err) {
-        console.error('Failed to fetch profile:', err);
+        addToast('Gagal memuat profil: ' + err.message, 'error');
       } finally {
         setLoading(false);
       }
