@@ -58,15 +58,23 @@ export function BrandPanel() {
           </div>
         </motion.div>
 
-        {/* Bottom Legal */}
-        <motion.p 
-          initial={{ opacity: 0 }} 
-          animate={{ opacity: 1 }} 
-          transition={{ delay: 0.8 }} 
-          className="text-xs text-zinc-600 tracking-wide"
+        {/* Bottom Stats */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8 }}
+          className="flex items-center gap-6"
         >
-          © 2025 Almex Group. All rights reserved.
-        </motion.p>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span className="text-xs text-zinc-500">Sistem Aktif</span>
+          </div>
+          <div className="h-3 w-px bg-zinc-800" />
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-amber-500" />
+            <span className="text-xs text-zinc-500">v1.0.0</span>
+          </div>
+        </motion.div>
       </div>
     </motion.div>
   );

@@ -296,9 +296,9 @@ export default function DocumentTable({ documents, loading, onRefresh, onDelete,
                           <div className="w-12 h-12 rounded-xl bg-zinc-50 border border-zinc-100 flex items-center justify-center">
                             <FilePlus className="w-6 h-6 text-zinc-300" />
                           </div>
-                          <div>
+                          <div className="flex flex-col items-center gap-1">
                             <p className="text-sm font-medium text-zinc-500">Belum ada dokumen</p>
-                            <p className="text-xs text-zinc-400 mt-0.5">Unggah dokumen pertama Anda</p>
+                            <p className="text-xs text-zinc-400">Unggah dokumen pertama Anda</p>
                           </div>
                         </>
                       )}

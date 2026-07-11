@@ -51,11 +51,18 @@ class ApiClient {
   }
 
   // Auth
-  login(username, password) {
-    return this.request('/api/auth/login', {
+  async login(username, password) {
+    const url = `${this.baseUrl}/api/auth/login`;
+    const res = await fetch(url, {
       method: 'POST',
-      body: { username, password },
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
     });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Login gagal' }));
+      throw new Error(typeof err.detail === 'string' ? err.detail : 'Username atau password salah');
+    }
+    return res.json();
   }
 
   getMe() {

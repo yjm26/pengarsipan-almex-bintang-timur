@@ -127,7 +127,7 @@ export default function LoginPage() {
 
           {/* Footer */}
           <motion.p variants={item} className="mt-12 text-center text-xs text-zinc-400 tracking-wide">
-            © 2025 PT. Almex Bintang Timur
+            ALMEX Arsip v1.0.0
           </motion.p>
         </motion.div>
       </div>
