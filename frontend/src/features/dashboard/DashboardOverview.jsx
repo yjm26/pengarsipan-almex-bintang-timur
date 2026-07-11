@@ -7,7 +7,10 @@ import CategoryChart from './components/CategoryChart';
 import RecentDocuments from './components/RecentDocuments';
 import api from '../../lib/api';
 
+import { useToast } from '../../contexts/ToastContext.jsx';
+
 export default function DashboardOverview({ onNavigate }) {
+  const { addToast } = useToast();
   const [kpiData, setKpiData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -22,7 +25,7 @@ export default function DashboardOverview({ onNavigate }) {
           { title: 'Perlu Verifikasi', value: stats.perlu_verifikasi_count?.toLocaleString() ?? '0', subtitle: 'Akurasi di bawah 80%', icon: AlertTriangle, accent: 'red', filter: { confidence: 'low' } },
         ]);
       } catch (err) {
-        console.error('Failed to fetch dashboard stats:', err);
+        addToast('Gagal memuat statistik dashboard: ' + err.message, 'error');
       } finally {
         setLoading(false);
       }
