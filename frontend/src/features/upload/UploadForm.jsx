@@ -119,7 +119,9 @@ export default function UploadForm() {
                       nama_pt: manualPerusahaan || namaPt,
                       tanggal_surat: manualTanggal || tanggalSurat,
                     });
-                  } catch {}
+                  } catch (err) {
+                    addToast(`Gagal menyimpan ${item.file.name}: ${err.message}`, 'error');
+                  }
                 }
                 window.dispatchEvent(new CustomEvent('doc-updated'));
                 clearAll();
