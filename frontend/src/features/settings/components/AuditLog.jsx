@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { ClipboardList, Upload, UserPlus, Settings, RotateCw, Search } from 'lucide-react';
 import api from '../../../lib/api';
 
+import { useToast } from '../../../contexts/ToastContext.jsx';
+
 const typeConfig = {
   upload: { icon: Upload, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100', label: 'Dokumen' },
   auth: { icon: ClipboardList, color: 'text-zinc-500', bg: 'bg-zinc-50', border: 'border-zinc-100', label: 'Auth' },
@@ -41,6 +43,7 @@ function fullTimestamp(ts) {
 }
 
 export default function AuditLog() {
+  const { addToast } = useToast();
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -60,7 +63,7 @@ export default function AuditLog() {
         }));
         setLogs(mapped);
       } catch (err) {
-        console.error('Failed to fetch audit logs:', err);
+        addToast('Gagal memuat audit log: ' + err.message, 'error');
       } finally {
         setLoading(false);
       }
