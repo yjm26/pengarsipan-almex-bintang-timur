@@ -2,9 +2,12 @@ import { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import api from '../../../lib/api';
 
+import { useToast } from '../../../contexts/ToastContext.jsx';
+
 const COLORS = ['#D49A28', '#71717a', '#18181b', '#d4d4d8', '#e4e4e7', '#a1a1aa'];
 
 export default function CategoryChart() {
+  const { addToast } = useToast();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -20,7 +23,7 @@ export default function CategoryChart() {
         }));
         setData(chartData);
       } catch (err) {
-        console.error('Failed to fetch category data:', err);
+        addToast('Gagal memuat data kategori: ' + err.message, 'error');
       } finally {
         setLoading(false);
       }
