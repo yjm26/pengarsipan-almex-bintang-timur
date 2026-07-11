@@ -10,11 +10,10 @@ router = APIRouter(prefix="/api/ai", tags=["AI Model"])
 
 retrain_status = {"running": False, "message": "", "progress": 0}
 
-@router.get("/model", response_model=AIModelOut)
+@router.get("/model")
 def get_model_info(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     model = db.query(AIModel).order_by(AIModel.id.desc()).first()
     if not model:
-        # Return default placeholder jangan 404
         return {
             "id": 0,
             "version": "Belum dilatih",
@@ -32,7 +31,26 @@ def get_model_info(db: Session = Depends(get_db), current_user: User = Depends(g
             "test_size": 0,
             "split_note": "Model belum dilatih. Klik 'Retrain Model' untuk memulai.",
         }
-    return model
+    import json
+    arah = json.loads(model.arah_metrics_json) if model.arah_metrics_json else None
+    jenis = json.loads(model.jenis_metrics_json) if model.jenis_metrics_json else None
+    return {
+        "id": model.id,
+        "version": model.version,
+        "accuracy": model.accuracy,
+        "precision_score": model.precision_score,
+        "recall_score": model.recall_score,
+        "f1_score": model.f1_score,
+        "training_data_count": model.training_data_count,
+        "threshold": model.threshold,
+        "last_retrain": model.last_retrain.isoformat() if model.last_retrain else None,
+        "created_at": model.created_at.isoformat() if model.created_at else None,
+        "arah_metrics": arah,
+        "jenis_metrics": jenis,
+        "train_size": model.train_size,
+        "test_size": model.test_size,
+        "split_note": model.split_note,
+    }
 
 @router.post("/retrain", status_code=202)
 def trigger_retrain(background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -73,6 +91,7 @@ def do_retrain(user_id: int):
             parts = model_info.version.split(".")
             ver = f"{parts[0]}.{parts[1]}.{int(parts[2]) + 1}"
 
+        import json
         new_model = AIModel(
             version=ver,
             accuracy=metrics["accuracy"],
@@ -82,7 +101,12 @@ def do_retrain(user_id: int):
             training_data_count=metrics["train_size"] + metrics["test_size"],
             threshold=0.7,
             last_retrain=datetime.now(timezone(timedelta(hours=7))),
-            created_at=datetime.now(timezone(timedelta(hours=7)))
+            created_at=datetime.now(timezone(timedelta(hours=7))),
+            arah_metrics_json=json.dumps(metrics["arah"]),
+            jenis_metrics_json=json.dumps(metrics["jenis"]),
+            train_size=metrics["train_size"],
+            test_size=metrics["test_size"],
+            split_note=metrics["split_note"],
         )
         db.add(new_model)
         log = AuditLog(user_id=user_id, action="Retrain Model AI", detail=f"Model v{ver} - Akurasi: {metrics['accuracy']:.2%} (arah: {metrics['arah']['accuracy']:.2%}, jenis: {metrics['jenis']['accuracy']:.2%})", type="ai", timestamp=datetime.now(timezone(timedelta(hours=7))))
