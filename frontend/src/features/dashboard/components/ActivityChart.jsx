@@ -10,7 +10,10 @@ import {
 } from 'recharts';
 import api from '../../../lib/api';
 
+import { useToast } from '../../../contexts/ToastContext.jsx';
+
 export default function ActivityChart() {
+  const { addToast } = useToast();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -20,7 +23,7 @@ export default function ActivityChart() {
         const stats = await api.getDashboardStats();
         setData(stats.monthly_activity || []);
       } catch (err) {
-        console.error('Failed to fetch activity data:', err);
+        addToast('Gagal memuat data aktivitas: ' + err.message, 'error');
       } finally {
         setLoading(false);
       }
