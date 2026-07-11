@@ -48,7 +48,7 @@ export default function AIModelPanel() {
           trainSize: data.train_size ?? 0,
           testSize: data.test_size ?? 0,
           splitNote: data.split_note ?? '',
-          isUntrained: data.version === 'Belum dilatih' || data.id === 0,
+          isUntrained: data.version === 'Belum dilatih' || data.id === 0 || (data.accuracy || 0) === 0,
         });
         if (data.threshold != null) {
           setThreshold(Math.round(data.threshold * 100));
