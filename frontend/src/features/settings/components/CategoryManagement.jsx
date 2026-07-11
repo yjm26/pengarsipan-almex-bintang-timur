@@ -155,7 +155,7 @@ export default function CategoryManagement() {
               >
                 {/* Parent Row */}
                 <div className="flex items-center gap-3 px-6 py-3.5 rounded-lg hover:bg-zinc-50/50 transition-colors group">
-                  <button onClick={() => setExpandedParent(isExpanded ? null : parent.id)} className="p-1 rounded hover:bg-zinc-200/50 transition-colors">
+                  <button onClick={() => setExpandedParent(isExpanded ? null : parent.id)} className="p-1 rounded hover:bg-zinc-200/50 transition-colors" aria-label={isExpanded ? 'Tutup sub-kategori' : 'Buka sub-kategori'} title={isExpanded ? 'Tutup sub-kategori' : 'Buka sub-kategori'}>
                     {childList.length > 0 ? (
                       isExpanded ? <ChevronDown className="w-4 h-4 text-zinc-400" /> : <ChevronRight className="w-4 h-4 text-zinc-400" />
                     ) : (
@@ -169,20 +169,20 @@ export default function CategoryManagement() {
                   <span className="text-xs text-zinc-400">{parent.count} dokumen</span>
                   <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">{parent.status}</span>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => handleEdit(parent)} className="p-1.5 rounded-lg hover:bg-blue-50 text-zinc-400 hover:text-blue-600 transition-all">
+                    <button onClick={() => handleEdit(parent)} className="p-1.5 rounded-lg hover:bg-blue-50 text-zinc-400 hover:text-blue-600 transition-all" aria-label="Edit kategori" title="Edit kategori">
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
-                    <button onClick={() => handleAdd(parent.id)} className="p-1.5 rounded-lg hover:bg-emerald-50 text-zinc-400 hover:text-emerald-600 transition-all" title="Tambah Sub-kategori">
+                    <button onClick={() => handleAdd(parent.id)} className="p-1.5 rounded-lg hover:bg-emerald-50 text-zinc-400 hover:text-emerald-600 transition-all" aria-label="Tambah sub-kategori" title="Tambah sub-kategori">
                       <Plus className="w-3.5 h-3.5" />
                     </button>
                     {showConfirmDelete === parent.id ? (
                       <div className="flex items-center gap-1">
                         <span className="text-xs text-red-600 font-medium">Yakin?</span>
-                        <button onClick={() => handleDelete(parent.id)} className="px-2 py-1 rounded text-xs font-semibold text-white bg-red-500 hover:bg-red-600">Ya</button>
-                        <button onClick={() => setShowConfirmDelete(null)} className="px-2 py-1 rounded text-xs text-zinc-600 bg-zinc-100">Batal</button>
+                        <button onClick={() => handleDelete(parent.id)} className="px-2 py-1 rounded text-xs font-semibold text-white bg-red-500 hover:bg-red-600" aria-label="Konfirmasi hapus">Ya</button>
+                        <button onClick={() => setShowConfirmDelete(null)} className="px-2 py-1 rounded text-xs text-zinc-600 bg-zinc-100" aria-label="Batal hapus">Batal</button>
                       </div>
                     ) : (
-                      <button onClick={() => setShowConfirmDelete(parent.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-600 transition-all">
+                      <button onClick={() => setShowConfirmDelete(parent.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-600 transition-all" aria-label="Hapus kategori" title="Hapus kategori">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     )}
@@ -198,10 +198,10 @@ export default function CategoryManagement() {
                         <span className="text-sm text-zinc-700 flex-1">{child.nama}</span>
                         <span className="text-xs text-zinc-400">{child.count}</span>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => handleEdit(child)} className="p-1.5 rounded-lg hover:bg-blue-50 text-zinc-400 hover:text-blue-600 transition-all">
+                          <button onClick={() => handleEdit(child)} className="p-1.5 rounded-lg hover:bg-blue-50 text-zinc-400 hover:text-blue-600 transition-all" aria-label="Edit sub-kategori" title="Edit sub-kategori">
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
-                          <button onClick={() => handleDelete(child.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-600 transition-all">
+                          <button onClick={() => handleDelete(child.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-600 transition-all" aria-label="Hapus sub-kategori" title="Hapus sub-kategori">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
