@@ -97,6 +97,12 @@ class ApiClient {
     });
   }
 
+  confirmDocument(id) {
+    return this.request(`/api/documents/${id}/confirm`, {
+      method: 'POST',
+    });
+  }
+
   deleteDocument(id) {
     return this.request(`/api/documents/${id}`, {
       method: 'DELETE',

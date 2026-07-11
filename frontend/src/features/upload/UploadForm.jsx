@@ -42,6 +42,7 @@ export default function UploadForm() {
         nama_pt: manualPerusahaan || namaPt,
         tanggal_surat: manualTanggal || tanggalSurat,
       });
+      await api.confirmDocument(id);
       window.dispatchEvent(new CustomEvent('doc-updated'));
       removeUpload(item.id);
       addToast('Dokumen berhasil disimpan ke arsip', 'success', {
@@ -119,8 +120,9 @@ export default function UploadForm() {
                       nama_pt: manualPerusahaan || namaPt,
                       tanggal_surat: manualTanggal || tanggalSurat,
                     });
+                    await api.confirmDocument(id);
                   } catch (err) {
-                    addToast(`Gagal menyimpan ${item.file.name}: ${err.message}`, 'error');
+                    addToast(`Gagal menyimpan ${u.file.name}: ${err.message}`, 'error');
                   }
                 }
                 window.dispatchEvent(new CustomEvent('doc-updated'));
