@@ -100,8 +100,46 @@ export default function AIModelPanel() {
     );
   }
 
+  // ── Error State (API failure / null) ──
+  if (!modelStats) {
+    return (
+      <div className="space-y-8">
+        <div className="bg-white rounded-xl border border-red-100/60 p-8">
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center mb-4">
+              <AlertTriangle className="w-8 h-8 text-red-500" />
+            </div>
+            <h3 className="text-lg font-semibold text-zinc-900 mb-2">Gagal Memuat Model</h3>
+            <p className="text-sm text-zinc-500 max-w-sm mb-4">
+              Tidak dapat terhubung ke server backend. Cek koneksi atau restart backend.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-zinc-900 text-white text-sm font-medium rounded-lg hover:bg-zinc-800 transition-colors"
+            >
+              Coba Lagi
+            </button>
+          </div>
+        </div>
+
+        {/* Threshold tetap ada */}
+        <div className="bg-white rounded-xl border border-zinc-200/60 p-8">
+          <h2 className="text-base font-semibold tracking-tight text-zinc-900 mb-1">Confidence Threshold</h2>
+          <p className="text-sm text-zinc-500 mt-1 mb-6">Akan aktif setelah model terpasang.</p>
+          <div className="max-w-md space-y-4 opacity-50">
+            <input type="range" min="50" max="95" value={75} disabled className="w-full h-2 bg-zinc-200 rounded-lg appearance-none cursor-not-allowed" />
+            <div className="flex items-center justify-between text-xs text-zinc-400">
+              <span>50%</span>
+              <span>95%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // ── Empty State ──
-  if (modelStats?.isUntrained) {
+  if (modelStats.isUntrained) {
     return (
       <div className="space-y-8">
         <div className="bg-white rounded-xl border border-zinc-200/60 p-8">
