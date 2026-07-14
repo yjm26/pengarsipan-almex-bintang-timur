@@ -74,7 +74,7 @@ class UserCreate(BaseModel):
     username: str
     password: str
     nama_lengkap: str
-    role: str = "admin"
+    role: str = "staff_admin"
 
 class UserUpdate(BaseModel):
     username: Optional[str] = None

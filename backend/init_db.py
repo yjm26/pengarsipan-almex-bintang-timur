@@ -13,21 +13,21 @@ def init():
     
     db = SessionLocal()
     
-    # Seed admin user
+    # Seed owner user
     if not db.query(User).filter(User.username == "admin").first():
-        admin = User(
+        owner = User(
             username="admin",
             password_hash=hash_password("admin"),
-            nama_lengkap="Super Administrator",
-            role="super_admin",
+            nama_lengkap="Owner",
+            role="owner",
             is_active=True,
             created_at=now_wib()
         )
-        db.add(admin)
+        db.add(owner)
         db.commit()
-        print("[OK] Admin user created (admin/admin)")
+        print("[OK] Owner user created (admin/admin)")
     else:
-        print("[OK] Admin user already exists")
+        print("[OK] Owner user already exists")
     
     # Seed categories
     # Seed categories (HARDCODED 5 kategori + Lainnya)
@@ -106,7 +106,7 @@ def init():
     db.close()
     print("\nDatabase initialized successfully!")
     print(f"Database: {os.path.join(os.path.dirname(__file__), 'database', 'almex.db')}")
-    print("Admin credentials: admin / admin")
+    print("Owner credentials: admin / admin")
 
 if __name__ == "__main__":
     init()

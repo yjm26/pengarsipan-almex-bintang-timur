@@ -40,7 +40,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
         raise HTTPException(status_code=401, detail="User tidak ditemukan atau tidak aktif")
     return user
 
-def require_super_admin(current_user: User = Depends(get_current_user)) -> User:
-    if current_user.role != "super_admin":
-        raise HTTPException(status_code=403, detail="Akses ditolak. Hanya Super Admin.")
+def require_owner(current_user: User = Depends(get_current_user)) -> User:
+    if current_user.role != "owner":
+        raise HTTPException(status_code=403, detail="Akses ditolak. Hanya Owner.")
     return current_user

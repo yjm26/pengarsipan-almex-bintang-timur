@@ -16,7 +16,7 @@ export default function BackupExport() {
     lastBackup: '-',
   });
   const [backups, setBackups] = useState([]);
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
   const [loadingStats, setLoadingStats] = useState(true);
 
   useEffect(() => {
@@ -36,7 +36,7 @@ export default function BackupExport() {
             lastBackup: stats.last_backup ?? '-',
           });
         }
-        if (me) setIsSuperAdmin(me.role === 'super_admin');
+        if (me) setIsOwner(me.role === 'owner');
       } catch (err) {
         addToast('Gagal memuat statistik penyimpanan: ' + err.message, 'error');
       } finally {
@@ -90,7 +90,7 @@ export default function BackupExport() {
     { type: 'csv', icon: FileSpreadsheet, label: 'Export CSV', desc: 'Semua data dokumen dalam format CSV', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', disabled: false },
     { type: 'excel', icon: FileSpreadsheet, label: 'Export Excel (.xlsx)', desc: 'Format spreadsheet dengan format lengkap', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100', disabled: false },
     { type: 'report', icon: FileText, label: 'Export Klasifikasi Report', desc: 'Laporan akurasi klasifikasi dan distribusi kategori', color: 'text-[#D49A28]', bg: 'bg-amber-50', border: 'border-amber-100', disabled: true, soon: true },
-    { type: 'backup', icon: Archive, label: 'Full Database Backup', desc: 'Backup seluruh database + file upload', color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100', disabled: !isSuperAdmin },
+    { type: 'backup', icon: Archive, label: 'Full Database Backup', desc: 'Backup seluruh database + file upload', color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100', disabled: !isOwner },
   ];
 
   return (

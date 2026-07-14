@@ -3,16 +3,16 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models import User, AuditLog, now_wib
 from schemas import UserCreate, UserUpdate, UserOut
-from auth import get_current_user, require_super_admin, hash_password
+from auth import get_current_user, require_owner, hash_password
 
 router = APIRouter(prefix="/api/users", tags=["Users"])
 
 @router.get("", response_model=list[UserOut])
-def list_users(db: Session = Depends(get_db), current_user: User = Depends(require_super_admin)):
+def list_users(db: Session = Depends(get_db), current_user: User = Depends(require_owner)):
     return db.query(User).all()
 
 @router.post("", response_model=UserOut)
-def create_user(data: UserCreate, db: Session = Depends(get_db), current_user: User = Depends(require_super_admin)):
+def create_user(data: UserCreate, db: Session = Depends(get_db), current_user: User = Depends(require_owner)):
     if db.query(User).filter(User.username == data.username).first():
         raise HTTPException(status_code=400, detail="Username sudah digunakan")
     user = User(
@@ -32,7 +32,7 @@ def create_user(data: UserCreate, db: Session = Depends(get_db), current_user: U
     return user
 
 @router.put("/{user_id}", response_model=UserOut)
-def update_user(user_id: int, data: UserUpdate, db: Session = Depends(get_db), current_user: User = Depends(require_super_admin)):
+def update_user(user_id: int, data: UserUpdate, db: Session = Depends(get_db), current_user: User = Depends(require_owner)):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User tidak ditemukan")
@@ -53,7 +53,7 @@ def update_user(user_id: int, data: UserUpdate, db: Session = Depends(get_db), c
     return user
 
 @router.delete("/{user_id}")
-def delete_user(user_id: int, db: Session = Depends(get_db), current_user: User = Depends(require_super_admin)):
+def delete_user(user_id: int, db: Session = Depends(get_db), current_user: User = Depends(require_owner)):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User tidak ditemukan")

@@ -58,10 +58,10 @@ def export_excel(db: Session = Depends(get_db), current_user: User = Depends(get
 
 @router.post("/backup")
 def backup_database(current_user: User = Depends(get_current_user)):
-    """Manual backup database + uploads. Super Admin only."""
-    if current_user.role != "super_admin":
+    """Manual backup database + uploads. Owner only."""
+    if current_user.role != "owner":
         from fastapi import HTTPException
-        raise HTTPException(status_code=403, detail="Hanya Super Admin yang bisa backup")
+        raise HTTPException(status_code=403, detail="Hanya Owner yang bisa backup")
     
     os.makedirs(BACKUP_DIR, exist_ok=True)
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -106,9 +106,9 @@ def backup_database(current_user: User = Depends(get_current_user)):
 @router.get("/backups")
 def list_backups(current_user: User = Depends(get_current_user)):
     """List available backups."""
-    if current_user.role != "super_admin":
+    if current_user.role != "owner":
         from fastapi import HTTPException
-        raise HTTPException(status_code=403, detail="Hanya Super Admin")
+        raise HTTPException(status_code=403, detail="Hanya Owner")
     
     os.makedirs(BACKUP_DIR, exist_ok=True)
     backups = []
