@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, Shield, Edit2, Check, X, Lock } from 'lucide-react';
+import { User, Edit2, Check, X, Lock } from 'lucide-react';
 import api from '../../../lib/api';
 import { useToast } from '../../../contexts/ToastContext.jsx';
 
@@ -9,7 +9,6 @@ export default function ProfileSettings() {
   const [editing, setEditing] = useState(false);
   const [profile, setProfile] = useState({
     nama: '',
-    email: '',
     role: '',
   });
   const [tempProfile, setTempProfile] = useState({ ...profile });
@@ -24,7 +23,6 @@ export default function ProfileSettings() {
         const data = await api.getProfile();
         const mapped = {
           nama: data.nama || data.name || data.full_name || '',
-          email: data.email || '',
           role: data.role || '',
         };
         setProfile(mapped);
@@ -41,7 +39,7 @@ export default function ProfileSettings() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await api.updateProfile({ nama: tempProfile.nama, email: tempProfile.email });
+      await api.updateProfile({ nama: tempProfile.nama });
       setProfile({ ...tempProfile });
       setEditing(false);
       addToast('Profil berhasil diperbarui', 'success');
@@ -69,7 +67,7 @@ export default function ProfileSettings() {
               <div className="h-4 w-24 bg-zinc-100 rounded animate-pulse" />
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6 max-w-md">
             <div className="h-10 bg-zinc-50 rounded-lg animate-pulse" />
             <div className="h-10 bg-zinc-50 rounded-lg animate-pulse" />
           </div>
@@ -108,7 +106,7 @@ export default function ProfileSettings() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 max-w-md">
           <div>
             <label className="block text-sm font-medium text-zinc-700 mb-2">Nama Lengkap</label>
             {editing ? (
@@ -122,19 +120,7 @@ export default function ProfileSettings() {
               <p className="text-sm text-zinc-900 px-3 py-2.5 bg-zinc-50/50 rounded-lg">{profile.nama}</p>
             )}
           </div>
-          <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-2">Email</label>
-            {editing ? (
-              <input
-                type="email"
-                value={tempProfile.email}
-                onChange={(e) => setTempProfile({ ...tempProfile, email: e.target.value })}
-                className="w-full px-3 py-2.5 text-sm bg-zinc-50/50 border border-zinc-200/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D49A28]/20 focus:border-[#D49A28]/50 transition-all"
-              />
-            ) : (
-              <p className="text-sm text-zinc-900 px-3 py-2.5 bg-zinc-50/50 rounded-lg">{profile.email}</p>
-            )}
-          </div>
+
         </div>
 
         {editing && (
