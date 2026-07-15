@@ -64,8 +64,8 @@ async def rate_limit_middleware(request: Request, call_next):
     response = await call_next(request)
     return response
 
-# Upload size limit (10MB)
-MAX_UPLOAD_SIZE = 10 * 1024 * 1024
+# Upload size limit (15MB)
+MAX_UPLOAD_SIZE = 15 * 1024 * 1024
 
 @app.middleware("http")
 async def upload_size_middleware(request: Request, call_next):
@@ -74,7 +74,7 @@ async def upload_size_middleware(request: Request, call_next):
         if content_length and int(content_length) > MAX_UPLOAD_SIZE:
             return JSONResponse(
                 status_code=413,
-                content={"detail": "File terlalu besar. Maksimal 10MB."}
+                content={"detail": "File terlalu besar. Maksimal 15MB."}
             )
     return await call_next(request)
 

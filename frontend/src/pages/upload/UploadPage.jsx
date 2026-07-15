@@ -5,7 +5,7 @@ import { useUpload } from '../../store/uploadStore';
 import api from '../../lib/api';
 import { useToast } from '../../contexts/ToastContext.jsx';
 
-const MAX_FILES = 5;
+const MAX_FILES = 10;
 
 function formatDate(dateStr) {
   if (!dateStr) return '';
