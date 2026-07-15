@@ -39,8 +39,8 @@ export default function UploadForm() {
     const { id, namaPt, tanggalSurat, manualPerusahaan, manualTanggal } = item.result;
     try {
       await api.updateDocument(id, {
-        nama_pt: manualPerusahaan || namaPt,
-        tanggal_surat: manualTanggal || tanggalSurat,
+        nama_pt: manualPerusahaan || namaPt || null,
+        tanggal_surat: (manualTanggal || tanggalSurat) || null,
       });
       await api.confirmDocument(id);
       window.dispatchEvent(new CustomEvent('doc-updated'));
@@ -117,8 +117,8 @@ export default function UploadForm() {
                   const { id, namaPt, tanggalSurat, manualPerusahaan, manualTanggal } = u.result;
                   try {
                     await api.updateDocument(id, {
-                      nama_pt: manualPerusahaan || namaPt,
-                      tanggal_surat: manualTanggal || tanggalSurat,
+                      nama_pt: manualPerusahaan || namaPt || null,
+                      tanggal_surat: (manualTanggal || tanggalSurat) || null,
                     });
                     await api.confirmDocument(id);
                   } catch (err) {

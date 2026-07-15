@@ -43,7 +43,11 @@ export default function DetailPanel({ doc, onClose, onUpdate, onDelete }) {
   async function handleSave() {
     setSaving(true);
     try {
-      const updated = await api.updateDocument(doc.id, form);
+      const updated = await api.updateDocument(doc.id, {
+        ...form,
+        nama_pt: form.nama_pt || null,
+        tanggal_surat: form.tanggal_surat || null,
+      });
       onUpdate(updated);
       setEditing(false);
       addToast('Perubahan berhasil disimpan', 'success');
