@@ -6,6 +6,7 @@ import { InputField } from '../components/Input';
 import { PrimaryButton } from '../components/Button';
 import { BrandPanel } from '../components/BrandPanel';
 import api from '../lib/api';
+import { useToast } from '../contexts/ToastContext.jsx';
 
 // Animation variants
 const container = {
@@ -27,6 +28,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const { addToast } = useToast();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -37,6 +39,7 @@ export default function LoginPage() {
       const data = await api.login(username, password);
       api.setToken(data.access_token);
       localStorage.setItem('isAuthenticated', 'true');
+      addToast(`Selamat datang${data.nama_lengkap ? ', ' + data.nama_lengkap : ''}!`, 'success');
       navigate('/dashboard');
     } catch (err) {
       setError(err.message || 'Username atau password salah.');

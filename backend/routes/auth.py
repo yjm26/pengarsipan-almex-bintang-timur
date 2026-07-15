@@ -19,7 +19,7 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
     log = AuditLog(user_id=user.id, action="Login", detail=f"User {user.username} berhasil login", type="auth", timestamp=now_wib())
     db.add(log)
     db.commit()
-    return {"access_token": token}
+    return {"access_token": token, "nama_lengkap": user.nama_lengkap, "role": user.role}
 
 @router.get("/me", response_model=UserOut)
 def me(current_user: User = Depends(get_current_user)):
