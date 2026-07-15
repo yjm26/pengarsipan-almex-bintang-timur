@@ -7,6 +7,8 @@ import DashboardOverview from '../features/dashboard/DashboardOverview';
 import ArsipPage from '../features/arsip/ArsipPage';
 import UploadForm from '../features/upload/UploadForm';
 import SettingsPage from '../features/settings/SettingsPage';
+import { useToast } from '../contexts/ToastContext.jsx';
+import api from '../lib/api';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
@@ -27,6 +29,68 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const { addToast } = useToast();
+
+  const handleLogout = () => {
+    api.setToken(null);
+    localStorage.removeItem('isAuthenticated');
+    setShowLogoutConfirm(false);
+    addToast('Berhasil logout', 'success');
+    navigate('/');
+  };
+
+  const logoutButton = (
+    <motion.button
+      whileTap={{ scale: 0.98 }}
+      onClick={() => setShowLogoutConfirm(true)}
+      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-zinc-500 hover:bg-red-500/10 hover:text-red-400 transition-all"
+    >
+      <LogOut className="w-5 h-5 flex-shrink-0" />
+      Logout
+    </motion.button>
+  );
+
+  const LogoutConfirmModal = () => (
+    <AnimatePresence>
+      {showLogoutConfirm && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+            onClick={() => setShowLogoutConfirm(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6 w-full max-w-sm shadow-xl"
+            >
+              <h3 className="text-base font-semibold text-zinc-900 dark:text-white mb-2">Keluar dari aplikasi?</h3>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">Semua sesi aktif akan diakhiri dan Anda harus login kembali.</p>
+              <div className="flex items-center justify-end gap-3">
+                <button
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="px-4 py-2 text-sm font-medium text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-lg transition-all"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-all"
+                >
+                  Ya, Keluar
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
 
   const onNavigate = (page, filterParams) => {
     if (page === 'arsip') {
@@ -108,17 +172,7 @@ export default function DashboardPage() {
 
             {/* Logout */}
             <div className="p-4 border-t border-zinc-800/50">
-              <motion.button
-                whileTap={{ scale: 0.98 }}
-                onClick={() => {
-                  localStorage.removeItem('isAuthenticated');
-                  navigate('/');
-                }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-zinc-500 hover:bg-red-500/10 hover:text-red-400 transition-all"
-              >
-                <LogOut className="w-5 h-5 flex-shrink-0" />
-                Logout
-              </motion.button>
+              {logoutButton}
             </div>
           </motion.aside>
         )}
@@ -164,17 +218,7 @@ export default function DashboardPage() {
 
         {/* Logout */}
         <div className="p-4 border-t border-zinc-800/50">
-          <motion.button
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              localStorage.removeItem('isAuthenticated');
-              navigate('/');
-            }}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-zinc-500 hover:bg-red-500/10 hover:text-red-400 transition-all"
-          >
-            <LogOut className="w-5 h-5 flex-shrink-0" />
-            Logout
-          </motion.button>
+          {logoutButton}
         </div>
       </motion.aside>
 
@@ -187,6 +231,7 @@ export default function DashboardPage() {
           </div>
         </main>
       </div>
+      <LogoutConfirmModal />
     </div>
   );
 }
