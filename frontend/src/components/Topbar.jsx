@@ -200,7 +200,7 @@ export default function Topbar({ onOpenSidebar }) {
           </div>
           <div className="flex flex-col items-start hidden sm:block">
             <span className="text-sm font-semibold text-zinc-900 dark:text-white leading-tight">{user.nama || 'User'}</span>
-            <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium uppercase tracking-wider mt-0.5">{user.role || 'User'}</span>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0">{user.role || 'User'}</span>
           </div>
         </div>
       </div>
