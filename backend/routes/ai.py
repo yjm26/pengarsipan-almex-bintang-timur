@@ -4,13 +4,22 @@ from database import get_db
 from models import AIModel, User, now_wib
 from schemas import ThresholdUpdate
 from auth import get_current_user
+import os
+import json
 
 router = APIRouter(prefix="/api/ai", tags=["AI Model"])
+
+def _check_model_active():
+    model_dir = os.path.join(os.path.dirname(__file__), "..", "ml_model")
+    arah_path = os.path.join(model_dir, "arah_pipeline.pkl")
+    jenis_path = os.path.join(model_dir, "jenis_pipeline.pkl")
+    return os.path.exists(arah_path) and os.path.exists(jenis_path)
 
 @router.get("/model")
 def get_model_info(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """Return static model info. Model trained offline via notebook/train_and_evaluate.py"""
     model = db.query(AIModel).order_by(AIModel.id.desc()).first()
+    is_active = _check_model_active()
     if not model:
         return {
             "id": 0,
@@ -27,9 +36,9 @@ def get_model_info(db: Session = Depends(get_db), current_user: User = Depends(g
             "jenis_metrics": None,
             "train_size": 0,
             "test_size": 0,
+            "is_active": is_active,
             "split_note": "Model klasifikasi aktif. Hubungi admin untuk update terbaru.",
         }
-    import json
     arah = json.loads(model.arah_metrics_json) if model.arah_metrics_json else None
     jenis = json.loads(model.jenis_metrics_json) if model.jenis_metrics_json else None
     return {
@@ -47,6 +56,7 @@ def get_model_info(db: Session = Depends(get_db), current_user: User = Depends(g
         "jenis_metrics": jenis,
         "train_size": model.train_size,
         "test_size": model.test_size,
+        "is_active": is_active,
         "split_note": model.split_note,
     }
 
@@ -69,4 +79,5 @@ def update_threshold(data: ThresholdUpdate, db: Session = Depends(get_db), curre
         "f1_score": model.f1_score,
         "training_data_count": model.training_data_count,
         "threshold": model.threshold,
+        "is_active": _check_model_active(),
     }

@@ -97,7 +97,7 @@ def init():
                 jenis_metrics_json=None,
                 train_size=0,
                 test_size=0,
-                split_note="Model belum terpasang. Hubungi admin untuk aktivasi.",
+                split_note="Model belum terpasang. Upload file model atau hubungi tim IT.",
             )
             db.add(model)
             db.commit()
