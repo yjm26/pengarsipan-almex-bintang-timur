@@ -1,35 +1,19 @@
 import { useState, useEffect } from 'react';
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
-import api from '../../../lib/api';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-import { useToast } from '../../../contexts/ToastContext.jsx';
-
-export default function ActivityChart() {
-  const { addToast } = useToast();
-  const [data, setData] = useState([]);
+export default function ActivityChart({ stats }) {
   const [loading, setLoading] = useState(true);
+  const [data, setData] = useState([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const stats = await api.getDashboardStats();
-        setData(stats.monthly_activity || []);
-      } catch (err) {
-        addToast('Gagal memuat data aktivitas: ' + err.message, 'error');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+    if (stats) {
+      setData(stats.monthly_activity || []);
+      setLoading(false);
+    } else {
+      setData([]);
+      setLoading(false);
+    }
+  }, [stats]);
 
   if (loading) {
     return (

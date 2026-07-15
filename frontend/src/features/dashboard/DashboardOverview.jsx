@@ -12,20 +12,22 @@ import { useToast } from '../../contexts/ToastContext.jsx';
 export default function DashboardOverview({ onNavigate }) {
   const { addToast } = useToast();
   const [kpiData, setKpiData] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const stats = await api.getDashboardStats();
+        const data = await api.getDashboardStats();
+        setStats(data);
         setKpiData([
-          { title: 'Total Dokumen', value: stats.total_documents?.toLocaleString() ?? '0', subtitle: 'Seluruh arsip tersimpan', icon: FileText, accent: 'gold', filter: null },
-          { title: 'Surat Masuk', value: stats.surat_masuk_count?.toLocaleString() ?? '0', subtitle: 'Bulan ini', icon: ArrowDownRight, accent: 'blue', filter: { arah: 'Masuk' } },
-          { title: 'Surat Keluar', value: stats.surat_keluar_count?.toLocaleString() ?? '0', subtitle: 'Bulan ini', icon: ArrowUpRight, accent: 'green', filter: { arah: 'Keluar' } },
-          { title: 'Perlu Verifikasi', value: stats.perlu_verifikasi_count?.toLocaleString() ?? '0', subtitle: 'Akurasi di bawah 80%', icon: AlertTriangle, accent: 'red', filter: { confidence: 'low' } },
+          { title: 'Total Dokumen', value: data.total_documents?.toLocaleString() ?? '0', subtitle: 'Seluruh arsip tersimpan', icon: FileText, accent: 'gold', filter: null },
+          { title: 'Surat Masuk', value: data.surat_masuk_count?.toLocaleString() ?? '0', subtitle: 'Bulan ini', icon: ArrowDownRight, accent: 'blue', filter: { arah: 'Masuk' } },
+          { title: 'Surat Keluar', value: data.surat_keluar_count?.toLocaleString() ?? '0', subtitle: 'Bulan ini', icon: ArrowUpRight, accent: 'green', filter: { arah: 'Keluar' } },
+          { title: 'Perlu Verifikasi', value: data.perlu_verifikasi_count?.toLocaleString() ?? '0', subtitle: 'Akurasi di bawah 80%', icon: AlertTriangle, accent: 'red', filter: { confidence: 'low' } },
         ]);
       } catch (err) {
-        addToast('Gagal memuat statistik dashboard: ' + err.message, 'error');
+        addToast('Gagal memuat data dashboard: ' + err.message, 'error');
         // Default 0 biar card tetap muncul
         setKpiData([
           { title: 'Total Dokumen', value: '0', subtitle: 'Seluruh arsip tersimpan', icon: FileText, accent: 'gold', filter: null },
@@ -62,11 +64,11 @@ export default function DashboardOverview({ onNavigate }) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2"><ActivityChart /></div>
-        <div><CategoryChart /></div>
+        <div className="lg:col-span-2"><ActivityChart stats={stats} /></div>
+        <div><CategoryChart stats={stats} /></div>
       </div>
 
-      <RecentDocuments />
+      <RecentDocuments stats={stats} />
     </div>
   );
 }

@@ -1,35 +1,24 @@
 import { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
-import api from '../../../lib/api';
-
-import { useToast } from '../../../contexts/ToastContext.jsx';
 
 const COLORS = ['#D49A28', '#71717a', '#18181b', '#d4d4d8', '#e4e4e7', '#a1a1aa'];
 
-export default function CategoryChart() {
-  const { addToast } = useToast();
+export default function CategoryChart({ stats }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const stats = await api.getDashboardStats();
-        const dist = stats.category_distribution || {};
-        const chartData = Object.entries(dist).map(([name, value], i) => ({
-          name,
-          value,
-          color: COLORS[i % COLORS.length],
-        }));
-        setData(chartData);
-      } catch (err) {
-        addToast('Gagal memuat data kategori: ' + err.message, 'error');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+    if (stats) {
+      const dist = stats.category_distribution || {};
+      const chartData = Object.entries(dist).map(([name, value], i) => ({
+        name,
+        value,
+        color: COLORS[i % COLORS.length],
+      }));
+      setData(chartData);
+    }
+    setLoading(false);
+  }, [stats]);
 
   const total = data.reduce((sum, item) => sum + item.value, 0);
 

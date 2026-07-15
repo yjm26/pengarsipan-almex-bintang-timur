@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Eye, FileText, Clock, Download, CheckCircle2, AlertTriangle } from 'lucide-react';
-import api from '../../../lib/api';
-
-import { useToast } from '../../../contexts/ToastContext.jsx';
 
 function getConfidenceBadge(score) {
   const pct = Math.round(score * 100);
@@ -43,24 +40,16 @@ function formatTime(dateStr) {
   return d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 }
 
-export default function RecentDocuments() {
-  const { addToast } = useToast();
+export default function RecentDocuments({ stats }) {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const stats = await api.getDashboardStats();
-        setDocuments(stats.recent_documents || []);
-      } catch (err) {
-        addToast('Gagal memuat dokumen terbaru: ' + err.message, 'error');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+    if (stats) {
+      setDocuments(stats.recent_documents || []);
+    }
+    setLoading(false);
+  }, [stats]);
 
   if (loading) {
     return (
