@@ -10,7 +10,7 @@ export default function UserManagement() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editUser, setEditUser] = useState(null);
-  const [formData, setFormData] = useState({ nama_lengkap: '', username: '', role: 'staff_admin', password: '', is_active: true });
+  const [formData, setFormData] = useState({ nama_lengkap: '', username: '', role: 'admin_dokumen', password: '', is_active: true });
   const [showConfirmDelete, setShowConfirmDelete] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -41,7 +41,7 @@ export default function UserManagement() {
 
   const handleAdd = () => {
     setEditUser(null);
-    setFormData({ nama_lengkap: '', username: '', role: 'staff_admin', password: '', is_active: true });
+    setFormData({ nama_lengkap: '', username: '', role: 'admin_dokumen', password: '', is_active: true });
     setError(null);
     setShowModal(true);
   };
@@ -51,7 +51,7 @@ export default function UserManagement() {
     setFormData({
       nama_lengkap: user.nama_lengkap || '',
       username: user.username || '',
-      role: user.role || 'staff_admin',
+      role: user.role || 'admin_dokumen',
       password: '',
       is_active: user.is_active ?? true,
     });
@@ -188,7 +188,7 @@ export default function UserManagement() {
                         : 'bg-zinc-100 text-zinc-600 border-zinc-200'
                     }`}>
                       <Shield className="w-3 h-3" />
-                      {user.role === 'owner' ? 'Owner' : 'Staff Admin'}
+                      {user.role === 'owner' ? 'Owner' : 'Admin Dokumen'}
                     </span>
                   </td>
                   <td className="px-6 py-3.5">
@@ -264,7 +264,7 @@ export default function UserManagement() {
               <div>
                 <label className="block text-sm font-medium text-zinc-700 mb-2">Role</label>
                 <select value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })} className="w-full px-3 py-2.5 text-sm bg-zinc-50/50 border border-zinc-200/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D49A28]/20 focus:border-[#D49A28]/50 transition-all">
-                  <option value="staff_admin">Staff Admin</option>
+                  <option value="admin_dokumen">Admin Dokumen</option>
                   <option value="owner">Owner</option>
                 </select>
               </div>

@@ -14,7 +14,7 @@ class User(Base):
     username = Column(String(50), unique=True, index=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
     nama_lengkap = Column(String(100), nullable=False)
-    role = Column(String(20), default="staff_admin")  # staff_admin / owner
+    role = Column(String(20), default="admin_dokumen")  # admin_dokumen / owner
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=now_wib)
     documents = relationship("Document", back_populates="user")
