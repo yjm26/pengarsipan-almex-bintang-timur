@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Settings, Users, FolderTree, ClipboardList, Database, User } from 'lucide-react';
-import UserManagement from './components/UserManagement';
-import CategoryManagement from './components/CategoryManagement';
-import AuditLog from './components/AuditLog';
-import BackupExport from './components/BackupExport';
-import ProfileSettings from './components/ProfileSettings';
+import UserManagement from '../../features/settings/components/UserManagement';
+import CategoryManagement from '../../features/settings/components/CategoryManagement';
+import AuditLog from '../../features/settings/components/AuditLog';
+import BackupExport from '../../features/settings/components/BackupExport';
+import ProfileSettings from '../../features/settings/components/ProfileSettings';
 
 const tabs = [
   { id: 'profile', label: 'Profil Saya', icon: User },

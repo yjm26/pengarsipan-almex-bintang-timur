@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import DocumentTable from './components/DocumentTable';
+import DocumentTable from '../../features/arsip/components/DocumentTable';
 import api from '../../lib/api';
 import { useToast } from '../../contexts/ToastContext.jsx';
 

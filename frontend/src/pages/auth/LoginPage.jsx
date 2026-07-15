@@ -2,11 +2,11 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Lock, Mail, Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import { InputField } from '../components/Input';
-import { PrimaryButton } from '../components/Button';
-import { BrandPanel } from '../components/BrandPanel';
-import api from '../lib/api';
-import { useToast } from '../contexts/ToastContext.jsx';
+import { InputField } from "../../components/Input";
+import { PrimaryButton } from "../../components/Button";
+import { BrandPanel } from "../../components/BrandPanel";
+import api from '../../lib/api';
+import { useToast } from '../../contexts/ToastContext.jsx';
 
 // Animation variants
 const container = {
