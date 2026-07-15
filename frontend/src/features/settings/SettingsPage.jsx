@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Settings, Users, FolderTree, Brain, ClipboardList, Database, User } from 'lucide-react';
+import { Settings, Users, FolderTree, ClipboardList, Database, User } from 'lucide-react';
 import UserManagement from './components/UserManagement';
 import CategoryManagement from './components/CategoryManagement';
-import AIModelPanel from './components/AIModelPanel';
 import AuditLog from './components/AuditLog';
 import BackupExport from './components/BackupExport';
 import ProfileSettings from './components/ProfileSettings';
@@ -12,7 +11,6 @@ const tabs = [
   { id: 'profile', label: 'Profil Saya', icon: User },
   { id: 'users', label: 'Manajemen User', icon: Users },
   { id: 'categories', label: 'Kategori', icon: FolderTree },
-  { id: 'ai', label: 'Model', icon: Brain },
   { id: 'audit', label: 'Audit Log', icon: ClipboardList },
   { id: 'backup', label: 'Backup & Export', icon: Database },
 ];
@@ -70,7 +68,6 @@ export default function SettingsPage() {
         {activeTab === 'profile' && <ProfileSettings />}
         {activeTab === 'users' && <UserManagement />}
         {activeTab === 'categories' && <CategoryManagement />}
-        {activeTab === 'ai' && <AIModelPanel />}
         {activeTab === 'audit' && <AuditLog />}
         {activeTab === 'backup' && <BackupExport />}
       </motion.div>

@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
 from models import AIModel, User, now_wib
-from schemas import ThresholdUpdate
 from auth import get_current_user
 import os
 import json
@@ -17,7 +16,7 @@ def _check_model_active():
 
 @router.get("/model")
 def get_model_info(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    """Return static model info. Model trained offline via notebook/train_and_evaluate.py"""
+    """Return static model info."""
     model = db.query(AIModel).order_by(AIModel.id.desc()).first()
     is_active = _check_model_active()
     if not model:
@@ -37,7 +36,7 @@ def get_model_info(db: Session = Depends(get_db), current_user: User = Depends(g
             "train_size": 0,
             "test_size": 0,
             "is_active": is_active,
-            "split_note": "Model klasifikasi aktif. Hubungi admin untuk update terbaru.",
+            "split_note": "Model klasifikasi aktif.",
         }
     arah = json.loads(model.arah_metrics_json) if model.arah_metrics_json else None
     jenis = json.loads(model.jenis_metrics_json) if model.jenis_metrics_json else None
@@ -58,26 +57,4 @@ def get_model_info(db: Session = Depends(get_db), current_user: User = Depends(g
         "test_size": model.test_size,
         "is_active": is_active,
         "split_note": model.split_note,
-    }
-
-@router.put("/threshold")
-def update_threshold(data: ThresholdUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    if data.threshold < 0.5 or data.threshold > 0.95:
-        raise HTTPException(status_code=400, detail="Threshold harus antara 50% - 95%")
-    model = db.query(AIModel).order_by(AIModel.id.desc()).first()
-    if not model:
-        raise HTTPException(status_code=404, detail="Model AI belum dilatih")
-    model.threshold = data.threshold
-    db.commit()
-    db.refresh(model)
-    return {
-        "id": model.id,
-        "version": model.version,
-        "accuracy": model.accuracy,
-        "precision_score": model.precision_score,
-        "recall_score": model.recall_score,
-        "f1_score": model.f1_score,
-        "training_data_count": model.training_data_count,
-        "threshold": model.threshold,
-        "is_active": _check_model_active(),
     }
