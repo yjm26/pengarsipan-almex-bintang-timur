@@ -2,13 +2,13 @@ import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, Menu, LayoutDashboard, Upload, FileText, Settings, LogOut } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import Topbar from '../components/Topbar';
-import DashboardOverview from '../features/dashboard/DashboardOverview';
-import ArsipPage from '../features/arsip/ArsipPage';
-import UploadForm from '../features/upload/UploadForm';
-import SettingsPage from '../features/settings/SettingsPage';
-import { useToast } from '../contexts/ToastContext.jsx';
-import api from '../lib/api';
+import Topbar from '../../layout/Topbar';
+import DashboardOverview from '../../features/dashboard/DashboardOverview';
+import ArsipPage from '../../pages/arsip/ArsipPage';
+import UploadForm from '../../pages/upload/UploadPage';
+import SettingsPage from '../../pages/settings/SettingsPage';
+import { useToast } from '../../contexts/ToastContext.jsx';
+import api from '../../lib/api';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
