@@ -70,7 +70,7 @@ def init():
                 jenis_metrics_json=json.dumps({"accuracy":0,"precision":0,"recall":0,"f1":0,"cv":0}),
                 train_size=0,
                 test_size=0,
-                split_note="Model belum ditrain. Latih via notebook Training_Model_Produksi.ipynb (149 dokumen, 80/20 split).",
+                split_note="Model terpasang. Metrics diperbarui manual oleh admin.",
             )
             db.add(model)
             db.commit()
@@ -97,7 +97,7 @@ def init():
                 jenis_metrics_json=None,
                 train_size=0,
                 test_size=0,
-                split_note="Model belum dilatih. Jalankan notebook training terlebih dahulu.",
+                split_note="Model belum terpasang. Hubungi admin untuk aktivasi.",
             )
             db.add(model)
             db.commit()

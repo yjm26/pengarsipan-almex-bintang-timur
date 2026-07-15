@@ -48,7 +48,7 @@ export default function AIModelPanel() {
           trainSize: data.train_size ?? 0,
           testSize: data.test_size ?? 0,
           splitNote: data.split_note ?? '',
-          isUntrained: data.version === 'Belum dilatih' || data.id === 0 || (data.accuracy || 0) === 0,
+          isUntrained: data.version === 'Belum dilatih' || data.id === 0,
         });
         if (data.threshold != null) {
           setThreshold(Math.round(data.threshold * 100));
@@ -159,8 +159,7 @@ export default function AIModelPanel() {
             </div>
             <h3 className="text-lg font-semibold text-zinc-900 mb-2">Model Belum Aktif</h3>
             <p className="text-sm text-zinc-500 max-w-md mb-6">
-              Model klasifikasi dilatih secara offline menggunakan dataset 149 dokumen. 
-              Hubungi administrator untuk mengaktifkan model.
+              Model klasifikasi dokumen belum terpasang. Hubungi administrator untuk mengaktifkan model.
             </p>
             <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-50 border border-zinc-100 text-xs text-zinc-500">
               <Info className="w-3.5 h-3.5" />
