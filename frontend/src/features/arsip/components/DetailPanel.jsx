@@ -1,224 +1,185 @@
-import { useState, useEffect } from 'react';
-import { X, ArrowDownLeft, ArrowUpRight, FileText, Trash2, Save, ExternalLink, Pencil, Eye } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Download, Eye, Save, Trash2, X } from 'lucide-react';
 import api from '../../../lib/api';
-import PreviewModal from './PreviewModal';
 import { useToast } from '../../../contexts/ToastContext.jsx';
+import PreviewModal from './PreviewModal';
 
-const AKURASI_COLORS = {
-  bg: { Akurat: '#00AA00', Cukup: '#D4A000', 'Tidak Akurat': '#DD0000' },
-  label: { Akurat: 'Akurat', Cukup: 'Cukup', 'Tidak Akurat': 'Tidak Akurat' },
-};
-
-function getBadge(c) {
-  const pct = Math.round((c || 0) * 100);
-  if (pct >= 75) return { label: 'Akurat', bg: AKURASI_COLORS.bg.Akurat };
-  if (pct >= 50) return { label: 'Cukup', bg: AKURASI_COLORS.bg.Cukup };
-  return { label: 'Tidak Akurat', bg: AKURASI_COLORS.bg['Tidak Akurat'] };
+function formatDate(value) {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
-function formatDate(d) {
-  if (!d) return '-';
-  try {
-    return new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-  } catch { return d; }
+function formatUploadDate(value) {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function confidenceLabel(value) {
+  const pct = Math.round((value || 0) * 100);
+  if (pct >= 90) return `${pct}%`;
+  if (pct >= 75) return `${pct}%`;
+  return `${pct}%`;
+}
+
+function DetailRow({ label, value, editing, children }) {
+  return (
+    <div className="grid min-h-9 grid-cols-[120px_1fr] items-center border-b border-[#eaeae8] px-2.5 last:border-b-0">
+      <span className="text-[11px] text-[var(--almex-text-3)]">{label}</span>
+      <div className="min-w-0 text-right text-xs font-medium text-[var(--almex-text)]">
+        {editing ? children : value || '-'}
+      </div>
+    </div>
+  );
 }
 
 export default function DetailPanel({ doc, onClose, onUpdate, onDelete }) {
   const { addToast } = useToast();
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ nama_pt: doc.nama_pt || '', tanggal_surat: doc.tanggal_surat?.split('T')[0] || '', arah: doc.arah || '', jenis: doc.jenis || '' });
   const [saving, setSaving] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
-  const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false);
-  const badge = getBadge(doc.confidence);
-  const isMasuk = doc.arah === 'Masuk';
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [form, setForm] = useState({
+    nama_pt: doc.nama_pt || '',
+    tanggal_surat: doc.tanggal_surat?.split('T')[0] || '',
+    arah: doc.arah || 'Masuk',
+    jenis: doc.jenis || '',
+  });
 
   useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    const onKey = (event) => {
+      if (event.key === 'Escape') onClose();
+    };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  async function handleSave() {
+  const inputClass = 'h-8 w-full rounded-md border border-[var(--almex-border)] bg-white px-2 text-right text-xs text-[var(--almex-text)] outline-none focus:border-[#b8b3ff] focus:ring-2 focus:ring-[rgba(75,60,255,0.08)]';
+
+  const handleSave = async () => {
     setSaving(true);
-    try {
-      const updated = await api.updateDocument(doc.id, {
-        ...form,
-        nama_pt: form.nama_pt || null,
-        tanggal_surat: form.tanggal_surat || null,
-      });
-      onUpdate(updated);
-      setEditing(false);
-      addToast('Perubahan berhasil disimpan', 'success');
-    } catch (err) {
-      addToast('Gagal menyimpan: ' + err.message, 'error');
-    } finally { setSaving(false); }
-  }
+    await onUpdate(doc.id, {
+      ...form,
+      nama_pt: form.nama_pt || null,
+      tanggal_surat: form.tanggal_surat || null,
+    });
+    setSaving(false);
+    setEditing(false);
+  };
 
-  async function handleDelete() {
-    try {
-      await api.deleteDocument(doc.id);
-      onDelete(doc.id);
-      addToast('Dokumen berhasil dihapus', 'success');
-    } catch (err) {
-      addToast('Gagal menghapus: ' + err.message, 'error');
-    } finally {
-      setShowConfirmDelete(false);
-    }
-  }
+  const handleDelete = async () => {
+    await onDelete(doc.id);
+    setShowDeleteConfirm(false);
+    onClose();
+  };
 
-  async function handleDownload() {
+  const handleDownload = async () => {
     try {
       const res = await api.request(`/api/documents/${doc.id}/download`);
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = doc.nama_file;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = doc.nama_file;
+      link.click();
       URL.revokeObjectURL(url);
       addToast(`"${doc.nama_file}" berhasil diunduh`, 'success');
     } catch (err) {
       addToast('Gagal download: ' + err.message, 'error');
     }
-  }
-
-  async function handlePreview() {
-    setShowPreview(true);
-  }
+  };
 
   return (
     <>
-      <div className="w-[340px] flex-shrink-0 border-l border-zinc-100 bg-white overflow-y-auto">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100">
-          <h3 className="text-sm font-semibold text-zinc-900">Detail Dokumen</h3>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 transition-all"><X className="w-4 h-4" /></button>
-        </div>
-        <div className="p-4 space-y-4">
-          <div className="flex items-start gap-3 p-3 rounded-xl bg-zinc-50 border border-zinc-100">
-            <div className="w-9 h-9 rounded-lg bg-red-50 border border-red-100 flex items-center justify-center"><FileText className="w-4 h-4 text-red-400" /></div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-zinc-900 truncate">{doc.nama_file}</p>
-              <p className="text-xs text-zinc-400 mt-0.5">Diunggah {doc.tanggal_unggah}</p>
-            </div>
+      <div className="fixed inset-0 z-50 grid place-items-center bg-black/35 p-5" onClick={onClose}>
+        <section
+          className="w-full max-w-[720px] overflow-hidden rounded-[12px] border border-[var(--almex-border)] bg-white shadow-[0_24px_80px_rgba(0,0,0,0.16)]"
+          onClick={(event) => event.stopPropagation()}
+          aria-label="Detail dokumen"
+        >
+          <div className="flex h-[54px] items-center justify-between border-b border-[var(--almex-border)] px-4">
+            <h2 className="text-[15px] font-semibold text-[var(--almex-text)]">Detail Dokumen</h2>
+            <button onClick={onClose} className="grid h-8 w-8 place-items-center rounded-md border border-[var(--almex-border)] bg-white text-[var(--almex-text-2)] hover:bg-[var(--almex-muted)]" aria-label="Tutup detail">
+              <X className="h-4 w-4" />
+            </button>
           </div>
-          <div>
-            <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">Metadata</h4>
-            <div className="space-y-2">
-              {[
-                ['Perusahaan', 'nama_pt'],
-                ['Tanggal Surat', 'tanggal_surat'],
-                ['Status', 'status'],
-              ].map(([label, key]) => (
-                <div key={key} className="flex items-center justify-between py-2 px-3 rounded-lg bg-zinc-50">
-                  <span className="text-xs text-zinc-500">{label}</span>
-                  {editing && key !== 'status' ? (
-                    key === 'tanggal_surat' ? (
-                      <input type="date" value={form.tanggal_surat} onChange={(e) => setForm({ ...form, tanggal_surat: e.target.value })} className="text-xs text-zinc-900 bg-white border border-zinc-200 rounded px-2 py-1 w-36" />
-                    ) : (
-                      <input type="text" value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} className="text-xs text-zinc-900 bg-white border border-zinc-200 rounded px-2 py-1 w-36" />
-                    )
-                  ) : (
-                    <span className="text-xs font-semibold text-zinc-900">{key === 'tanggal_surat' ? formatDate(doc.tanggal_surat) : doc[key] || '-'}</span>
-                  )}
-                </div>
-              ))}
+
+          <div className="grid gap-4 p-4 sm:grid-cols-2">
+            <div className="sm:col-span-2 rounded-[9px] border border-[var(--almex-border)] bg-[#fafaf9] p-3">
+              <p className="truncate text-[13px] font-medium text-[var(--almex-text)]">{doc.nama_file}</p>
+              <p className="mt-1 text-[11px] text-[var(--almex-text-3)]">Diunggah {formatUploadDate(doc.tanggal_unggah)}</p>
             </div>
-          </div>
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Klasifikasi</h4>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-semibold text-white" style={{ backgroundColor: badge.bg }}>{badge.label}</span>
-            </div>
-            <div className="space-y-2">
-              <div className={`flex items-center justify-between py-2.5 px-3 rounded-lg ${isMasuk ? 'bg-emerald-50/50 border border-emerald-100' : 'bg-red-50/50 border border-red-100'}`}>
-                <span className="text-xs text-zinc-600">Arah</span>
-                <div className="flex items-center gap-1.5">
-                  {isMasuk ? <ArrowDownLeft className="w-3.5 h-3.5" style={{ color: '#00AA00' }} /> : <ArrowUpRight className="w-3.5 h-3.5" style={{ color: '#DD0000' }} />}
-                  {editing ? (
-                    <select value={form.arah} onChange={(e) => setForm({ ...form, arah: e.target.value })} className="text-xs font-semibold text-zinc-900 bg-white border border-zinc-200 rounded px-2 py-1">
-                      <option value="Masuk">Masuk</option>
-                      <option value="Keluar">Keluar</option>
-                    </select>
-                  ) : (
-                    <span className="text-sm font-semibold text-zinc-900">{doc.arah}</span>
-                  )}
-                </div>
+
+            <section>
+              <h3 className="mb-2 text-[11px] font-semibold text-[var(--almex-text-3)]">Metadata</h3>
+              <div className="overflow-hidden rounded-[9px] border border-[var(--almex-border)]">
+                <DetailRow label="Perusahaan" value={doc.nama_pt} editing={editing}>
+                  <input value={form.nama_pt} onChange={(event) => setForm({ ...form, nama_pt: event.target.value })} className={inputClass} />
+                </DetailRow>
+                <DetailRow label="Tanggal Surat" value={formatDate(doc.tanggal_surat)} editing={editing}>
+                  <input type="date" value={form.tanggal_surat} onChange={(event) => setForm({ ...form, tanggal_surat: event.target.value })} className={inputClass} />
+                </DetailRow>
+                <DetailRow label="Status" value={doc.status || '-'} />
               </div>
-              <div className="flex items-center justify-between py-2.5 px-3 rounded-lg bg-blue-50/50 border border-blue-100">
-                <span className="text-xs text-zinc-600">Jenis</span>
-                {editing ? (
-                  <input type="text" value={form.jenis} onChange={(e) => setForm({ ...form, jenis: e.target.value })} className="text-xs font-semibold text-zinc-900 bg-white border border-zinc-200 rounded px-2 py-1 w-32" />
-                ) : (
-                  <span className="text-sm font-semibold text-zinc-900">{doc.jenis}</span>
-                )}
+            </section>
+
+            <section>
+              <h3 className="mb-2 text-[11px] font-semibold text-[var(--almex-text-3)]">Klasifikasi</h3>
+              <div className="overflow-hidden rounded-[9px] border border-[var(--almex-border)]">
+                <DetailRow label="Arah" value={doc.arah} editing={editing}>
+                  <select value={form.arah} onChange={(event) => setForm({ ...form, arah: event.target.value })} className={inputClass}>
+                    <option value="Masuk">Masuk</option>
+                    <option value="Keluar">Keluar</option>
+                  </select>
+                </DetailRow>
+                <DetailRow label="Jenis" value={doc.jenis} editing={editing}>
+                  <input value={form.jenis} onChange={(event) => setForm({ ...form, jenis: event.target.value })} className={inputClass} />
+                </DetailRow>
+                <DetailRow label="Akurasi" value={confidenceLabel(doc.confidence)} />
+              </div>
+            </section>
+          </div>
+
+          {showDeleteConfirm && (
+            <div className="border-t border-[var(--almex-border)] bg-[#fafaf9] px-4 py-3">
+              <p className="text-xs text-[var(--almex-text-2)]">Dokumen akan dihapus permanen dari arsip.</p>
+              <div className="mt-3 flex justify-end gap-2">
+                <button onClick={() => setShowDeleteConfirm(false)} className="h-8 rounded-md border border-[var(--almex-border)] bg-white px-3 text-xs font-medium text-[var(--almex-text-2)]">Batal</button>
+                <button onClick={handleDelete} className="h-8 rounded-md border border-[#7f1d1d] bg-[#7f1d1d] px-3 text-xs font-medium text-white">Hapus</button>
               </div>
             </div>
+          )}
+
+          <div className="flex flex-col gap-2 border-t border-[var(--almex-border)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap gap-2">
+              {editing ? (
+                <>
+                  <button onClick={handleSave} disabled={saving} className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[var(--almex-ink)] bg-[var(--almex-ink)] px-3 text-xs font-medium text-white disabled:opacity-60">
+                    <Save className="h-3.5 w-3.5" />{saving ? 'Menyimpan' : 'Simpan'}
+                  </button>
+                  <button onClick={() => setEditing(false)} className="h-8 rounded-md border border-[var(--almex-border)] bg-white px-3 text-xs font-medium text-[var(--almex-text-2)]">Batal</button>
+                </>
+              ) : (
+                <button onClick={() => setEditing(true)} className="h-8 rounded-md border border-[var(--almex-border)] bg-white px-3 text-xs font-medium text-[var(--almex-text-2)]">Edit</button>
+              )}
+              <button onClick={() => setShowPreview(true)} className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[var(--almex-border)] bg-white px-3 text-xs font-medium text-[var(--almex-text-2)]">
+                <Eye className="h-3.5 w-3.5" />Preview
+              </button>
+              <button onClick={handleDownload} className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[var(--almex-border)] bg-white px-3 text-xs font-medium text-[var(--almex-text-2)]">
+                <Download className="h-3.5 w-3.5" />Download
+              </button>
+            </div>
+            <button onClick={() => setShowDeleteConfirm(true)} className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[var(--almex-border)] bg-white px-3 text-xs font-medium text-[#7f1d1d]">
+              <Trash2 className="h-3.5 w-3.5" />Hapus
+            </button>
           </div>
-          {/* 3 tombol: Edit / Preview / Delete */}
-          <div className="flex items-center gap-2 pt-2">
-            {editing ? (
-              <>
-                <button onClick={handleSave} disabled={saving} className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-white transition-all disabled:opacity-60" style={{ backgroundColor: '#C49A38' }}>
-                  <Save className="w-3.5 h-3.5" /> {saving ? 'Menyimpan...' : 'Simpan'}
-                </button>
-                <button onClick={() => setEditing(false)} className="px-4 py-2.5 rounded-xl text-xs font-semibold text-zinc-600 bg-zinc-100 hover:bg-zinc-200 transition-all">Batal</button>
-              </>
-            ) : (
-              <>
-                <button onClick={() => setEditing(true)} className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold text-zinc-600 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 transition-all">
-                  <Pencil className="w-3.5 h-3.5" /> Edit
-                </button>
-                <button onClick={handlePreview} className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold text-zinc-600 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 transition-all">
-                  <Eye className="w-3.5 h-3.5" /> Preview
-                </button>
-                {showConfirmDelete ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-red-600 font-medium">Yakin?</span>
-                    <button onClick={() => setShowConfirmDeleteModal(true)} className="px-3 py-2 rounded-xl text-xs font-semibold text-white bg-red-500 hover:bg-red-600">Ya</button>
-                    <button onClick={() => setShowConfirmDelete(false)} className="px-3 py-2 rounded-xl text-xs font-semibold text-zinc-600 bg-zinc-100">Batal</button>
-                  </div>
-                ) : (
-                  <button onClick={() => setShowConfirmDelete(true)} className="p-2.5 rounded-xl hover:bg-red-50 text-zinc-400 hover:text-red-500 border border-zinc-200 transition-all"><Trash2 className="w-3.5 h-3.5" /></button>
-                )}
-              </>
-            )}
-          </div>
-          {/* Download lebar di bawah */}
-          <button onClick={handleDownload} className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl text-xs font-medium text-zinc-600 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 transition-all">
-            <ExternalLink className="w-3.5 h-3.5" /> Download
-          </button>
-        </div>
+        </section>
       </div>
 
-      {/* Preview Modal */}
-      {showPreview && (
-        <PreviewModal doc={doc} onClose={() => setShowPreview(false)} />
-      )}
-
-      {/* Modal konfirmasi hapus gede */}
-      {showConfirmDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4 text-center">
-            <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
-              <Trash2 className="w-6 h-6 text-red-500" />
-            </div>
-            <h3 className="text-base font-semibold text-zinc-900 mb-1">Hapus Dokumen?</h3>
-            <p className="text-sm text-zinc-500 mb-6">Dokumen akan dihapus secara permanen dari arsip.</p>
-            <div className="flex items-center gap-3 justify-center">
-              <button onClick={() => setShowConfirmDeleteModal(false)} className="px-5 py-2.5 rounded-xl text-sm font-medium text-zinc-600 bg-zinc-100 hover:bg-zinc-200 transition-all">
-                Batal
-              </button>
-              <button onClick={handleDelete} className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-500 hover:bg-red-600 transition-all">
-                Hapus
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {showPreview && <PreviewModal doc={doc} onClose={() => setShowPreview(false)} />}
     </>
   );
 }

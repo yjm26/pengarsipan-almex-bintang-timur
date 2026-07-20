@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
 import DocumentTable from '../../features/arsip/components/DocumentTable';
 import api from '../../lib/api';
 import { useToast } from '../../contexts/ToastContext.jsx';
@@ -34,14 +33,17 @@ export default function ArsipPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [addToast]);
 
-  useEffect(() => { fetchDocuments(); }, [fetchDocuments]);
+  useEffect(() => {
+    const timer = setTimeout(fetchDocuments, 0);
+    return () => clearTimeout(timer);
+  }, [fetchDocuments]);
 
   const handleDelete = async (id) => {
     try {
       await api.deleteDocument(id);
-      setDocuments(prev => prev.filter(d => d.id !== id));
+      setDocuments((prev) => prev.filter((d) => d.id !== id));
       addToast('Dokumen berhasil dihapus', 'success');
     } catch (err) {
       addToast('Gagal menghapus dokumen: ' + err.message, 'error');
@@ -50,8 +52,8 @@ export default function ArsipPage() {
 
   const handleBulkDelete = async (ids) => {
     try {
-      await Promise.all(ids.map(id => api.deleteDocument(id)));
-      setDocuments(prev => prev.filter(d => !ids.includes(d.id)));
+      await Promise.all(ids.map((id) => api.deleteDocument(id)));
+      setDocuments((prev) => prev.filter((d) => !ids.includes(d.id)));
       addToast(`${ids.length} dokumen berhasil dihapus`, 'success');
     } catch (err) {
       addToast('Gagal menghapus dokumen: ' + err.message, 'error');
@@ -61,7 +63,7 @@ export default function ArsipPage() {
   const handleUpdate = async (id, data) => {
     try {
       const res = await api.updateDocument(id, data);
-      setDocuments(prev => prev.map(d => d.id === id ? { ...d, ...res } : d));
+      setDocuments((prev) => prev.map((d) => (d.id === id ? { ...d, ...res } : d)));
       addToast('Dokumen berhasil diperbarui', 'success');
     } catch (err) {
       addToast('Gagal memperbarui dokumen: ' + err.message, 'error');
@@ -69,22 +71,22 @@ export default function ArsipPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.05 }}>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Arsip Surat</h1>
-        <p className="text-sm text-zinc-500 mt-1.5 font-light">Semua dokumen terklasifikasi.</p>
-      </motion.div>
+    <div className="space-y-[18px]">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.02em] text-[var(--almex-text)]">Arsip Surat</h1>
+          <p className="mt-1 text-[13px] text-[var(--almex-text-2)]">Kelola dokumen masuk, dokumen keluar, dan hasil klasifikasi arsip.</p>
+        </div>
+      </div>
 
-      <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.15 }}>
-        <DocumentTable
-          documents={documents}
-          loading={loading}
-          onRefresh={fetchDocuments}
-          onDelete={handleDelete}
-          onBulkDelete={handleBulkDelete}
-          onUpdate={handleUpdate}
-        />
-      </motion.div>
+      <DocumentTable
+        documents={documents}
+        loading={loading}
+        onRefresh={fetchDocuments}
+        onDelete={handleDelete}
+        onBulkDelete={handleBulkDelete}
+        onUpdate={handleUpdate}
+      />
     </div>
   );
 }

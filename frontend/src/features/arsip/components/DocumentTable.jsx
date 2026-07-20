@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
-import { Search, Filter, ChevronLeft, ChevronRight, Eye, Pencil, Trash2, Download, ArrowDownLeft, ArrowUpRight, X, ChevronDown, RefreshCw, FileText, SearchX, FilePlus } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { ChevronLeft, ChevronRight, Download, Eye, FilePlus, Filter, MoreHorizontal, RefreshCw, Search, SearchX, X } from 'lucide-react';
 import DetailPanel from './DetailPanel';
 import PreviewModal from './PreviewModal';
 import api from '../../../lib/api';
@@ -19,44 +19,44 @@ function useDebounce(value, delay) {
 
 function Pagination({ page, totalPages, onChange }) {
   if (totalPages <= 1) return null;
-
-  const getPages = () => {
-    const pages = [];
-    const add = (p) => pages.push({ type: 'page', num: p, active: p === page });
-    const ellipsis = () => { if (pages[pages.length - 1]?.type !== 'ellipsis') pages.push({ type: 'ellipsis' }); };
-
-    add(1);
-    if (page > 4) ellipsis();
-    for (let p = Math.max(2, page - 2); p <= Math.min(totalPages - 1, page + 2); p++) add(p);
-    if (page < totalPages - 3) ellipsis();
-    if (totalPages > 1) add(totalPages);
-    return pages;
-  };
-
-  const pages = getPages();
+  const pages = Array.from({ length: totalPages }, (_, index) => index + 1).filter((item) => (
+    item === 1 || item === totalPages || Math.abs(item - page) <= 1
+  ));
 
   return (
-    <div className="flex items-center justify-between mt-3">
-      <p className="text-xs text-zinc-500">Halaman {page} dari {totalPages}</p>
+    <div className="mt-3 flex items-center justify-between">
+      <p className="text-xs text-[var(--almex-text-3)]">Halaman {page} dari {totalPages}</p>
       <div className="flex items-center gap-1">
-        <button onClick={() => onChange(page - 1)} disabled={page === 1} className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 disabled:opacity-30 transition-all">
-          <ChevronLeft className="w-4 h-4" />
+        <button onClick={() => onChange(page - 1)} disabled={page === 1} className="grid h-7 w-7 place-items-center rounded-md border border-[var(--almex-border)] bg-white text-[var(--almex-text-2)] disabled:opacity-35">
+          <ChevronLeft className="h-3.5 w-3.5" />
         </button>
-        {pages.map((p, i) =>
-          p.type === 'ellipsis' ? (
-            <span key={`e${i}`} className="w-7 h-7 flex items-center justify-center text-xs text-zinc-400">...</span>
-          ) : (
-            <button key={p.num} onClick={() => onChange(p.num)} className={`w-7 h-7 text-xs rounded-lg transition-all ${p.active ? 'bg-zinc-900 text-white' : 'hover:bg-zinc-100 text-zinc-600'}`}>
-              {p.num}
-            </button>
-          )
-        )}
-        <button onClick={() => onChange(page + 1)} disabled={page === totalPages} className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 disabled:opacity-30 transition-all">
-          <ChevronRight className="w-4 h-4" />
+        {pages.map((item, index) => {
+          const prev = pages[index - 1];
+          return (
+            <span key={item} className="flex items-center gap-1">
+              {prev && item - prev > 1 && <span className="px-1 text-xs text-[var(--almex-text-3)]">...</span>}
+              <button onClick={() => onChange(item)} className={`h-7 min-w-7 rounded-md px-2 text-xs ${item === page ? 'bg-[var(--almex-ink)] text-white' : 'border border-[var(--almex-border)] bg-white text-[var(--almex-text-2)]'}`}>
+                {item}
+              </button>
+            </span>
+          );
+        })}
+        <button onClick={() => onChange(page + 1)} disabled={page === totalPages} className="grid h-7 w-7 place-items-center rounded-md border border-[var(--almex-border)] bg-white text-[var(--almex-text-2)] disabled:opacity-35">
+          <ChevronRight className="h-3.5 w-3.5" />
         </button>
       </div>
     </div>
   );
+}
+
+function FileBadge({ filename }) {
+  const lower = (filename || '').toLowerCase();
+  const type = lower.endsWith('.doc') || lower.endsWith('.docx') ? 'DOC' : lower.endsWith('.xls') || lower.endsWith('.xlsx') ? 'XLS' : 'PDF';
+  return <span className="grid h-[22px] w-[28px] place-items-center rounded-[5px] border border-[var(--almex-border)] bg-[var(--almex-muted)] text-[9px] font-semibold text-[var(--almex-text-2)]">{type}</span>;
+}
+
+function DirectionPill({ value }) {
+  return <span className="inline-flex h-[22px] items-center rounded-full border border-[var(--almex-border)] bg-[#fafaf9] px-2 text-[11px] font-medium text-[var(--almex-text-2)]">{value || '-'}</span>;
 }
 
 export default function DocumentTable({ documents, loading, onRefresh, onDelete, onBulkDelete, onUpdate }) {
@@ -69,68 +69,40 @@ export default function DocumentTable({ documents, loading, onRefresh, onDelete,
   const [expanded, setExpanded] = useState(false);
   const [detailDoc, setDetailDoc] = useState(null);
   const [previewDoc, setPreviewDoc] = useState(null);
-  const [showConfirmBulkDelete, setShowConfirmBulkDelete] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [showConfirmBulkDelete, setShowConfirmBulkDelete] = useState(false);
 
   const filtered = useMemo(() => {
-    let data = [...documents];
-    if (search) {
-      const q = search.toLowerCase();
-      data = data.filter(d => d.nama_file.toLowerCase().includes(q) || (d.nama_pt || '').toLowerCase().includes(q));
-    }
-    if (filters.arah) data = data.filter(d => d.arah === filters.arah);
-    if (filters.jenis) data = data.filter(d => d.jenis === filters.jenis);
-    if (filters.confidence === '90') data = data.filter(d => d.confidence >= 0.9);
-    else if (filters.confidence === '75') data = data.filter(d => d.confidence >= 0.75 && d.confidence < 0.9);
-    else if (filters.confidence === 'low') data = data.filter(d => d.confidence < 0.75);
-    return data;
-  }, [documents, search, filters]);
+    const q = search.trim().toLowerCase();
+    return documents.filter((doc) => {
+      const matchSearch = !q || [doc.nama_file, doc.nama_pt, doc.jenis, doc.arah].filter(Boolean).some((item) => String(item).toLowerCase().includes(q));
+      const matchArah = !filters.arah || doc.arah === filters.arah;
+      const matchJenis = !filters.jenis || doc.jenis === filters.jenis;
+      const matchConfidence = !filters.confidence
+        || (filters.confidence === '90' && doc.confidence >= 0.9)
+        || (filters.confidence === '75' && doc.confidence >= 0.75 && doc.confidence < 0.9)
+        || (filters.confidence === 'low' && doc.confidence < 0.75);
+      return matchSearch && matchArah && matchJenis && matchConfidence;
+    });
+  }, [documents, filters, search]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const currentPage = Math.min(page, totalPages);
+  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
   const hasActiveFilters = filters.arah || filters.jenis || filters.confidence;
 
-  useEffect(() => {
-    setPage(1);
-  }, [search, filters]);
-
-  const handleFilterChange = (key, val) => {
-    if (key === 'clear') setFilters({ arah: '', jenis: '', confidence: '' });
-    else setFilters(prev => ({ ...prev, [key]: val }));
+  const toggleSelect = (id) => {
+    setSelected((prev) => prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]);
   };
 
   const toggleSelectAll = () => {
-    const ids = paginated.map(d => d.id);
-    setSelected(prev => prev.length === ids.length ? [] : ids);
+    const ids = paginated.map((doc) => doc.id);
+    setSelected((prev) => prev.length === ids.length ? [] : ids);
   };
 
-  const toggleSelect = (id) => {
-    setSelected(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
-  };
-
-  const handleBulkDelete = async () => {
-    if (!selected.length) return;
-    try {
-      await onBulkDelete(selected);
-      addToast(`${selected.length} dokumen berhasil dihapus`, 'success');
-      setSelected([]);
-    } catch (err) {
-      addToast(err.message || 'Gagal menghapus dokumen', 'error');
-    } finally {
-      setShowConfirmBulkDelete(false);
-    }
-  };
-
-  const getBadge = (confidence) => {
-    const pct = Math.round(confidence * 100);
-    if (pct >= 75) return { bg: '#00AA00', label: 'Akurat' };
-    if (pct >= 50) return { bg: '#D4A000', label: 'Cukup' };
-    return { bg: '#DD0000', label: 'Tidak Akurat' };
-  };
-
-  const handleUpdate = async (id, data) => {
-    await onUpdate(id, data);
-    setDetailDoc(prev => prev && prev.id === id ? { ...prev, ...data } : prev);
+  const clearFilters = () => {
+    setFilters({ arah: '', jenis: '', confidence: '' });
+    setSearchRaw('');
   };
 
   const handleDownload = async (doc) => {
@@ -138,12 +110,10 @@ export default function DocumentTable({ documents, loading, onRefresh, onDelete,
       const res = await api.request(`/api/documents/${doc.id}/download`);
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = doc.nama_file;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = doc.nama_file;
+      link.click();
       URL.revokeObjectURL(url);
       addToast(`"${doc.nama_file}" berhasil diunduh`, 'success');
     } catch (err) {
@@ -151,79 +121,59 @@ export default function DocumentTable({ documents, loading, onRefresh, onDelete,
     }
   };
 
-  const handleDeleteRow = (id) => {
-    setConfirmDeleteId(id);
-  };
-
   const confirmDelete = async () => {
     if (!confirmDeleteId) return;
-    try {
-      await onDelete(confirmDeleteId);
-      addToast('Dokumen berhasil dihapus', 'success');
-    } catch (err) {
-      addToast('Gagal menghapus dokumen: ' + err.message, 'error');
-    } finally {
-      setConfirmDeleteId(null);
-    }
+    await onDelete(confirmDeleteId);
+    setConfirmDeleteId(null);
   };
 
-  const handlePreview = (doc) => {
-    setPreviewDoc(doc);
+  const handleBulkDelete = async () => {
+    if (!selected.length) return;
+    await onBulkDelete(selected);
+    setSelected([]);
+    setShowConfirmBulkDelete(false);
   };
 
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl shadow-sm border border-zinc-200/60 p-12 text-center">
-        <RefreshCw className="w-6 h-6 text-zinc-400 animate-spin mx-auto mb-3" />
-        <p className="text-sm text-zinc-500">Memuat dokumen...</p>
-      </div>
+      <section className="rounded-[10px] border border-[var(--almex-border)] bg-white p-12 text-center">
+        <RefreshCw className="mx-auto mb-3 h-5 w-5 animate-spin text-[var(--almex-text-3)]" />
+        <p className="text-sm text-[var(--almex-text-2)]">Memuat dokumen...</p>
+      </section>
     );
   }
 
   return (
-    <div className="flex gap-4">
-      <div className="flex-1 min-w-0">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3 flex-1">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-              <input type="text" placeholder="Cari dokumen..." value={searchRaw} onChange={(e) => setSearchRaw(e.target.value)} className="w-full pl-9 pr-8 py-1.5 text-xs rounded-lg border border-zinc-200/60 bg-zinc-50/50 outline-none focus:border-zinc-400 transition-all" />
-              {searchRaw && (
-                <button onClick={() => setSearchRaw('')} className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-zinc-200 text-zinc-400 hover:text-zinc-600 transition-all">
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-            <button onClick={() => setExpanded(!expanded)} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition-all ${expanded ? 'border-zinc-400 bg-zinc-100' : 'border-zinc-200/60 bg-zinc-50/50 hover:bg-zinc-100'} ${hasActiveFilters ? 'border-zinc-900 bg-zinc-900 text-white hover:bg-zinc-800' : 'text-zinc-600'}`}>
-              <Filter className="w-3.5 h-3.5" /> Filter {hasActiveFilters && `(${Object.values(filters).filter(Boolean).length})`}
-            </button>
-            {selected.length > 0 && (
-              <button onClick={() => setShowConfirmBulkDelete(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 border border-red-100 transition-all">
-                <Trash2 className="w-3.5 h-3.5" /> Hapus ({selected.length})
-              </button>
-            )}
+    <>
+      <section className="overflow-hidden rounded-[10px] border border-[var(--almex-border)] bg-white">
+        <div className="flex min-h-12 flex-col gap-2 border-b border-[var(--almex-border)] px-3.5 py-2.5 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h3 className="text-[13px] font-semibold text-[var(--almex-text)]">Daftar Dokumen</h3>
+            <p className="mt-0.5 text-xs text-[var(--almex-text-3)]">{filtered.length} dokumen ditemukan</p>
           </div>
-          <button onClick={onRefresh} className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition-all"><RefreshCw className="w-4 h-4" /></button>
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="flex h-8 min-w-[240px] flex-1 items-center gap-2 rounded-md border border-[var(--almex-border)] bg-[#fafaf9] px-2.5 text-xs text-[var(--almex-text-2)] lg:w-[280px] lg:flex-none">
+              <Search className="h-3.5 w-3.5" />
+              <input value={searchRaw} onChange={(event) => { setSearchRaw(event.target.value); setPage(1); }} placeholder="Cari dokumen..." className="min-w-0 flex-1 bg-transparent text-xs text-[var(--almex-text)] outline-none placeholder:text-[var(--almex-text-3)]" />
+              {searchRaw && <button type="button" onClick={() => { setSearchRaw(''); setPage(1); }} className="text-[var(--almex-text-3)]"><X className="h-3.5 w-3.5" /></button>}
+            </label>
+            <button onClick={() => setExpanded((value) => !value)} className={`inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium ${hasActiveFilters ? 'border-[var(--almex-ink)] bg-[var(--almex-ink)] text-white' : 'border-[var(--almex-border)] bg-white text-[var(--almex-text-2)]'}`}>
+              <Filter className="h-3.5 w-3.5" />Filter
+            </button>
+            <button onClick={onRefresh} className="grid h-8 w-8 place-items-center rounded-md border border-[var(--almex-border)] bg-white text-[var(--almex-text-2)]" aria-label="Refresh dokumen">
+              <RefreshCw className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
 
-        {/* Filter inline */}
         {expanded && (
-          <div className="flex flex-wrap items-center gap-2 mb-4 p-3 bg-zinc-50/50 border border-zinc-200/60 rounded-lg">
-            <select
-              value={filters.arah}
-              onChange={(e) => handleFilterChange('arah', e.target.value)}
-              className="px-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-amber-400 cursor-pointer"
-            >
+          <div className="flex flex-wrap items-center gap-2 border-b border-[var(--almex-border)] bg-[#fafaf9] px-3.5 py-2.5">
+            <select value={filters.arah} onChange={(event) => { setFilters((prev) => ({ ...prev, arah: event.target.value })); setPage(1); }} className="h-8 rounded-md border border-[var(--almex-border)] bg-white px-2.5 text-xs text-[var(--almex-text-2)] outline-none focus:border-[#b8b3ff]">
               <option value="">Semua Arah</option>
               <option value="Masuk">Masuk</option>
               <option value="Keluar">Keluar</option>
             </select>
-            <select
-              value={filters.jenis}
-              onChange={(e) => handleFilterChange('jenis', e.target.value)}
-              className="px-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-amber-400 cursor-pointer"
-            >
+            <select value={filters.jenis} onChange={(event) => { setFilters((prev) => ({ ...prev, jenis: event.target.value })); setPage(1); }} className="h-8 rounded-md border border-[var(--almex-border)] bg-white px-2.5 text-xs text-[var(--almex-text-2)] outline-none focus:border-[#b8b3ff]">
               <option value="">Semua Jenis</option>
               <option value="PurchaseOrder">PurchaseOrder</option>
               <option value="Invoice">Invoice</option>
@@ -232,163 +182,106 @@ export default function DocumentTable({ documents, loading, onRefresh, onDelete,
               <option value="SuratJalan">SuratJalan</option>
               <option value="Lainnya">Lainnya</option>
             </select>
-            <select
-              value={filters.confidence}
-              onChange={(e) => handleFilterChange('confidence', e.target.value)}
-              className="px-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-amber-400 cursor-pointer"
-            >
+            <select value={filters.confidence} onChange={(event) => { setFilters((prev) => ({ ...prev, confidence: event.target.value })); setPage(1); }} className="h-8 rounded-md border border-[var(--almex-border)] bg-white px-2.5 text-xs text-[var(--almex-text-2)] outline-none focus:border-[#b8b3ff]">
               <option value="">Semua Akurasi</option>
               <option value="90">Akurat (≥90%)</option>
               <option value="75">Cukup (75-89%)</option>
               <option value="low">Rendah (&lt;75%)</option>
             </select>
-            {hasActiveFilters && (
-              <button onClick={() => handleFilterChange('clear')} className="flex items-center gap-1 px-2 py-1.5 text-xs text-zinc-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
-                <X className="w-3 h-3" /> Reset
-              </button>
-            )}
+            {(hasActiveFilters || searchRaw) && <button onClick={clearFilters} className="h-8 rounded-md border border-[var(--almex-border)] bg-white px-2.5 text-xs text-[var(--almex-text-2)]">Reset</button>}
           </div>
         )}
 
-        {/* Info */}
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-xs text-zinc-500">{filtered.length} dokumen ditemukan</p>
-          {selected.length > 0 && <button onClick={() => setSelected([])} className="text-xs text-zinc-400 hover:text-zinc-600">Batal pilih</button>}
-        </div>
+        {selected.length > 0 && (
+          <div className="flex items-center justify-between border-b border-[var(--almex-border)] bg-[#fafaf9] px-3.5 py-2 text-xs text-[var(--almex-text-2)]">
+            <span>{selected.length} dokumen dipilih</span>
+            <div className="flex gap-2">
+              <button onClick={() => setSelected([])} className="h-7 rounded-md border border-[var(--almex-border)] bg-white px-2.5 text-xs">Batal pilih</button>
+              <button onClick={() => setShowConfirmBulkDelete(true)} className="h-7 rounded-md border border-[var(--almex-border)] bg-white px-2.5 text-xs text-[#7f1d1d]">Hapus</button>
+            </div>
+          </div>
+        )}
 
-        {/* Table */}
-        <div className="bg-white rounded-2xl shadow-sm border border-zinc-200/60 overflow-hidden">
-          <table className="w-full">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[940px] border-collapse">
             <thead>
-              <tr className="border-b border-zinc-100">
-                <th className="pl-3 pr-1 py-2 w-6"><input type="checkbox" checked={selected.length === paginated.length && paginated.length > 0} onChange={toggleSelectAll} className="rounded border-zinc-300 w-3 h-3" /></th>
-                <th className="text-left px-2 py-2 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">File</th>
-                <th className="text-left px-2 py-2 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Perusahaan</th>
-                <th className="text-left px-2 py-2 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Tanggal</th>
-                <th className="text-left px-2 py-2 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Arah</th>
-                <th className="text-left px-2 py-2 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Kategori</th>
-                <th className="w-10"></th>
+              <tr>
+                <th className="h-[34px] w-9 border-b border-[var(--almex-border)] bg-[#fafaf9] px-2 text-left"><input type="checkbox" checked={selected.length === paginated.length && paginated.length > 0} onChange={toggleSelectAll} className="h-3.5 w-3.5" aria-label="Pilih semua dokumen" /></th>
+                {['Nama Dokumen', 'Arah', 'Jenis', 'Perusahaan', 'Tanggal', 'Aksi'].map((header) => (
+                  <th key={header} className="h-[34px] border-b border-[var(--almex-border)] bg-[#fafaf9] px-2.5 text-left text-[11px] font-medium text-[var(--almex-text-3)] last:text-right">{header}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {paginated.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-14">
-                    <div className="flex flex-col items-center gap-3">
-                      {hasActiveFilters || search ? (
-                        <>
-                          <div className="w-12 h-12 rounded-xl bg-zinc-50 border border-zinc-100 flex items-center justify-center">
-                            <SearchX className="w-6 h-6 text-zinc-300" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-zinc-500">Tidak ada dokumen yang cocok</p>
-                            <p className="text-xs text-zinc-400 mt-0.5">Coba ubah kata kunci atau filter</p>
-                          </div>
-                          <button
-                            onClick={() => { setSearchRaw(''); setFilters({ arah: '', jenis: '', confidence: '' }); }}
-                            className="mt-1 px-3 py-1.5 text-xs font-medium text-zinc-600 bg-zinc-100 rounded-lg hover:bg-zinc-200 transition-all"
-                          >
-                            Reset pencarian
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <div className="w-12 h-12 rounded-xl bg-zinc-50 border border-zinc-100 flex items-center justify-center">
-                            <FilePlus className="w-6 h-6 text-zinc-300" />
-                          </div>
-                          <div className="flex flex-col items-center gap-1">
-                            <p className="text-sm font-medium text-zinc-500">Belum ada dokumen</p>
-                            <p className="text-xs text-zinc-400">Unggah dokumen pertama Anda</p>
-                          </div>
-                        </>
-                      )}
+                  <td colSpan={7} className="px-6 py-12 text-center">
+                    <div className="mx-auto grid max-w-sm justify-items-center gap-2">
+                      {search || hasActiveFilters ? <SearchX className="h-6 w-6 text-[var(--almex-text-3)]" /> : <FilePlus className="h-6 w-6 text-[var(--almex-text-3)]" />}
+                      <p className="text-sm font-medium text-[var(--almex-text)]">{search || hasActiveFilters ? 'Dokumen tidak ditemukan' : 'Belum ada dokumen'}</p>
+                      <p className="text-xs text-[var(--almex-text-3)]">{search || hasActiveFilters ? 'Coba ubah kata kunci atau filter.' : 'Upload dokumen pertama untuk mulai membuat arsip.'}</p>
                     </div>
                   </td>
                 </tr>
-              ) : paginated.map((doc) => {
-                const isMasuk = doc.arah === 'Masuk';
-                return (
-                  <tr key={doc.id} className={`group border-b border-zinc-50 hover:bg-zinc-50/50 cursor-pointer transition-colors ${selected.includes(doc.id) ? 'bg-zinc-50' : ''}`} onClick={() => setDetailDoc(doc)}>
-                    <td className="pl-3 pr-1 py-1.5" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selected.includes(doc.id)} onChange={() => toggleSelect(doc.id)} className="rounded border-zinc-300 w-3 h-3" /></td>
-                    <td className="px-2 py-1.5"><div className="flex items-center gap-1.5 min-w-0"><div className="w-5 h-5 rounded flex items-center justify-center bg-zinc-100 flex-shrink-0"><FileText className="w-2.5 h-2.5 text-zinc-500" /></div><div className="min-w-0"><p className="text-[11px] font-medium text-zinc-900 truncate max-w-[140px]">{doc.nama_file}</p><p className="text-[9px] text-zinc-400">{doc.ukuran ? `${(doc.ukuran / 1024 / 1024).toFixed(1)} MB` : ''}</p></div></div></td>
-                    <td className="px-2 py-1.5 text-[11px] text-zinc-600 max-w-[120px] truncate">{doc.nama_pt || <span className="text-zinc-300">-</span>}</td>
-                    <td className="px-2 py-1.5 text-[11px] text-zinc-600 whitespace-nowrap">{doc.tanggalSurat || <span className="text-zinc-300">-</span>}</td>
-                    <td className="px-2 py-1.5">
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium text-white" style={{ backgroundColor: isMasuk ? '#00AA00' : '#DD0000' }}>
-                        {isMasuk ? <ArrowDownLeft className="w-2.5 h-2.5" /> : <ArrowUpRight className="w-2.5 h-2.5" />}
-                        {doc.arah}
-                      </span>
-                    </td>
-                    <td className="px-2 py-1.5 text-[11px] text-zinc-600 max-w-[100px] truncate">{doc.jenis}</td>
-                    <td className="pr-3 py-1.5" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center gap-1">
-                        <button onClick={() => handlePreview(doc)} className="p-1.5 rounded-lg bg-zinc-200 hover:bg-violet-100 text-zinc-700 hover:text-violet-600 transition-all" title="Preview"><Eye className="w-3.5 h-3.5" /></button>
-                        <button onClick={() => handleDownload(doc)} className="p-1.5 rounded-lg bg-zinc-200 hover:bg-emerald-100 text-zinc-700 hover:text-emerald-600 transition-all" title="Download"><Download className="w-3.5 h-3.5" /></button>
-                        <button onClick={() => handleDeleteRow(doc.id)} className="p-1.5 rounded-lg bg-zinc-200 hover:bg-red-100 text-zinc-700 hover:text-red-600 transition-all" title="Hapus"><Trash2 className="w-3.5 h-3.5" /></button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
+              ) : paginated.map((doc) => (
+                <tr key={doc.id} onClick={() => setDetailDoc(doc)} className="group cursor-pointer hover:bg-[var(--almex-bg)]">
+                  <td className="h-[42px] border-b border-[#eaeae8] px-2" onClick={(event) => event.stopPropagation()}>
+                    <input type="checkbox" checked={selected.includes(doc.id)} onChange={() => toggleSelect(doc.id)} className="h-3.5 w-3.5" aria-label={`Pilih ${doc.nama_file}`} />
+                  </td>
+                  <td className="h-[42px] border-b border-[#eaeae8] px-2.5">
+                    <div className="flex min-w-0 items-center gap-2 text-xs font-medium text-[var(--almex-text)]">
+                      <FileBadge filename={doc.nama_file} />
+                      <span className="max-w-[300px] truncate">{doc.nama_file}</span>
+                    </div>
+                  </td>
+                  <td className="h-[42px] border-b border-[#eaeae8] px-2.5"><DirectionPill value={doc.arah} /></td>
+                  <td className="h-[42px] border-b border-[#eaeae8] px-2.5 text-xs text-[var(--almex-text-2)]">{doc.jenis || '-'}</td>
+                  <td className="h-[42px] border-b border-[#eaeae8] px-2.5 text-xs text-[var(--almex-text-2)]">{doc.nama_pt || '-'}</td>
+                  <td className="h-[42px] border-b border-[#eaeae8] px-2.5 text-xs text-[var(--almex-text-2)]">{doc.tanggalSurat || '-'}</td>
+                  <td className="h-[42px] border-b border-[#eaeae8] px-2.5" onClick={(event) => event.stopPropagation()}>
+                    <div className="flex justify-end gap-1.5">
+                      <button onClick={() => setPreviewDoc(doc)} className="inline-flex h-7 items-center gap-1 rounded-md border border-[var(--almex-border)] bg-white px-2 text-[11px] font-medium text-[var(--almex-text-2)]"><Eye className="h-3.5 w-3.5" />Preview</button>
+                      <button onClick={() => handleDownload(doc)} className="grid h-7 w-7 place-items-center rounded-md border border-[var(--almex-border)] bg-white text-[var(--almex-text-2)]" title="Download"><Download className="h-3.5 w-3.5" /></button>
+                      <button onClick={() => setConfirmDeleteId(doc.id)} className="grid h-7 w-7 place-items-center rounded-md border border-[var(--almex-border)] bg-white text-[var(--almex-text-2)]" title="Aksi"><MoreHorizontal className="h-3.5 w-3.5" /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
+      </section>
 
-        {/* Pagination */}
-        <Pagination page={page} totalPages={totalPages} onChange={setPage} />
-      </div>
+      <Pagination page={currentPage} totalPages={totalPages} onChange={setPage} />
 
-      {/* Detail panel */}
-      {detailDoc && (
-        <DetailPanel doc={detailDoc} onClose={() => setDetailDoc(null)} onUpdate={handleUpdate} onDelete={(id) => { onDelete(id); setDetailDoc(null); }} />
-      )}
+      {detailDoc && <DetailPanel key={detailDoc.id} doc={detailDoc} onClose={() => setDetailDoc(null)} onUpdate={onUpdate} onDelete={onDelete} />}
+      {previewDoc && <PreviewModal doc={previewDoc} onClose={() => setPreviewDoc(null)} />}
 
-      {/* Preview modal */}
-      {previewDoc && (
-        <PreviewModal doc={previewDoc} onClose={() => setPreviewDoc(null)} />
-      )}
-
-      {/* Modal konfirmasi hapus (tengah layar, gede) */}
       {confirmDeleteId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4 text-center">
-            <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
-              <Trash2 className="w-6 h-6 text-red-500" />
-            </div>
-            <h3 className="text-base font-semibold text-zinc-900 mb-1">Hapus Dokumen?</h3>
-            <p className="text-sm text-zinc-500 mb-6">Dokumen akan dihapus secara permanen dari arsip.</p>
-            <div className="flex items-center gap-3 justify-center">
-              <button onClick={() => setConfirmDeleteId(null)} className="px-5 py-2.5 rounded-xl text-sm font-medium text-zinc-600 bg-zinc-100 hover:bg-zinc-200 transition-all">
-                Batal
-              </button>
-              <button onClick={confirmDelete} className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-500 hover:bg-red-600 transition-all">
-                Hapus
-              </button>
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/35 p-5">
+          <div className="w-full max-w-sm rounded-[10px] border border-[var(--almex-border)] bg-white p-5 shadow-xl">
+            <h3 className="text-sm font-semibold text-[var(--almex-text)]">Hapus dokumen?</h3>
+            <p className="mt-1 text-xs text-[var(--almex-text-2)]">Dokumen akan dihapus permanen dari arsip.</p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button onClick={() => setConfirmDeleteId(null)} className="h-8 rounded-md border border-[var(--almex-border)] bg-white px-3 text-xs text-[var(--almex-text-2)]">Batal</button>
+              <button onClick={confirmDelete} className="h-8 rounded-md border border-[#7f1d1d] bg-[#7f1d1d] px-3 text-xs font-medium text-white">Hapus</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal konfirmasi bulk delete */}
       {showConfirmBulkDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4 text-center">
-            <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
-              <Trash2 className="w-6 h-6 text-red-500" />
-            </div>
-            <h3 className="text-base font-semibold text-zinc-900 mb-1">Hapus {selected.length} Dokumen?</h3>
-            <p className="text-sm text-zinc-500 mb-6">Semua dokumen terpilih akan dihapus secara permanen.</p>
-            <div className="flex items-center gap-3 justify-center">
-              <button onClick={() => setShowConfirmBulkDelete(false)} className="px-5 py-2.5 rounded-xl text-sm font-medium text-zinc-600 bg-zinc-100 hover:bg-zinc-200 transition-all">
-                Batal
-              </button>
-              <button onClick={handleBulkDelete} className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-500 hover:bg-red-600 transition-all">
-                Hapus
-              </button>
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/35 p-5">
+          <div className="w-full max-w-sm rounded-[10px] border border-[var(--almex-border)] bg-white p-5 shadow-xl">
+            <h3 className="text-sm font-semibold text-[var(--almex-text)]">Hapus {selected.length} dokumen?</h3>
+            <p className="mt-1 text-xs text-[var(--almex-text-2)]">Semua dokumen terpilih akan dihapus permanen.</p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button onClick={() => setShowConfirmBulkDelete(false)} className="h-8 rounded-md border border-[var(--almex-border)] bg-white px-3 text-xs text-[var(--almex-text-2)]">Batal</button>
+              <button onClick={handleBulkDelete} className="h-8 rounded-md border border-[#7f1d1d] bg-[#7f1d1d] px-3 text-xs font-medium text-white">Hapus</button>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
