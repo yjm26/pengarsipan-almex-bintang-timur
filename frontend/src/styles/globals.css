@@ -1,10 +1,37 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&display=swap");
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+:root {
+  --almex-bg: #f7f7f6;
+  --almex-surface: #ffffff;
+  --almex-muted: #f1f1f0;
+  --almex-muted-2: #ececea;
+  --almex-border: #e2e2e0;
+  --almex-border-strong: #d2d2cf;
+  --almex-text: #1e1e1e;
+  --almex-text-2: #6f6f6f;
+  --almex-text-3: #9a9a9a;
+  --almex-ink: #1c1c1c;
+  --almex-accent: #4b3cff;
+  --almex-accent-soft: #edebff;
+  --almex-success: #35a853;
+  --almex-success-soft: #eef9f1;
+  --almex-blue: #2563eb;
+  --almex-blue-soft: #eff6ff;
+}
+
 @layer base {
+  html {
+    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
   body {
     @apply antialiased;
+    background: var(--almex-bg);
+    color: var(--almex-text);
+    font-variant-numeric: tabular-nums;
   }
 }
 

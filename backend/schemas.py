@@ -140,7 +140,7 @@ class DashboardStats(BaseModel):
     total_documents: int
     surat_masuk_count: int
     surat_keluar_count: int
-    perlu_verifikasi_count: int
+    documents_this_month_count: int = 0
     recent_documents: List[DocumentOut]
     monthly_activity: List[MonthlyActivity]
     category_distribution: dict

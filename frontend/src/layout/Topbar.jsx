@@ -1,209 +1,84 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, User, Moon, Sun, Menu, FileText, CheckCircle2, AlertTriangle, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Bell, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
+import { useToast } from '../contexts/ToastContext.jsx';
 
-const mockNotifications = [];
-
-function formatNotifTime(ts) {
-  if (!ts) return '-';
-  const date = new Date(ts);
-  if (isNaN(date.getTime())) return ts;
-  const now = new Date();
-  const diffMs = now - date;
-  const diffSec = Math.floor(diffMs / 1000);
-  const diffMin = Math.floor(diffSec / 60);
-  const diffHour = Math.floor(diffMin / 60);
-  const diffDay = Math.floor(diffHour / 24);
-  if (diffSec < 60) return 'Baru saja';
-  if (diffMin < 60) return `${diffMin} menit lalu`;
-  if (diffHour < 24) return `${diffHour} jam lalu`;
-  if (diffDay === 1) return 'Kemarin';
-  if (diffDay < 7) return `${diffDay} hari lalu`;
-  return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+function roleLabel(role) {
+  const labels = {
+    owner: 'Owner',
+    super_admin: 'Super Admin',
+    admin: 'Administrator',
+    admin_dokumen: 'Admin Dokumen',
+  };
+  return labels[role] || role || 'User';
 }
 
-export default function Topbar({ onOpenSidebar }) {
-  const [notifOpen, setNotifOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
-  const [notifications, setNotifications] = useState([]);
-  const [user, setUser] = useState({ nama: '', role: '' });
-  const [readIds, setReadIds] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('notifReadIds') || '[]'); } catch { return []; }
-  });
+export default function Topbar({ pageTitle = 'Dashboard' }) {
+  const navigate = useNavigate();
+  const { addToast } = useToast();
+  const [user, setUser] = useState({ nama: 'User', role: 'User' });
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  // Fetch notifications from audit log
   useEffect(() => {
-    const fetchNotifs = async () => {
-      try {
-        const res = await api.getAuditLogs({ per_page: 5 });
-        const mapped = (res.data || []).map((log) => ({
-          id: log.id,
-          type: log.type === 'upload' || log.type === 'auth' ? 'success' : log.type === 'ai' ? 'warning' : 'info',
-          title: log.action || 'Aktivitas',
-          desc: log.detail || '',
-          time: formatNotifTime(log.timestamp),
-          read: readIds.includes(log.id),
-        }));
-        setNotifications(mapped);
-      } catch (_) {
-        setNotifications([]);
-      }
-    };
-    fetchNotifs();
-    const interval = setInterval(fetchNotifs, 30000);
-    return () => clearInterval(interval);
-  }, [readIds]);
-
-  // Fetch user profile
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const data = await api.getMe();
+    let mounted = true;
+    api.getMe()
+      .then((data) => {
+        if (!mounted) return;
         setUser({
           nama: data.nama_lengkap || data.username || 'User',
-          role: data.role || 'User',
+          role: roleLabel(data.role),
         });
-      } catch (_) {}
-    };
-    fetchUser();
+      })
+      .catch(() => {
+        if (mounted) setUser({ nama: 'User', role: 'User' });
+      });
+    return () => { mounted = false; };
   }, []);
 
-  // Dark mode toggle
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    localStorage.setItem('darkMode', darkMode);
-  }, [darkMode]);
-
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
-  const markAllRead = () => {
-    const ids = notifications.map((n) => n.id);
-    setReadIds(ids);
-    localStorage.setItem('notifReadIds', JSON.stringify(ids));
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  const handleLogout = () => {
+    api.setToken(null);
+    localStorage.removeItem('isAuthenticated');
+    setShowLogoutConfirm(false);
+    addToast('Berhasil logout', 'success');
+    navigate('/');
   };
 
   return (
-    <header className="h-16 bg-white dark:bg-zinc-900 border-b border-zinc-200/60 dark:border-zinc-800 flex items-center gap-4 px-4 lg:px-6 sticky top-0 z-10 transition-colors">
-      {/* Mobile Hamburger */}
-      <motion.button
-        whileTap={{ scale: 0.95 }}
-        onClick={onOpenSidebar}
-        className="lg:hidden p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 transition-all"
-      >
-        <Menu className="w-5 h-5" />
-      </motion.button>
-
-      <div className="flex items-center gap-3 lg:gap-4 ml-auto">
-
-        {/* Dark Mode Toggle */}
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setDarkMode(!darkMode)}
-          className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 transition-all"
-          title={darkMode ? 'Mode Terang' : 'Mode Gelap'}
-        >
-          {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-        </motion.button>
-
-        {/* Notifications */}
-        <div className="relative">
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setNotifOpen(!notifOpen)}
-            className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 relative text-zinc-600 dark:text-zinc-400 transition-all"
-          >
-            <Bell className="w-5 h-5" />
-            {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white dark:border-zinc-900 flex items-center justify-center">
-                <span className="text-[8px] text-white font-bold">{unreadCount}</span>
-              </span>
-            )}
-          </motion.button>
-
-          <AnimatePresence>
-            {notifOpen && (
-              <>
-                {/* Backdrop */}
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
-
-                {/* Dropdown */}
-                <motion.div
-                  initial={{ opacity: 0, y: -8, scale: 0.96 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -8, scale: 0.96 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute right-0 top-12 w-80 bg-white dark:bg-zinc-800 rounded-xl shadow-xl border border-zinc-200/60 dark:border-zinc-700 z-50 overflow-hidden"
-                >
-                  {/* Header */}
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100 dark:border-zinc-700">
-                    <h3 className="text-sm font-semibold text-zinc-900 dark:text-white">Notifikasi</h3>
-                    {unreadCount > 0 && (
-                      <button onClick={markAllRead} className="text-xs text-[#D49A28] hover:text-[#C08A20] font-medium">Tandai semua dibaca</button>
-                    )}
-                  </div>
-
-                  {/* List */}
-                  <div className="max-h-80 overflow-y-auto">
-                    {notifications.length === 0 ? (
-                      <div className="px-4 py-8 text-center text-zinc-400 text-sm">
-                        Belum ada aktivitas
-                      </div>
-                    ) : (
-                      notifications.map((n) => (
-                        <div key={n.id} className={`px-4 py-3 border-b border-zinc-50 dark:border-zinc-700/50 last:border-0 ${
-                          !n.read ? 'bg-zinc-50/50 dark:bg-zinc-800/50' : ''
-                        }`}>
-                          <div className="flex items-start gap-3">
-                            <div className={`w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center mt-0.5 ${
-                              n.type === 'success' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600' :
-                              n.type === 'warning' ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-600' :
-                              'bg-blue-50 dark:bg-blue-500/10 text-blue-600'
-                            }`}>
-                              {n.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> :
-                               n.type === 'warning' ? <AlertTriangle className="w-4 h-4" /> :
-                               <FileText className="w-4 h-4" />}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-zinc-900 dark:text-white">{n.title}</p>
-                              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{n.desc}</p>
-                              <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1">{n.time}</p>
-                            </div>
-                            {!n.read && <span className="w-2 h-2 rounded-full bg-[#D49A28] flex-shrink-0 mt-2" />}
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-
-                  {/* Footer */}
-                  <div className="px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800/80 text-center">
-                    <button onClick={() => setNotifOpen(false)} className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 font-medium">
-                      Tutup
-                    </button>
-                  </div>
-                </motion.div>
-              </>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* Profile */}
-        <div className="flex items-center gap-3 pl-4 border-l border-zinc-200 dark:border-zinc-700">
-          <div className="w-9 h-9 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center border border-zinc-200 dark:border-zinc-700">
-            <User className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
-          </div>
-          <div className="flex flex-col items-start hidden sm:block">
-            <span className="text-sm font-semibold text-zinc-900 dark:text-white leading-tight">{user.nama || 'User'}</span>
-            <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0">{user.role || 'User'}</span>
-          </div>
-        </div>
+    <header className="sticky top-0 z-20 flex h-[54px] items-center justify-between border-b border-[var(--almex-border)] bg-[rgba(247,247,246,0.86)] px-5 backdrop-blur-xl">
+      <div className="flex items-center gap-2 text-xs text-[var(--almex-text-2)]">
+        <span>Workspace</span>
+        <span>/</span>
+        <strong className="font-medium text-[var(--almex-text)]">{pageTitle}</strong>
       </div>
+
+      <div className="flex items-center gap-2.5 text-xs text-[var(--almex-text-2)]">
+        <button className="grid h-[30px] w-[30px] place-items-center rounded-md border border-[var(--almex-border-strong)] bg-white text-[var(--almex-text-2)]" aria-label="Notifikasi">
+          <Bell className="h-3.5 w-3.5" />
+        </button>
+        <span className="text-[var(--almex-border-strong)]">|</span>
+        <div className="hidden min-w-0 text-right sm:block">
+          <strong className="block max-w-[180px] truncate text-[13px] font-semibold leading-4 text-[var(--almex-text)]">{user.nama}</strong>
+          <span className="block text-xs font-medium leading-4 text-[var(--almex-text-3)]">{user.role}</span>
+        </div>
+        <span className="text-[var(--almex-border-strong)]">|</span>
+        <button onClick={() => setShowLogoutConfirm(true)} className="grid h-[30px] w-[30px] place-items-center rounded-md border border-[var(--almex-border-strong)] bg-white text-[var(--almex-text-2)] hover:text-[var(--almex-text)]" aria-label="Logout">
+          <LogOut className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-[10px] border border-[var(--almex-border)] bg-white p-5 shadow-xl">
+            <h3 className="text-sm font-semibold text-[var(--almex-text)]">Keluar dari aplikasi?</h3>
+            <p className="mt-1 text-xs text-[var(--almex-text-2)]">Sesi aktif akan diakhiri dan Anda perlu login kembali.</p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button onClick={() => setShowLogoutConfirm(false)} className="h-8 rounded-md border border-[var(--almex-border)] bg-white px-3 text-xs text-[var(--almex-text-2)]">Batal</button>
+              <button onClick={handleLogout} className="h-8 rounded-md border border-[var(--almex-ink)] bg-[var(--almex-ink)] px-3 text-xs font-medium text-white">Logout</button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

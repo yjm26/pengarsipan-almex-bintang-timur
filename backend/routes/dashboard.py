@@ -58,13 +58,22 @@ def get_stats(db: Session = Depends(get_db), current_user: User = Depends(get_cu
     total = db.query(Document).count()
     masuk = db.query(Document).filter(Document.arah == "Masuk").count()
     keluar = db.query(Document).filter(Document.arah == "Keluar").count()
-    perlu_verifikasi = db.query(Document).filter(Document.status == "pending").count()
+
+    now = datetime.now(timezone(timedelta(hours=7)))
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    if now.month == 12:
+        month_end = month_start.replace(year=now.year + 1, month=1)
+    else:
+        month_end = month_start.replace(month=now.month + 1)
+    documents_this_month = db.query(Document).filter(
+        Document.tanggal_unggah >= month_start,
+        Document.tanggal_unggah < month_end
+    ).count()
 
     recent = db.query(Document).order_by(Document.created_at.desc()).limit(5).all()
 
     # Monthly activity - last 6 months
     monthly = []
-    now = datetime.now(timezone(timedelta(hours=7)))
     for i in range(5, -1, -1):
         d = now - timedelta(days=i * 30)
         month_start = d.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -84,17 +93,18 @@ def get_stats(db: Session = Depends(get_db), current_user: User = Depends(get_cu
         ).count()
         monthly.append(MonthlyActivity(month=d.strftime("%b %Y"), masuk=m_count, keluar=k_count))
 
-    # Category distribution
-    cat_dist = {}
+    # Category distribution - keep all skripsi categories visible, even when count is 0
+    category_order = ["PurchaseOrder", "Invoice", "Penawaran", "SalesOrder", "SuratJalan", "Lainnya"]
+    cat_dist = {name: 0 for name in category_order}
     for doc in db.query(Document).all():
         j = doc.jenis or "Lainnya"
-        cat_dist[j] = cat_dist.get(j, 0) + 1
+        cat_dist[j if j in cat_dist else "Lainnya"] += 1
 
     return DashboardStats(
         total_documents=total,
         surat_masuk_count=masuk,
         surat_keluar_count=keluar,
-        perlu_verifikasi_count=perlu_verifikasi,
+        documents_this_month_count=documents_this_month,
         recent_documents=[DocumentOut.model_validate(r) for r in recent],
         monthly_activity=monthly,
         category_distribution=cat_dist

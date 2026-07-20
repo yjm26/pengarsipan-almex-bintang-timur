@@ -1,105 +1,45 @@
-import { useState, useEffect } from 'react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import DashboardPanel from './DashboardPanel';
 
-export default function ActivityChart({ stats }) {
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState([]);
-
-  useEffect(() => {
-    if (stats) {
-      setData(stats.monthly_activity || []);
-      setLoading(false);
-    } else {
-      setData([]);
-      setLoading(false);
-    }
-  }, [stats]);
-
-  if (loading) {
-    return (
-      <div className="bg-white rounded-xl border border-zinc-200/60 p-8">
-        <div className="h-6 w-40 bg-zinc-100 rounded animate-pulse mb-4" />
-        <div className="h-64 bg-zinc-50 rounded animate-pulse" />
-      </div>
-    );
-  }
+export default function ActivityChart({ stats, loading }) {
+  const data = stats?.monthly_activity || [];
 
   return (
-    <div className="bg-white rounded-xl border border-zinc-200/60 p-8">
-      <div className="mb-8">
-        <h3 className="text-base font-semibold tracking-tight text-zinc-900">Tren Aktivitas Dokumen</h3>
-        <p className="text-sm text-zinc-500 mt-1">Volume surat masuk & keluar 6 bulan terakhir</p>
-      </div>
-
-      <div className="flex items-center gap-6 mb-6">
-        <div className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-full bg-[#D49A28]" />
-          <span className="text-xs font-medium text-zinc-600">Surat Masuk</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-full bg-zinc-400" />
-          <span className="text-xs font-medium text-zinc-600">Surat Keluar</span>
-        </div>
-      </div>
-
-      {data.length === 0 ? (
-        <div className="h-64 flex items-center justify-center text-zinc-400 text-sm">
-          Belum ada data aktivitas
+    <DashboardPanel
+      title="Aktivitas Dokumen"
+      description="Volume surat masuk dan keluar dalam 6 bulan terakhir"
+      action={<span className="inline-flex h-7 items-center rounded-md border border-[var(--almex-border)] bg-white px-2.5 text-xs text-[var(--almex-text-2)]">Bulanan</span>}
+    >
+      {loading ? (
+        <div className="h-[210px] p-4"><div className="h-full rounded bg-[var(--almex-muted)]" /></div>
+      ) : data.length === 0 ? (
+        <div className="flex h-[210px] items-center justify-center px-6 text-center text-xs text-[var(--almex-text-3)]">
+          Aktivitas akan muncul setelah dokumen diunggah.
         </div>
       ) : (
-        <ResponsiveContainer width="100%" height={260}>
-          <AreaChart data={data}>
-            <defs>
-              <linearGradient id="colorMasuk" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#D49A28" stopOpacity={0.15} />
-                <stop offset="95%" stopColor="#D49A28" stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="colorKeluar" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#a1a1aa" stopOpacity={0.1} />
-                <stop offset="95%" stopColor="#a1a1aa" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f4f4f5" vertical={false} />
-            <XAxis
-              dataKey="month"
-              tick={{ fontSize: 11, fill: '#71717a' }}
-              tickLine={false}
-              axisLine={{ stroke: '#e4e4e7' }}
-            />
-            <YAxis
-              tick={{ fontSize: 11, fill: '#71717a' }}
-              tickLine={false}
-              axisLine={false}
-              allowDecimals={false}
-            />
-            <Tooltip
-              contentStyle={{
-                background: '#fff',
-                border: '1px solid #e4e4e7',
-                borderRadius: '8px',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                fontSize: '12px',
-              }}
-            />
-            <Area
-              type="monotone"
-              dataKey="masuk"
-              name="Masuk"
-              stroke="#D49A28"
-              strokeWidth={2}
-              fill="url(#colorMasuk)"
-            />
-            <Area
-              type="monotone"
-              dataKey="keluar"
-              name="Keluar"
-              stroke="#a1a1aa"
-              strokeWidth={2}
-              fill="url(#colorKeluar)"
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+        <div className="h-[240px] p-4">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data}>
+              <defs>
+                <linearGradient id="masukGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#35a853" stopOpacity={0.14} />
+                  <stop offset="95%" stopColor="#35a853" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="keluarGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#2563eb" stopOpacity={0.12} />
+                  <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke="#eeeeec" vertical={false} />
+              <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#9a9a9a' }} tickLine={false} axisLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: '#9a9a9a' }} tickLine={false} axisLine={false} allowDecimals={false} />
+              <Tooltip contentStyle={{ border: '1px solid #e2e2e0', borderRadius: 8, fontSize: 12 }} />
+              <Area type="monotone" dataKey="masuk" name="Masuk" stroke="#35a853" strokeWidth={2} fill="url(#masukGradient)" />
+              <Area type="monotone" dataKey="keluar" name="Keluar" stroke="#2563eb" strokeWidth={2} fill="url(#keluarGradient)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
       )}
-    </div>
+    </DashboardPanel>
   );
 }

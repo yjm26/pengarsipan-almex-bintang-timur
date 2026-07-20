@@ -1,74 +1,75 @@
-import { motion } from 'framer-motion';
-import { useState, useEffect } from 'react';
-import { FileText, ArrowDownRight, ArrowUpRight, AlertTriangle } from 'lucide-react';
-import KPICard from './components/KPICard';
+import { Download } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import api from '../../lib/api';
+import { useToast } from '../../contexts/ToastContext.jsx';
 import ActivityChart from './components/ActivityChart';
 import CategoryChart from './components/CategoryChart';
+import DashboardStats from './components/DashboardStats';
 import RecentDocuments from './components/RecentDocuments';
-import api from '../../lib/api';
-
-import { useToast } from '../../contexts/ToastContext.jsx';
 
 export default function DashboardOverview({ onNavigate }) {
   const { addToast } = useToast();
-  const [kpiData, setKpiData] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const exportSummary = () => {
+    if (!stats) return;
+    const rows = [
+      ['Metrik', 'Jumlah'],
+      ['Total Dokumen', stats.total_documents || 0],
+      ['Surat Masuk', stats.surat_masuk_count || 0],
+      ['Surat Keluar', stats.surat_keluar_count || 0],
+      ['Dokumen Bulan Ini', stats.documents_this_month_count || 0],
+    ];
+    const csv = rows.map((row) => row.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'ringkasan-dashboard-almex.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+    addToast('Ringkasan dashboard berhasil diunduh', 'success');
+  };
+
   useEffect(() => {
+    let mounted = true;
+
     const fetchStats = async () => {
       try {
         const data = await api.getDashboardStats();
-        setStats(data);
-        setKpiData([
-          { title: 'Total Dokumen', value: data.total_documents?.toLocaleString() ?? '0', subtitle: 'Seluruh arsip tersimpan', icon: FileText, accent: 'gold', filter: null },
-          { title: 'Surat Masuk', value: data.surat_masuk_count?.toLocaleString() ?? '0', subtitle: 'Bulan ini', icon: ArrowDownRight, accent: 'blue', filter: { arah: 'Masuk' } },
-          { title: 'Surat Keluar', value: data.surat_keluar_count?.toLocaleString() ?? '0', subtitle: 'Bulan ini', icon: ArrowUpRight, accent: 'green', filter: { arah: 'Keluar' } },
-          { title: 'Perlu Verifikasi', value: data.perlu_verifikasi_count?.toLocaleString() ?? '0', subtitle: 'Akurasi di bawah 80%', icon: AlertTriangle, accent: 'red', filter: { confidence: 'low' } },
-        ]);
+        if (mounted) setStats(data);
       } catch (err) {
-        addToast('Gagal memuat data dashboard: ' + err.message, 'error');
-        // Default 0 biar card tetap muncul
-        setKpiData([
-          { title: 'Total Dokumen', value: '0', subtitle: 'Seluruh arsip tersimpan', icon: FileText, accent: 'gold', filter: null },
-          { title: 'Surat Masuk', value: '0', subtitle: 'Bulan ini', icon: ArrowDownRight, accent: 'blue', filter: { arah: 'Masuk' } },
-          { title: 'Surat Keluar', value: '0', subtitle: 'Bulan ini', icon: ArrowUpRight, accent: 'green', filter: { arah: 'Keluar' } },
-          { title: 'Perlu Verifikasi', value: '0', subtitle: 'Akurasi di bawah 80%', icon: AlertTriangle, accent: 'red', filter: { confidence: 'low' } },
-        ]);
+        addToast('Gagal memuat dashboard: ' + err.message, 'error');
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
+
     fetchStats();
-  }, []);
+    return () => { mounted = false; };
+  }, [addToast]);
 
   return (
-    <div className="space-y-8">
-      <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }}>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Overview</h1>
-        <p className="text-sm text-zinc-500 mt-1.5 font-light">Ringkasan aktivitas arsip dokumen perusahaan.</p>
-      </motion.div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {loading ? (
-          <>
-            {[0,1,2,3].map((i) => (
-              <div key={i} className="h-28 rounded-xl bg-zinc-100 animate-pulse" />
-            ))}
-          </>
-        ) : (
-          kpiData.map((kpi, i) => (
-            <KPICard key={kpi.title} {...kpi} delay={0.15 + i * 0.05} onClick={() => kpi.filter && onNavigate?.('arsip', kpi.filter)} />
-          ))
-        )}
+    <div className="space-y-[18px]">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.02em] text-[var(--almex-text)]">Dashboard Arsip</h1>
+          <p className="mt-1 text-[13px] text-[var(--almex-text-2)]">Pantau dokumen masuk, dokumen keluar, dan kategori arsip dalam satu workspace.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={exportSummary} disabled={!stats || loading} className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[var(--almex-border-strong)] bg-white px-3 text-xs text-[var(--almex-text)] disabled:cursor-not-allowed disabled:opacity-50"><Download className="h-3.5 w-3.5" />Export</button>
+          <button onClick={() => onNavigate?.('arsip')} className="h-8 rounded-md border border-[var(--almex-border-strong)] bg-white px-3 text-xs text-[var(--almex-text)]">Lihat Arsip</button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2"><ActivityChart stats={stats} /></div>
-        <div><CategoryChart stats={stats} /></div>
-      </div>
+      <DashboardStats stats={stats} loading={loading} />
+      <RecentDocuments stats={stats} loading={loading} />
 
-      <RecentDocuments stats={stats} />
+      <div className="grid grid-cols-1 gap-[18px] lg:grid-cols-[1.6fr_0.9fr]">
+        <ActivityChart stats={stats} loading={loading} />
+        <CategoryChart stats={stats} loading={loading} />
+      </div>
     </div>
   );
 }

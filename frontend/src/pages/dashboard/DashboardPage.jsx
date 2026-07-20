@@ -1,14 +1,12 @@
-import { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, Menu, LayoutDashboard, Upload, FileText, Settings, LogOut } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Archive, FileText, LayoutDashboard, Menu, Settings, Upload, X } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Topbar from '../../layout/Topbar';
 import DashboardOverview from '../../features/dashboard/DashboardOverview';
 import ArsipPage from '../../pages/arsip/ArsipPage';
 import UploadForm from '../../pages/upload/UploadPage';
 import SettingsPage from '../../pages/settings/SettingsPage';
-import { useToast } from '../../contexts/ToastContext.jsx';
-import api from '../../lib/api';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
@@ -16,6 +14,8 @@ const menuItems = [
   { icon: FileText, label: 'Arsip Surat', path: '/dashboard/arsip' },
   { icon: Settings, label: 'Pengaturan', path: '/dashboard/pengaturan' },
 ];
+
+const collections = ['Keuangan', 'Pembelian', 'Penawaran', 'Surat Jalan'];
 
 function resolvePage(pathname, { onNavigate } = {}) {
   if (pathname === '/dashboard') return <DashboardOverview onNavigate={onNavigate} />;
@@ -25,213 +25,144 @@ function resolvePage(pathname, { onNavigate } = {}) {
   return <DashboardOverview onNavigate={onNavigate} />;
 }
 
+function resolveTitle(pathname) {
+  if (pathname === '/dashboard/arsip') return 'Arsip Surat';
+  if (pathname === '/dashboard/upload') return 'Upload Dokumen';
+  if (pathname === '/dashboard/pengaturan') return 'Pengaturan';
+  return 'Dashboard';
+}
+
+function SidebarContent({ activePath, onNavigate }) {
+  return (
+    <div className="flex h-full flex-col gap-4 px-2.5 py-3.5">
+      <div className="flex items-center gap-2.5 border-b border-[var(--almex-border)] px-2 pb-3">
+        <div className="grid h-7 w-7 place-items-center rounded-[7px] border border-[var(--almex-border-strong)] bg-white text-[10px] font-bold tracking-[0.08em] text-[var(--almex-text)]">
+          ABT
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-[var(--almex-text)]">ALMEX Arsip</p>
+          <p className="mt-[-2px] text-[11px] text-[var(--almex-text-3)]">Document workspace</p>
+        </div>
+      </div>
+
+      <section className="px-1">
+        <p className="mb-1.5 px-2 text-[11px] text-[var(--almex-text-3)]">Menu</p>
+        <nav className="grid gap-0.5">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            const active = activePath === item.path;
+            return (
+              <button
+                key={item.path}
+                onClick={() => onNavigate(item.path)}
+                className={`flex h-[34px] items-center gap-2.5 rounded-md px-2.5 text-left text-[13px] transition-colors ${
+                  active
+                    ? 'bg-[var(--almex-muted-2)] font-medium text-[var(--almex-text)]'
+                    : 'text-[#555] hover:bg-[var(--almex-muted)]'
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5 opacity-80" />
+                {item.label}
+              </button>
+            );
+          })}
+        </nav>
+      </section>
+
+      <section className="px-1">
+        <p className="mb-1.5 px-2 text-[11px] text-[var(--almex-text-3)]">Koleksi</p>
+        <div className="grid gap-0.5">
+          {collections.map((item) => (
+            <div key={item} className="flex h-[34px] items-center gap-2.5 rounded-md px-2.5 text-[13px] text-[#555]">
+              <Archive className="h-3.5 w-3.5 opacity-70" />
+              {item}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <div className="mt-auto border-t border-[var(--almex-border)] px-2 pt-3 text-xs text-[var(--almex-text-2)]">
+        <strong className="block font-medium text-[var(--almex-text)]">Admin Dokumen</strong>
+        <span>PT. Almex Bintang Timur</span>
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const { addToast } = useToast();
-
-  const handleLogout = () => {
-    api.setToken(null);
-    localStorage.removeItem('isAuthenticated');
-    setShowLogoutConfirm(false);
-    addToast('Berhasil logout', 'success');
-    navigate('/');
-  };
-
-  const logoutButton = (
-    <motion.button
-      whileTap={{ scale: 0.98 }}
-      onClick={() => setShowLogoutConfirm(true)}
-      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-zinc-500 hover:bg-red-500/10 hover:text-red-400 transition-all"
-    >
-      <LogOut className="w-5 h-5 flex-shrink-0" />
-      Logout
-    </motion.button>
-  );
-
-  const LogoutConfirmModal = () => (
-    <AnimatePresence>
-      {showLogoutConfirm && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
-            onClick={() => setShowLogoutConfirm(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 p-6 w-full max-w-sm shadow-xl"
-            >
-              <h3 className="text-base font-semibold text-zinc-900 dark:text-white mb-2">Keluar dari aplikasi?</h3>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6">Semua sesi aktif akan diakhiri dan Anda harus login kembali.</p>
-              <div className="flex items-center justify-end gap-3">
-                <button
-                  onClick={() => setShowLogoutConfirm(false)}
-                  className="px-4 py-2 text-sm font-medium text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-lg transition-all"
-                >
-                  Batal
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-all"
-                >
-                  Ya, Keluar
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
-  );
-
-  const onNavigate = (page, filterParams) => {
-    if (page === 'arsip') {
-      const params = new URLSearchParams();
-      if (filterParams?.arah) params.set('arah', filterParams.arah);
-      if (filterParams?.confidence) params.set('confidence', filterParams.confidence);
-      navigate(`/dashboard/arsip?${params}`);
-    }
-    setSidebarOpen(false);
-  };
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const activePath = useMemo(() => {
     const base = location.pathname.split('/').slice(0, 3).join('/');
     return menuItems.find((item) => item.path === base)?.path || '/dashboard';
   }, [location.pathname]);
 
+  const onNavigate = (pathOrPage, filterParams) => {
+    if (pathOrPage === 'arsip') {
+      const params = new URLSearchParams();
+      if (filterParams?.arah) params.set('arah', filterParams.arah);
+      if (filterParams?.confidence) params.set('confidence', filterParams.confidence);
+      navigate(`/dashboard/arsip${params.toString() ? `?${params}` : ''}`);
+    } else {
+      navigate(pathOrPage);
+    }
+    setMobileSidebarOpen(false);
+  };
+
   return (
-    <div className="min-h-screen flex bg-[#FAFAFA] dark:bg-zinc-950 transition-colors">
-
-      {/* Mobile Backdrop */}
-      <AnimatePresence>
-        {sidebarOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setSidebarOpen(false)}
-            className="fixed inset-0 bg-black/40 z-40 lg:hidden"
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Sidebar */}
-      <AnimatePresence>
-        {sidebarOpen && (
-          <motion.aside
-            initial={{ x: -256, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -256, opacity: 0 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="fixed top-0 left-0 h-screen w-64 bg-[#0A0A0A] z-50 flex flex-col lg:shadow-xl"
-          >
-            {/* Logo Area */}
-            <div className="flex items-center gap-3 px-6 py-5 border-b border-zinc-800/50">
-              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center flex-shrink-0">
-                <span className="text-zinc-950 font-bold text-[10px] tracking-widest">ABT</span>
-              </div>
-              <span className="font-semibold tracking-tight text-lg text-white">Arsip</span>
-            </div>
-
-            {/* Search */}
-            <div className="px-5 py-4">
-              <div className="flex items-center gap-2 px-3 py-2.5 bg-zinc-900/60 rounded-lg border border-zinc-800 text-zinc-500 text-xs">
-                <span className="text-lg leading-none">⌕</span>
-                <span>Cari menu...</span>
-              </div>
-            </div>
-
-            {/* Navigation */}
-            <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
-              {menuItems.map((item) => (
-                <button
-                  key={item.path}
-                  onClick={() => {
-                    navigate(item.path);
-                    setSidebarOpen(false);
-                  }}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                    activePath === item.path
-                      ? 'bg-zinc-800 text-white'
-                      : 'text-zinc-500 hover:bg-zinc-900/50 hover:text-zinc-300'
-                  }`}
-                >
-                  <item.icon className="w-5 h-5 flex-shrink-0" />
-                  {item.label}
-                </button>
-              ))}
-            </nav>
-
-            {/* Logout */}
-            <div className="p-4 border-t border-zinc-800/50">
-              {logoutButton}
-            </div>
-          </motion.aside>
-        )}
-      </AnimatePresence>
-
-      {/* Desktop fixed sidebar (always visible on lg+) */}
-      <motion.aside
-        className="hidden lg:flex fixed top-0 left-0 h-screen w-64 bg-[#0A0A0A] z-30 flex-col"
+    <div className="min-h-screen bg-[var(--almex-bg)] text-[var(--almex-text)]">
+      <button
+        onClick={() => setMobileSidebarOpen(true)}
+        className="fixed left-3 top-3 z-30 grid h-8 w-8 place-items-center rounded-md border border-[var(--almex-border)] bg-white text-[var(--almex-text-2)] lg:hidden"
+        aria-label="Buka menu"
       >
-        {/* Logo Area */}
-        <div className="flex items-center gap-3 px-6 py-5 border-b border-zinc-800/50">
-          <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center flex-shrink-0">
-            <span className="text-zinc-950 font-bold text-[10px] tracking-widest">ABT</span>
-          </div>
-          <span className="font-semibold tracking-tight text-lg text-white">Arsip</span>
-        </div>
+        <Menu className="h-4 w-4" />
+      </button>
 
-        {/* Search */}
-        <div className="px-5 py-4">
-          <div className="flex items-center gap-2 px-3 py-2.5 bg-zinc-900/60 rounded-lg border border-zinc-800 text-zinc-500 text-xs">
-            <span className="text-lg leading-none">⌕</span>
-            <span>Cari menu...</span>
-          </div>
-        </div>
+      <aside className="fixed left-0 top-0 z-20 hidden h-screen w-[248px] border-r border-[var(--almex-border)] bg-[var(--almex-bg)] lg:block">
+        <SidebarContent activePath={activePath} onNavigate={onNavigate} />
+      </aside>
 
-        {/* Navigation */}
-        <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
-          {menuItems.map((item) => (
-            <button
-              key={item.path}
-              onClick={() => navigate(item.path)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                activePath === item.path
-                  ? 'bg-zinc-800 text-white'
-                  : 'text-zinc-500 hover:bg-zinc-900/50 hover:text-zinc-300'
-              }`}
+      <AnimatePresence>
+        {mobileSidebarOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileSidebarOpen(false)}
+              className="fixed inset-0 z-40 bg-black/35 lg:hidden"
+            />
+            <motion.aside
+              initial={{ x: -260 }}
+              animate={{ x: 0 }}
+              exit={{ x: -260 }}
+              transition={{ duration: 0.2 }}
+              className="fixed left-0 top-0 z-50 h-screen w-[248px] border-r border-[var(--almex-border)] bg-[var(--almex-bg)] lg:hidden"
             >
-              <item.icon className="w-5 h-5 flex-shrink-0" />
-              {item.label}
-            </button>
-          ))}
-        </nav>
+              <button
+                onClick={() => setMobileSidebarOpen(false)}
+                className="absolute right-3 top-3 grid h-7 w-7 place-items-center rounded-md border border-[var(--almex-border)] bg-white text-[var(--almex-text-2)]"
+                aria-label="Tutup menu"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+              <SidebarContent activePath={activePath} onNavigate={onNavigate} />
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
 
-        {/* Logout */}
-        <div className="p-4 border-t border-zinc-800/50">
-          {logoutButton}
-        </div>
-      </motion.aside>
-
-      {/* Main Content — always full width on mobile, shifted on desktop */}
-      <div className="flex-1 flex flex-col min-w-0 lg:ml-64">
-        <Topbar onOpenSidebar={() => setSidebarOpen(true)} />
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
-          <div className="max-w-6xl mx-auto">
+      <div className="min-w-0 lg:pl-[248px]">
+        <Topbar pageTitle={resolveTitle(location.pathname)} />
+        <main className="px-4 py-[18px] sm:px-5">
+          <div className="mx-auto max-w-[1280px]">
             {resolvePage(location.pathname, { onNavigate })}
           </div>
         </main>
       </div>
-      <LogoutConfirmModal />
     </div>
   );
 }
